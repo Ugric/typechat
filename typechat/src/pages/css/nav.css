@@ -1,0 +1,10 @@
+.bg-darkpurple {
+  position: -webkit-sticky;
+  position: sticky;
+  background: var(--dark-bg-colour);
+  top: 0;
+  align-self: auto;
+}
+.mc-auto {
+  margin: auto;
+}

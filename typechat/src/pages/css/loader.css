@@ -1,0 +1,30 @@
+.loader {
+  width: 50px;
+  height: 50px;
+  background: url(../../images/logos/TS.svg);
+  background-repeat: no-repeat;
+  background-size: cover;
+  -webkit-animation: loader 1s ease-in-out infinite alternate;
+  animation: loader 1s ease-in-out infinite alternate;
+}
+
+@keyframes loader {
+  from {
+    transform: rotate(0deg) scale(1, 1);
+    border-radius: 0px;
+  }
+  to {
+    transform: rotate(360deg) scale(0, 0);
+    border-radius: 50px;
+  }
+}
+@-webkit-keyframes loader {
+  from {
+    -webkit-transform: rotate(0deg) scale(1, 1);
+    border-radius: 0px;
+  }
+  to {
+    -webkit-transform: rotate(360deg) scale(0, 0);
+    border-radius: 50px;
+  }
+}
