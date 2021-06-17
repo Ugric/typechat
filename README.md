@@ -10,4 +10,4 @@
 
 # =
 
-[![N|Solid](typechat/src/images/logos/TypeChat.svg)]
+![N|Solid](typechat/src/images/logos/TypeChat.svg)
