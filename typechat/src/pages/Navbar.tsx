@@ -12,9 +12,8 @@ const PageNav = () => {
     const { width } = useWindowSize()
     const { loggedin, user } = useData()
     const location = useLocation()
-    console.log(width)
     return <Navbar bg="darkpurple" variant="dark" sticky="top">
-        <Navbar.Brand as={Link} to="/"><img src={width > 500 ? bigLogo : smallLogo} style={{
+        <Navbar.Brand as={Link} to="/"><img src={width > 700 ? bigLogo : smallLogo} style={{
             height: "40px",
         }} /> </Navbar.Brand>
         <Nav className="mc-auto">

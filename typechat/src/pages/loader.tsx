@@ -1,6 +1,7 @@
 import "./css/loader.css"
 import "./css/center.css"
 
+
 function Loader() {
     return <div style={{
         display: "flex",

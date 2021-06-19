@@ -8,27 +8,31 @@ import {
 } from "react-router-dom";
 import Home from './pages/Home';
 import Login from './pages/Login';
-import { data } from "./hooks/datahook"
+import { data as datahook } from "./hooks/datahook"
 import PageNav from './pages/Navbar';
 import "./colourPallete.css"
 import reportWebVitals from './reportWebVitals';
+import useApi from './hooks/useapi';
+import Loader from './pages/loader';
 
 function App() {
+  const { data, error, loading } = useApi("/api/userdata")
   return <div style={{ overflowWrap: "anywhere" }}>
-    <Router>
-      <data.Provider value={{ loggedin: false, user: { username: "hi" } }}>
-        <PageNav />
-        <div>
-          <Switch>
-            <Route path="/" exact>
-              <Home />
-            </Route>
-            <Route path="/login" exact>
-              <Login />
-            </Route>
-          </Switch>
-        </div></data.Provider>
-    </Router></div>
+    {error || loading ? <Loader></Loader> :
+      <Router>
+        <datahook.Provider value={{ loggedin: data.loggedin, user: data.user }}>
+          <PageNav />
+          <div>
+            <Switch>
+              <Route path="/" exact>
+                <Home />
+              </Route>
+              <Route path="/login" exact>
+                <Login />
+              </Route>
+            </Switch>
+          </div></datahook.Provider>
+      </Router>}</div>
 }
 
 ReactDOM.render(
