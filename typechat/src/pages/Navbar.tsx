@@ -22,7 +22,7 @@ const PageNav = () => {
             <Nav.Link as={Link} to="/add" style={{ color: location.pathname === "/add" ? "white" : "" }}><FontAwesomeIcon icon={faPlus} /></Nav.Link>
         </Nav>
         <Nav> {loggedin ?
-            <Nav.Link as={Link} to="/settings" style={{ color: location.pathname === "/settings" ? "white" : "" }}>{user.username}</Nav.Link> : <Nav.Link as={Link} to="/signin" style={{ color: location.pathname === "/signin" ? "white" : "" }}><FontAwesomeIcon icon={faSignInAlt} /></Nav.Link>}</Nav>
+            <Nav.Link as={Link} to="/settings" style={{ color: location.pathname === "/settings" ? "white" : "" }}>{user.username}</Nav.Link> : <Nav.Link as={Link} to="/login" style={{ color: location.pathname === "/signin" ? "white" : "" }}><FontAwesomeIcon icon={faSignInAlt} /></Nav.Link>}</Nav>
     </Navbar>
 }
 export default PageNav

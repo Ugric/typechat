@@ -9,6 +9,7 @@ export function RouterForm({
     appendtoformdata = (fd: FormData) => {
         return fd;
     },
+    onerror = (e: string) => { console.error(e) }
 }: any) {
     return (
         <form
@@ -35,13 +36,17 @@ export function RouterForm({
                         }
                     }
                     const newformdata = appendtoformdata(fd);
-                    const result = await (
-                        await fetch(action, {
-                            method: "POST",
-                            body: newformdata,
-                        })
-                    ).json();
-                    callback(result);
+                    try {
+                        const result = await (
+                            await fetch(action, {
+                                method: "POST",
+                                body: newformdata,
+                            })
+                        ).json();
+                        callback(result);
+                    } catch (e) {
+                        onerror(e)
+                    }
                 }
             }}
         >

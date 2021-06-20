@@ -14,13 +14,14 @@ import "./colourPallete.css"
 import reportWebVitals from './reportWebVitals';
 import useApi from './hooks/useapi';
 import Loader from './pages/loader';
+import Signup from './pages/Signup';
 
 function App() {
-  const { data, error, loading } = useApi("/api/userdata")
+  const { data, error, loading, reload } = useApi("/api/userdata")
   return <div style={{ overflowWrap: "anywhere" }}>
     {error || loading ? <Loader></Loader> :
       <Router>
-        <datahook.Provider value={{ loggedin: data.loggedin, user: data.user }}>
+        <datahook.Provider value={{ loggedin: data.loggedin, user: data.user, rechecklogged: reload }}>
           <PageNav />
           <div>
             <Switch>
@@ -29,6 +30,9 @@ function App() {
               </Route>
               <Route path="/login" exact>
                 <Login />
+              </Route>
+              <Route path="/signup" exact>
+                <Signup />
               </Route>
             </Switch>
           </div></datahook.Provider>

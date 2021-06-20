@@ -6,19 +6,19 @@ import logo from "../images/logos/TS.svg"
 import { RouterForm } from "./RouterForm"
 import cookies from "../cookies"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSignInAlt } from '@fortawesome/free-solid-svg-icons'
+import { faAddressCard } from '@fortawesome/free-solid-svg-icons'
 
 function validateEmail(email: string) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
 }
 
-function Login() {
-    const { rechecklogged, logged } = useData()
+function Signup() {
+    const { rechecklogged, loggedin } = useData()
     const [error, seterror] = useState("");
     const history = useHistory();
     const [loading, setloading] = useState(false);
-    if (logged) {
+    if (loggedin) {
         history.push("/");
         return <></>;
     }
@@ -44,13 +44,13 @@ function Login() {
                         fontFamily: "'Source Sans Pro', sans-serif",
                     }}
                 >
-                    <FontAwesomeIcon icon={faSignInAlt}></FontAwesomeIcon>{" "}Login
+                    <FontAwesomeIcon icon={faAddressCard}></FontAwesomeIcon>{" "}Sign Up
                 </h1>
                 <RouterForm
-                    action={"/login"}
+                    action={"/signup"}
                     beforecallback={(e: any) => {
-                        if (e.target[0].value !== "" && e.target[1].value !== "") {
-                            if (validateEmail(e.target[0].value)) {
+                        if (e.target[0].value !== "" && e.target[1].value !== "" && e.target[2].value !== "") {
+                            if (validateEmail(e.target[1].value)) {
                                 setloading(true);
                                 return true;
                             } else {
@@ -58,13 +58,10 @@ function Login() {
                                 seterror("input a valid email!");
                             }
                         } else {
-                            seterror("input an email and password!");
+                            seterror("input a username, email and password!");
                         }
                     }}
-                    style={{
-                        width: "fit-content", margin: "auto",
-                        maxWidth: "300px",
-                    }}
+                    style={{ width: "fit-content", margin: "auto", maxWidth: "300px" }}
                     callback={(resp: any) => {
                         if (resp.resp) {
                             cookies.set("token", resp.token, {
@@ -78,6 +75,24 @@ function Login() {
                         }
                     }}
                 >       <input
+                        type="text"
+                        placeholder="Username"
+                        name="uname"
+                        style={{
+                            background: "transparent",
+                            borderTop: "none",
+                            borderRight: "none",
+                            borderBottom: "1px solid white",
+                            borderLeft: "none",
+                            borderImage: "initial",
+                            marginBottom: "1rem",
+                            width: "100%",
+                            paddingBottom: "0.5rem",
+                            fontFamily: "'Source Sans Pro', sans-serif",
+                            fontSize: "17px",
+                            color: "white",
+                        }}
+                    />  <input
                         type="text"
                         placeholder="email"
                         name="email"
@@ -117,7 +132,7 @@ function Login() {
                     />
                     <input
                         type="submit"
-                        value="Login"
+                        value="Sign up"
                         style={{
                             padding: "1rem",
                             maxWidth: "250px",
@@ -133,7 +148,7 @@ function Login() {
                         }}
                     />
                     <p style={{ margin: "1rem 0", color: "red" }}>{error}</p>
-                    <p style={{ margin: "1rem 0", color: "white" }}>dont already have an account?{" "}<span><Link to="/signup">Make one!</Link></span></p>
+                    <p style={{ margin: "1rem 0", color: "white" }}>already have an account?{" "}<span><Link to="/login">Login!</Link></span></p>
                 </RouterForm>
             </div>
         </>
@@ -141,4 +156,4 @@ function Login() {
 }
 
 
-export default Login
+export default Signup
