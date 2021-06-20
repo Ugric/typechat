@@ -14,11 +14,11 @@ function validateEmail(email: string) {
 }
 
 function Login() {
-    const { rechecklogged, logged } = useData()
+    const { rechecklogged, loggedin } = useData()
     const [error, seterror] = useState("");
     const history = useHistory();
     const [loading, setloading] = useState(false);
-    if (logged) {
+    if (loggedin) {
         history.push("/");
         return <></>;
     }
