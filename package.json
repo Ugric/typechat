@@ -1,14 +1,25 @@
 {
   "dependencies": {
     "@types/cookie-parser": "^1.4.2",
-    "@types/express": "^4.17.12",
+    "@types/express": "^4.17.13",
+    "@types/express-ws": "^3.0.0",
+    "bleach": "^0.3.0",
+    "connect-busboy": "^0.0.2",
+    "connect-multiparty": "^2.2.0",
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
+    "express-fileupload": "^1.2.1",
+    "express-ws": "^5.0.2",
+    "nodemailer": "^6.6.2",
     "randomstring": "^1.2.1",
     "sqlite": "^4.0.23",
     "sqlite3": "^5.0.2"
   },
   "devDependencies": {
+    "@types/mime-types": "^2.1.0",
     "@types/node": "^15.12.2"
+  },
+  "scripts": {
+    "start": "node app.ts"
   }
 }
