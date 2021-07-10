@@ -42,7 +42,7 @@ console.time("express boot");
   });
   await Promise.all([
     db.run(
-      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag)"
+      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS chats (chatID)"),
@@ -83,6 +83,7 @@ console.time("express boot");
         id: accountdata.accountID,
         profilePic: accountdata.profilePic,
         tag: accountdata.tag,
+        backgroundImage: accountdata.backgroundImage,
       });
     }
   });
@@ -103,6 +104,7 @@ console.time("express boot");
           id: accountdata.accountID,
           profilePic: accountdata.profilePic,
           tag: accountdata.tag,
+          backgroundImage: accountdata.backgroundImage,
         },
       });
     }
@@ -118,6 +120,21 @@ console.time("express boot");
       res.sendFile(path.join(__dirname, "files", imagedata.filename));
     } else {
       res.status(404).send("image not found in the database!");
+    }
+  });
+  app.post("/api/setusername", async (req, res) => {
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      { ":token": req.cookies.token }
+    );
+    if (accountdata.password == hasher(req.body.pass + accountdata.salt)) {
+      await db.get(
+        "UPDATE accounts SET username=:username WHERE accountID=:accountID",
+        { ":username": req.body.username, ":accountID": accountdata.accountID }
+      );
+      res.send({ resp: true });
+    } else {
+      res.send({ resp: false, err: "incorrect password!" });
     }
   });
   app.post("/login", async (req, res) => {
@@ -163,7 +180,7 @@ console.time("express boot");
       req.files.profile.mv(profilePath);
       await Promise.all([
         db.run(
-          "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag)",
+          "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :backgroundImage)",
           {
             ":accountID": accountID,
             ":email": req.body.email,
@@ -172,6 +189,7 @@ console.time("express boot");
             ":salt": salt,
             ":profilePic": profileID,
             ":tag": tag,
+            ":backgroundImage": profileID,
           } // work on this next! // thanks lol
         ),
         db.run(

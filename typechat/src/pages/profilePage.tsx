@@ -38,9 +38,13 @@ function ProfilePage({
           style={{ height: "75px", borderRadius: "50%" }}
         />
         <h1>
-          <span style={{ color: "var(--primary-text-colour)" }}>
+          <span style={{
+            color: "white",
+          }}>
             {user.username}
-            <span style={{ color: "var(--secondary-text-colour)" }}>
+            <span style={{
+              color: "lightgray",
+            }}>
               #{user.tag}
             </span>
           </span>

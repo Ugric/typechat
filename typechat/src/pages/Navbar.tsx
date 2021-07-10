@@ -99,11 +99,6 @@ const PageNav = () => {
                 />
                 <span style={{ marginLeft: "5px" }}>
                   {user.username}
-                  {width > 700 ? (
-                    <span style={{ color: "lightgray" }}>#{user.tag}</span>
-                  ) : (
-                    <></>
-                  )}
                 </span>
               </Nav.Link>
               <Nav.Link

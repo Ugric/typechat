@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import "./css/usersettings.css";
 import ProfilePage from "./profilePage";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Modal from "react-modal";
 
 function Changebutton({
@@ -44,6 +44,7 @@ function Changebutton({
 Modal.setAppElement("#root");
 function UserSettings() {
   const { loggedin, user, rechecklogged } = useData();
+  const [error, seterror] = useState("")
   const [UsernameModelIsOpen, setUsernameModelIsOpen] = useState(false);
   if (!loggedin) {
     return <Redirect to="/" />;
@@ -102,6 +103,7 @@ function UserSettings() {
           onRequestClose={() => {
             setUsernameModelIsOpen(false);
           }}
+          onAfterOpen={() => { seterror("") }}
           style={{
             overlay: { backgroundColor: "rgb(18 18 18 / 50%)" },
             content: {
@@ -115,65 +117,80 @@ function UserSettings() {
               transform: "translate(-50%, -50%)",
             },
           }}
-          contentLabel="Example Modal"
-        >
-          USERNAME
-          <div
-            style={{
-              border: "solid 1px gray",
-              backgroundColor: "var(--dark-mode)",
-              borderRadius: "5px",
-              width: "100%",
-            }}
-          >
-            <input
+          contentLabel="Username Change"
+        ><form onSubmit={async (e: any) => {
+          e.preventDefault();
+          if (e.target[0].value.trim() !== "" && e.target[1].value.trim() !== "") {
+            const fd = new FormData()
+            fd.append("username", e.target[0].value)
+            fd.append("pass", e.target[1].value)
+            const resp = await (await fetch("/api/setusername", { method: "POST", body: fd })).json()
+            if (resp.resp) {
+              rechecklogged()
+              setUsernameModelIsOpen(false)
+            } else {
+              seterror(resp.err)
+            }
+          } else { seterror("input a username and password!") }
+        }}>
+            USERNAME
+            <div
               style={{
-                color: "white",
-                backgroundColor: "transparent",
-                border: "none",
-                borderRight: "solid 1px white",
-                borderRadius: "0px",
-              }}
-              placeholder="Username"
-              autoComplete="new-password"
-              type="text"
-              defaultValue={user.username}
-            ></input>
-            <span
-              style={{
-                color: "lightgray",
-                padding: "0 1rem",
-                float: "right",
+                border: "solid 1px gray",
+                backgroundColor: "var(--dark-mode)",
+                borderRadius: "5px",
+                width: "100%",
               }}
             >
-              #{user.tag}
-            </span>
-          </div>
-          <input
-            style={{
-              width: "100%",
-              color: "white",
-              backgroundColor: "var(--dark-mode)",
-              border: "solid 1px gray",
-              borderRadius: "5px",
-            }}
-            placeholder="Password"
-            autoComplete="new-password"
-            type="password"
-          />
-          <button
-            style={{
-              float: "right",
-              marginTop: "1rem",
-              color: "white",
-              backgroundColor: "var(--dark-bg-colour)",
-              border: "solid 2px var(--light-bg-colour)",
-              borderRadius: "5px",
-            }}
-            onClick={() => { }}
-          >
-            Save
-          </button>
+              <input
+                onInput={(e: any) => { e.target.value = e.target.value.trimStart() }}
+                style={{
+                  color: "white",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRight: "solid 1px white",
+                  borderRadius: "0px",
+                }}
+                placeholder="Username"
+                autoComplete="new-password"
+                type="text"
+                defaultValue={user.username}
+              ></input>
+              <span
+                style={{
+                  color: "lightgray",
+                  padding: "0 1rem",
+                  float: "right",
+                }}
+              >
+                #{user.tag}
+              </span>
+            </div>
+            <input
+              style={{
+                width: "100%",
+                color: "white",
+                backgroundColor: "var(--dark-mode)",
+                border: "solid 1px gray",
+                borderRadius: "5px",
+              }}
+              placeholder="Current Password"
+              autoComplete="new-password"
+              type="password"
+            /><p style={{ color: "red" }}>{error}</p>
+            <button
+              style={{
+                float: "right",
+                marginTop: "1rem",
+                color: "white",
+                backgroundColor: "var(--dark-bg-colour)",
+                border: "solid 2px var(--light-bg-colour)",
+                borderRadius: "5px",
+              }}
+              type="submit"
+            >
+              Save
+            </button></form>
         </Modal>
       </div>
     </div>
