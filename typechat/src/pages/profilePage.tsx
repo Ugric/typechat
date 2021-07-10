@@ -1,3 +1,6 @@
+import { SecureLink } from "react-secure-link";
+import Linkify from "react-linkify";
+
 function ProfilePage({
   user,
 }: {
@@ -12,7 +15,6 @@ function ProfilePage({
   return (
     <div
       style={{
-        textAlign: "center",
         background: user.backgroundImage
           ? `url(/files/${user.backgroundImage})`
           : "",
@@ -26,18 +28,56 @@ function ProfilePage({
         backgroundPosition: "center",
       }}
     >
-      <img
-        src={"/files/" + user.profilePic}
-        style={{ height: "75px", borderRadius: "50%" }}
-      />
-      <h1>
-        <span style={{ color: "var(--primary-text-colour)" }}>
-          {user.username}
-          <span style={{ color: "var(--secondary-text-colour)" }}>
-            #{user.tag}
+      <div
+        style={{
+          textAlign: "center",
+        }}
+      >
+        <img
+          src={"/files/" + user.profilePic}
+          style={{ height: "75px", borderRadius: "50%" }}
+        />
+        <h1>
+          <span style={{ color: "var(--primary-text-colour)" }}>
+            {user.username}
+            <span style={{ color: "var(--secondary-text-colour)" }}>
+              #{user.tag}
+            </span>
           </span>
-        </span>
-      </h1>
+        </h1>
+      </div>
+      <div
+        style={{
+          padding: "1rem",
+          backgroundColor: "var(--dark-bg-colour)",
+          borderRadius: "10px",
+          border: "solid 1px var(--light-bg-colour)",
+        }}
+      >
+        <h4>About Me</h4>
+        <div
+          style={{ height: "1px", width: "100%", backgroundColor: "white" }}
+        />
+        <div
+          style={{
+            padding: "1rem",
+          }}
+        >
+          <Linkify
+            componentDecorator={(
+              decoratedHref: string,
+              decoratedText: string,
+              key: any
+            ) => (
+              <SecureLink href={decoratedHref} key={key}>
+                {decoratedText}
+              </SecureLink>
+            )}
+          >
+            hi
+          </Linkify>
+        </div>
+      </div>
     </div>
   );
 }

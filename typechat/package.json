@@ -24,6 +24,7 @@
     "react-avatar-edit": "^1.0.0",
     "react-bootstrap": "^1.6.1",
     "react-dom": "^17.0.2",
+    "react-linkify": "^1.0.0-alpha",
     "react-modal": "^3.14.3",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",

@@ -49,7 +49,11 @@ function UserSettings() {
     return <Redirect to="/" />;
   }
   return (
-    <div>
+    <div
+      style={{
+        margin: "1rem",
+      }}
+    >
       <h1 style={{ textAlign: "center" }}>User Settings</h1>
       <div
         style={{
@@ -100,7 +104,8 @@ function UserSettings() {
           style={{
             overlay: { backgroundColor: "rgb(18 18 18 / 50%)" },
             content: {
-              backgroundColor: "var(--dark-mode)",
+              backgroundColor: "var(--main-bg-colour)",
+              border: "1px solid var(--dark-bg-colour)",
               top: "50%",
               left: "50%",
               right: "auto",
@@ -111,25 +116,63 @@ function UserSettings() {
           }}
           contentLabel="Example Modal"
         >
-          <div>
+          USERNAME
+          <div
+            style={{
+              border: "solid 1px gray",
+              backgroundColor: "var(--dark-mode)",
+              borderRadius: "5px",
+              width: "100%",
+            }}
+          >
             <input
               style={{
                 color: "white",
                 backgroundColor: "transparent",
                 border: "none",
+                borderRight: "solid 1px white",
+                borderRadius: "0px",
               }}
+              placeholder="Username"
+              autoComplete="new-password"
+              type="text"
               defaultValue={user.username}
             ></input>
             <span
               style={{
                 color: "lightgray",
-                borderLeft: "solid 1px white",
-                paddingLeft: "1rem",
+                padding: "0 1rem",
+                float: "right",
               }}
             >
               #{user.tag}
             </span>
           </div>
+          <input
+            style={{
+              width: "100%",
+              color: "white",
+              backgroundColor: "var(--dark-mode)",
+              border: "solid 1px gray",
+              borderRadius: "5px",
+            }}
+            placeholder="Password"
+            autoComplete="new-password"
+            type="password"
+          />
+          <button
+            style={{
+              float: "right",
+              marginTop: "1rem",
+              color: "white",
+              backgroundColor: "var(--dark-bg-colour)",
+              border: "solid 2px var(--light-bg-colour)",
+              borderRadius: "5px",
+            }}
+            onClick={() => {}}
+          >
+            Save
+          </button>
         </Modal>
       </div>
     </div>
