@@ -28,6 +28,7 @@
     "react-modal": "^3.14.3",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
+    "react-secure-link": "^3.0.3",
     "react-use-websocket": "^2.7.1",
     "typescript": "^4.3.2",
     "universal-cookie": "^4.0.4",
