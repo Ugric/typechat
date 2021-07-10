@@ -10,7 +10,7 @@ import Modal from "react-modal";
 function Changebutton({
   name,
   children,
-  onClick = () => {},
+  onClick = () => { },
   clickable,
 }: {
   name: string;
@@ -57,11 +57,12 @@ function UserSettings() {
       <h1 style={{ textAlign: "center" }}>User Settings</h1>
       <div
         style={{
-          margin: "1rem",
+          margin: "auto",
           border: "solid 1px var(--light-bg-colour)",
           borderRadius: "10px",
           backgroundColor: "var(--dark-bg-colour)",
           padding: "1rem",
+          maxWidth: "700px"
         }}
       >
         <ProfilePage user={user} />
@@ -169,7 +170,7 @@ function UserSettings() {
               border: "solid 2px var(--light-bg-colour)",
               borderRadius: "5px",
             }}
-            onClick={() => {}}
+            onClick={() => { }}
           >
             Save
           </button>

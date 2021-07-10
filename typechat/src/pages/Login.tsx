@@ -7,7 +7,6 @@ import { RouterForm } from "./RouterForm";
 import cookies from "../cookies";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignInAlt } from "@fortawesome/free-solid-svg-icons";
-import e from "express";
 
 function validateEmail(email: string) {
   const re =
