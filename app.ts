@@ -1,4 +1,5 @@
 import { open } from "sqlite";
+import blobToHash from "blob-to-hash";
 const express = require("express");
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
@@ -19,20 +20,40 @@ console.time("express boot");
     }
     return output.join("");
   };
-  const createFileID = async (extention: string) => {
+  const createFileID = async (file: any) => {
+    const hashed = createHash("md5").update(file.data).digest("hex");
+    const existsindatabase = await db.get(
+      "SELECT * FROM images WHERE hash=:hash LIMIT 1",
+      { ":hash": hashed }
+    );
+    if (existsindatabase) {
+      const id = existsindatabase.id;
+      const filename = existsindatabase.filename;
+      const paths = path.join(__dirname, "files", filename);
+      return {
+        id,
+        filename,
+        path: paths,
+        exists: true,
+      };
+    }
     const id = generate(25);
-    const filename = generate(45) + "." + extention;
+    const filename = generate(45) + "." + mime.extension(file.mimetype);
     const paths = path.join(__dirname, "files", filename);
-    const output = {
+    db.run(
+      "INSERT INTO images (imageID, filename, hash) VALUES  (:id, :filename, :hash)",
+      {
+        ":id": id,
+        ":filename": filename,
+        ":hash": hashed,
+      }
+    );
+    return {
       id,
       filename,
       path: paths,
+      exists: false,
     };
-    await db.run(
-      "INSERT INTO images (imageID, filename) VALUES  (:id, :filename)",
-      { ":id": id, ":filename": filename }
-    );
-    return output;
   };
   const hasher = (string: string) =>
     createHash("md5").update(string).digest("hex");
@@ -50,7 +71,7 @@ console.time("express boot");
     db.run(
       "CREATE TABLE IF NOT EXISTS chatMessages (chatID, accountID, message, time)"
     ),
-    db.run("CREATE TABLE IF NOT EXISTS images (imageID, filename)"),
+    db.run("CREATE TABLE IF NOT EXISTS images (imageID, filename, hash)"),
   ]);
   const { app, getWss, applyTo } = expressWs(express());
   app.use(cookieParser());
@@ -128,13 +149,34 @@ console.time("express boot");
       { ":token": req.cookies.token }
     );
     if (accountdata.password == hasher(req.body.pass + accountdata.salt)) {
-      await db.get(
+      await db.run(
         "UPDATE accounts SET username=:username WHERE accountID=:accountID",
         { ":username": req.body.username, ":accountID": accountdata.accountID }
       );
       res.send({ resp: true });
     } else {
       res.send({ resp: false, err: "incorrect password!" });
+    }
+  });
+  app.post("/api/setbackgroundimage", async (req, res) => {
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      { ":token": req.cookies.token }
+    );
+    if (accountdata) {
+      const { id, path, exists } = await createFileID(
+        req.files.backgroundImage
+      );
+      if (!exists) {
+        req.files.backgroundImage.mv(path);
+      }
+      await db.run(
+        "UPDATE accounts SET backgroundImage=:backgroundImage WHERE accountID=:accountID",
+        { ":backgroundImage": id, ":accountID": accountdata.accountID }
+      );
+      res.send(true);
+    } else {
+      res.send(false);
     }
   });
   app.post("/login", async (req, res) => {
@@ -174,13 +216,17 @@ console.time("express boot");
       const salt = generate(150);
       const password = hasher(req.body.pass + salt);
       const tag = tagGenerator();
-      const { id: profileID, path: profilePath } = await createFileID(
-        String(mime.extension(req.files.profile.mimetype))
-      );
-      req.files.profile.mv(profilePath);
+      const {
+        id: profileID,
+        path: profilePath,
+        exists,
+      } = await createFileID(req.files.profile);
+      if (!exists) {
+        req.files.profile.mv(profilePath);
+      }
       await Promise.all([
         db.run(
-          "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :backgroundImage)",
+          "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag)",
           {
             ":accountID": accountID,
             ":email": req.body.email,
@@ -189,7 +235,6 @@ console.time("express boot");
             ":salt": salt,
             ":profilePic": profileID,
             ":tag": tag,
-            ":backgroundImage": profileID,
           } // work on this next! // thanks lol
         ),
         db.run(

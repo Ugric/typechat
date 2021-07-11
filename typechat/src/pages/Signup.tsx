@@ -138,6 +138,7 @@ function Signup() {
                 color: "white",
                 borderRadius: "0px",
               }}
+              autoComplete="new-password"
             />
             <p
               style={{
@@ -166,6 +167,7 @@ function Signup() {
                 color: "white",
                 borderRadius: "0px",
               }}
+              autoComplete="new-password"
             />{" "}
             <p
               style={{
@@ -194,6 +196,7 @@ function Signup() {
                 color: "white",
                 borderRadius: "0px",
               }}
+              autoComplete="new-password"
             />
             <input
               type="submit"

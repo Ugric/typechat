@@ -1,3 +1,5 @@
+import react from "react"
+
 export function RouterForm({
   action,
   beforecallback,
@@ -7,10 +9,16 @@ export function RouterForm({
   appendtoformdata = (fd: FormData) => {
     return fd;
   },
-  onerror = (e: string) => {
+  onerror = (e: any) => {
     console.error(e);
   },
-}: any) {
+}: {
+  action: string;
+  beforecallback: (e: any) => boolean | undefined;
+  callback(responce: any): void;
+  children: any; style?: react.CSSProperties;
+  appendtoformdata?(fd: FormData): FormData; onerror?(e: any): void
+}): JSX.Element {
   return (
     <form
       style={style}

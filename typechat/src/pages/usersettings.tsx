@@ -6,6 +6,7 @@ import "./css/usersettings.css";
 import ProfilePage from "./profilePage";
 import { useState, useRef } from "react";
 import Modal from "react-modal";
+import { RouterForm } from "./RouterForm"
 
 function Changebutton({
   name,
@@ -45,6 +46,7 @@ Modal.setAppElement("#root");
 function UserSettings() {
   const { loggedin, user, rechecklogged } = useData();
   const [error, seterror] = useState("")
+  const [backgroundImage, setbackgroundImage] = useState<string | undefined>(undefined)
   const [UsernameModelIsOpen, setUsernameModelIsOpen] = useState(false);
   if (!loggedin) {
     return <Redirect to="/" />;
@@ -84,6 +86,32 @@ function UserSettings() {
             }}
           />
           <FontAwesomeIcon icon={faPen} />
+        </Changebutton>
+        <Changebutton
+          name="Background Image"
+          clickable={false}
+        >
+          <RouterForm
+            action="/api/setbackgroundimage"
+            beforecallback={(e: any) => true}
+            callback={(resp) => { if (resp) { rechecklogged() } }}>
+            <img src={backgroundImage} style={{
+              maxHeight: "100px",
+              maxWidth: "100px"
+            }} /><input type="file" name="backgroundImage" onChange={(e: any) => {
+              setbackgroundImage(e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : undefined)
+            }} /> <button
+              style={{
+                color: "white",
+                backgroundColor: "var(--dark-bg-colour)",
+                border: "solid 2px var(--light-bg-colour)",
+                borderRadius: "5px",
+              }}
+              type="submit"
+            >
+              Save
+            </button>
+          </RouterForm>
         </Changebutton>
         <Changebutton
           name="USERNAME"
