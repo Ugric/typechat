@@ -30,14 +30,14 @@ function Changebutton({
       }}
     >
       <p style={{ margin: "0", color: "lightgray" }}>{name}</p>
-      <p style={{ margin: "0" }}>
+      <p style={{ margin: "0" }}>{clickable ?
         <a
-          onClick={clickable ? onClick : undefined}
-          className={clickable ? "changebutton" : ""}
+          onClick={onClick}
+          className={"changebutton"}
           style={{ color: "white" }}
         >
           {children}
-        </a>
+        </a> : <div>{children}</div>}
       </p>
     </div>
   );
@@ -46,6 +46,8 @@ Modal.setAppElement("#root");
 function UserSettings() {
   const { loggedin, user, rechecklogged } = useData();
   const [error, seterror] = useState("")
+  const backgroundinputref = useRef<any>(null)
+  const [uploading, setuploading] = useState(false)
   const [backgroundImage, setbackgroundImage] = useState<string | undefined>(undefined)
   const [UsernameModelIsOpen, setUsernameModelIsOpen] = useState(false);
   if (!loggedin) {
@@ -70,6 +72,20 @@ function UserSettings() {
       >
         <ProfilePage user={user} />
         <div style={{ textAlign: "center" }}>EDIT</div>
+        <button
+          style={{
+            color: "white",
+            backgroundColor: "var(--dark-bg-colour)",
+            border: "solid 2px var(--light-bg-colour)",
+            borderRadius: "5px",
+            margin: "0 1rem"
+          }}
+          onClick={() => {
+            rechecklogged()
+          }}
+        >
+          update
+        </button>
         <Changebutton
           name="PROFILE PICTURE"
           onClick={() => {
@@ -93,14 +109,23 @@ function UserSettings() {
         >
           <RouterForm
             action="/api/setbackgroundimage"
-            beforecallback={(e: any) => true}
-            callback={(resp) => { if (resp) { rechecklogged() } }}>
-            <img src={backgroundImage} style={{
+            beforecallback={(e: any) => {
+              setuploading(true)
+              return true
+            }}
+            callback={() => {
+              if (backgroundinputref.current) {
+                backgroundinputref.current.value = ""
+                setbackgroundImage(undefined)
+              }
+              setuploading(false)
+            }}>
+            {backgroundImage ? <img src={backgroundImage} style={{
               maxHeight: "100px",
               maxWidth: "100px"
-            }} /><input type="file" name="backgroundImage" onChange={(e: any) => {
+            }} /> : <></>}<input type="file" name="backgroundImage" style={{ maxWidth: "100%" }} onChange={(e: any) => {
               setbackgroundImage(e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : undefined)
-            }} /> <button
+            }} accept="image/*" ref={backgroundinputref} /> {!uploading ? <button
               style={{
                 color: "white",
                 backgroundColor: "var(--dark-bg-colour)",
@@ -110,7 +135,7 @@ function UserSettings() {
               type="submit"
             >
               Save
-            </button>
+            </button> : <></>}
           </RouterForm>
         </Changebutton>
         <Changebutton
@@ -148,18 +173,19 @@ function UserSettings() {
           contentLabel="Username Change"
         ><form onSubmit={async (e: any) => {
           e.preventDefault();
+          setuploading(true)
           if (e.target[0].value.trim() !== "" && e.target[1].value.trim() !== "") {
             const fd = new FormData()
             fd.append("username", e.target[0].value)
             fd.append("pass", e.target[1].value)
             const resp = await (await fetch("/api/setusername", { method: "POST", body: fd })).json()
             if (resp.resp) {
-              rechecklogged()
               setUsernameModelIsOpen(false)
             } else {
               seterror(resp.err)
             }
           } else { seterror("input a username and password!") }
+          setuploading(false)
         }}>
             USERNAME
             <div
@@ -171,7 +197,12 @@ function UserSettings() {
               }}
             >
               <input
-                onInput={(e: any) => { e.target.value = e.target.value.trimStart() }}
+                onInput={(e: any) => {
+                  e.target.value = e.target.value.trimStart()
+                  if (e.target.value.length > 30) {
+                    e.target.value = e.target.value.substring(0, 30);
+                  }
+                }}
                 style={{
                   color: "white",
                   backgroundColor: "transparent",
@@ -206,7 +237,7 @@ function UserSettings() {
               autoComplete="new-password"
               type="password"
             /><p style={{ color: "red" }}>{error}</p>
-            <button
+            {!uploading ? <button
               style={{
                 float: "right",
                 marginTop: "1rem",
@@ -218,7 +249,7 @@ function UserSettings() {
               type="submit"
             >
               Save
-            </button></form>
+            </button> : <></>}</form>
         </Modal>
       </div>
     </div>

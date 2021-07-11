@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import "./pages/css/toggleswitch.css";
@@ -18,11 +18,32 @@ import "./pages/css/highlight.css";
 import Error404 from "./pages/404";
 import useLocalStorage from "./hooks/useLocalStorage";
 import UserSettings from "./pages/usersettings";
+import snooze from "./snooze"
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
+  const [getuserdataonupdate, setgetuserdataonupdate] = useState(false)
+  const [userdata, setuserdata] = useState(data)
+  useEffect(() => { setuserdata(data) }, [data])
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!getuserdataonupdate) {
+          setgetuserdataonupdate(true)
+          const response = (await (await fetch("/api/getuserdataonupdate")).json())
+          if (!response.reconnect) {
+            setuserdata(response)
+          }
+          setgetuserdataonupdate(false)
+        }
+      } catch {
+        await snooze(1000)
+        setgetuserdataonupdate(false)
+      }
+    })()
+  })
   return (
     <div style={{ overflowWrap: "anywhere" }}>
       {error || loading ? (
@@ -31,8 +52,8 @@ function App() {
         <Router>
           <datahook.Provider
             value={{
-              loggedin: data.loggedin,
-              user: data.user,
+              loggedin: userdata.loggedin,
+              user: userdata.user,
               rechecklogged: reload,
               setnavbarsize,
               navbarsize,
