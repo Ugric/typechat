@@ -25,13 +25,14 @@ const PageNav = () => {
     useData();
   useEffect(() => {
     setnavbarsize(navbarsize);
-  }, [navbarsize]);
+  }, [navbarsize, setnavbarsize]);
   const location = useLocation();
   return (
     <>
       <Navbar ref={Navbarref} bg="darkpurple" variant="dark" fixed="top">
         <Navbar.Brand as={Link} to={loggedin ? "/contacts" : "/"}>
           <img
+          alt="TypeChat"
             src={width > 700 ? bigLogo : smallLogo}
             style={{
               height: "40px",
@@ -94,6 +95,7 @@ const PageNav = () => {
                 }}
               >
                 <img
+                alt="Profile"
                   src={"/files/" + user.profilePic}
                   style={{ height: "24px", borderRadius: "50%" }}
                 />

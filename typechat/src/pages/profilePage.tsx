@@ -1,53 +1,7 @@
 import { SecureLink } from "react-secure-link";
 import Linkify from "react-linkify";
 import { useState } from "react";
-
-function getAverageRGB(imgEl: any) {
-  var blockSize = 5, // only visit every 5 pixels
-    defaultRGB = { r: 0, g: 0, b: 0 }, // for non-supporting envs
-    canvas = document.createElement("canvas"),
-    context = canvas.getContext && canvas.getContext("2d"),
-    data,
-    width,
-    height,
-    i = -4,
-    length,
-    rgb = { r: 0, g: 0, b: 0 },
-    count = 0;
-
-  if (!context) {
-    return defaultRGB;
-  }
-
-  height = canvas.height =
-    imgEl.naturalHeight || imgEl.offsetHeight || imgEl.height;
-  width = canvas.width = imgEl.naturalWidth || imgEl.offsetWidth || imgEl.width;
-
-  context.drawImage(imgEl, 0, 0);
-
-  try {
-    data = context.getImageData(0, 0, width, height);
-  } catch (e) {
-    /* security error, img on diff domain */
-    return defaultRGB;
-  }
-
-  length = data.data.length;
-
-  while ((i += blockSize * 4) < length) {
-    ++count;
-    rgb.r += data.data[i];
-    rgb.g += data.data[i + 1];
-    rgb.b += data.data[i + 2];
-  }
-
-  // ~~ used to floor values
-  rgb.r = ~~(rgb.r / count);
-  rgb.g = ~~(rgb.g / count);
-  rgb.b = ~~(rgb.b / count);
-
-  return rgb;
-}
+import ColorThief from "colorthief";
 
 function ProfilePage({
   user,
@@ -56,15 +10,15 @@ function ProfilePage({
     profilePic: string;
     username: string;
     tag: string;
-    backgroundImage: string;
+    backgroundImage: string | null;
     aboutme: string;
     [key: string]: any;
   };
 }) {
   const [backgroundcolour, setbackgroundcolour] = useState({
-    r: 0,
-    g: 0,
-    b: 0,
+    r: 86,
+    g: 86,
+    b: 255,
   });
   return (
     <div
@@ -90,23 +44,32 @@ function ProfilePage({
         <img
           alt="profile"
           src={"/files/" + user.profilePic}
-          style={{ height: "75px", borderRadius: "50%" }}
-          onLoad={(e) => {
-            setbackgroundcolour(getAverageRGB(e.target));
+          style={{
+            maxHeight: "75px",
+            maxWidth: "100%",
+            height: "auto",
+            width: "auto",
+            borderRadius: "50%",
+          }}
+          onLoad={async (e: any) => {
+            const colorThief = new ColorThief();
+            const resp = await colorThief.getColor(e.target);
+            setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
           }}
         />
         <h4>
           <span
             style={{
               color: "white",
-              textShadow:
-                " -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+              WebkitTextStroke: "1px black",
+              fontWeight: "bold",
             }}
           >
             {user.username}
             <span
               style={{
                 color: "lightgray",
+                fontWeight: "normal",
               }}
             >
               #{user.tag}

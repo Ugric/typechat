@@ -1,7 +1,4 @@
-import {
-  faExclamationTriangle,
-  faFileCode,
-} from "@fortawesome/free-solid-svg-icons";
+import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 

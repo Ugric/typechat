@@ -35,7 +35,11 @@ function Login() {
           display: !loading ? "" : "none",
         }}
       >
-        <img src={logo} style={{ width: "150px", borderRadius: "10px" }}></img>
+        <img
+          src={logo}
+          style={{ width: "150px", borderRadius: "10px" }}
+          alt="logo"
+        ></img>
         <h1
           style={{
             fontSize: "20px",

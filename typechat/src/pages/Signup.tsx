@@ -1,5 +1,5 @@
 import { useData } from "../hooks/datahook";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Loader from "./loader";
 import { useHistory, Link } from "react-router-dom";
 import logo from "../images/logos/TS.svg";
@@ -8,7 +8,6 @@ import cookies from "../cookies";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAddressCard } from "@fortawesome/free-solid-svg-icons";
 import Avatar from "react-avatar-edit";
-import useComponentSize from "@rehooks/component-size";
 
 function validateEmail(email: string) {
   const re =
@@ -38,7 +37,7 @@ function Signup() {
           display: !loading ? "" : "none",
         }}
       >
-        <img src={logo} style={{ width: "150px", borderRadius: "10px" }}></img>
+        <img src={logo} alt="logo" style={{ width: "150px", borderRadius: "10px" }}></img>
         <h1
           style={{
             fontSize: "20px",
@@ -103,6 +102,7 @@ function Signup() {
                   fetched.blob().then((blob) => setprofile(blob))
                 );
               }}
+              labelStyle={{color: "white"}}
               onClose={() => {
                 setprofile(null);
               }}

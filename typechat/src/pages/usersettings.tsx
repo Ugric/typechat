@@ -7,6 +7,7 @@ import ProfilePage from "./profilePage";
 import { useState, useRef } from "react";
 import Modal from "react-modal";
 import { RouterForm } from "./RouterForm";
+import Avatar from "react-avatar-edit";
 
 function Changebutton({
   name,
@@ -55,7 +56,9 @@ function UserSettings() {
   const [backgroundImage, setbackgroundImage] = useState<string | undefined>(
     undefined
   );
+  const [profile, setprofile] = useState<Blob | null>(null);
   const [UsernameModelIsOpen, setUsernameModelIsOpen] = useState(false);
+  const [ProfileModelIsOpen, setProfileModelIsOpen] = useState(false);
   if (!loggedin) {
     return <Redirect to="/" />;
   }
@@ -65,7 +68,6 @@ function UserSettings() {
         margin: "1rem",
       }}
     >
-      <h1 style={{ textAlign: "center" }}>User Settings</h1>
       <div
         style={{
           margin: "auto",
@@ -76,6 +78,7 @@ function UserSettings() {
           maxWidth: "700px",
         }}
       >
+        <h1 style={{ textAlign: "center" }}>User Settings</h1>
         <ProfilePage user={user} />
         <div style={{ textAlign: "center" }}>EDIT</div>
         <button
@@ -93,9 +96,9 @@ function UserSettings() {
           update
         </button>
         <Changebutton
-          name="PROFILE PICTURE"
+          name="Profile Picture"
           onClick={() => {
-            console.log("hi");
+            setProfileModelIsOpen(true);
           }}
           clickable={true}
         >
@@ -110,6 +113,92 @@ function UserSettings() {
           />
           <FontAwesomeIcon icon={faPen} />
         </Changebutton>
+        <Modal
+          isOpen={ProfileModelIsOpen}
+          onRequestClose={() => {
+            setProfileModelIsOpen(false);
+          }}
+          onAfterOpen={() => {
+            seterror("");
+          }}
+          style={{
+            overlay: { backgroundColor: "rgb(18 18 18 / 50%)" },
+            content: {
+              backgroundColor: "var(--main-bg-colour)",
+              border: "1px solid var(--dark-bg-colour)",
+              top: "50%",
+              left: "50%",
+              right: "auto",
+              bottom: "auto",
+              marginRight: "-50%",
+              transform: "translate(-50%, -50%)",
+            },
+          }}
+          contentLabel="Username Change"
+        >
+          <form
+            onSubmit={async (e: any) => {
+              e.preventDefault();
+              setuploading(true);
+              if (profile) {
+                const fd = new FormData();
+                fd.append("profilepic", profile);
+                const resp = await (
+                  await fetch("/api/setprofilepic", {
+                    method: "POST",
+                    body: fd,
+                  })
+                ).json();
+                if (resp.resp) {
+                  setProfileModelIsOpen(false);
+                } else {
+                  seterror(resp.err);
+                }
+              } else {
+                seterror("input a profile picture!");
+              }
+              setuploading(false);
+            }}
+          >
+            PROFILE PICTURE
+            <Avatar
+              width={300}
+              height={0}
+              imageWidth={300}
+              onCrop={(dataURL) => {
+                fetch(dataURL).then((fetched) =>
+                  fetched.blob().then((blob) => setprofile(blob))
+                );
+              }}
+              labelStyle={{ color: "white" }}
+              onClose={() => {
+                setprofile(null);
+              }}
+              exportMimeType="image/jpeg"
+              exportSize={500}
+              exportQuality={0.75}
+              exportAsSquare
+            />
+            <p style={{ color: "red" }}>{error}</p>
+            {!uploading ? (
+              <button
+                style={{
+                  float: "right",
+                  marginTop: "1rem",
+                  color: "white",
+                  backgroundColor: "var(--dark-bg-colour)",
+                  border: "solid 2px var(--light-bg-colour)",
+                  borderRadius: "5px",
+                }}
+                type="submit"
+              >
+                Save
+              </button>
+            ) : (
+              <></>
+            )}
+          </form>
+        </Modal>
         <Changebutton name="Background Image" clickable={false}>
           <RouterForm
             action="/api/setbackgroundimage"
@@ -169,7 +258,7 @@ function UserSettings() {
           </RouterForm>
         </Changebutton>
         <Changebutton
-          name="USERNAME"
+          name="Username"
           onClick={() => {
             setUsernameModelIsOpen(true);
           }}
@@ -229,7 +318,7 @@ function UserSettings() {
               setuploading(false);
             }}
           >
-            USERNAME
+            Username
             <div
               style={{
                 border: "solid 1px gray",

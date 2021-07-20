@@ -49,7 +49,7 @@ function MessageMaker({
           {messages[i].message}
         </div>
       );
-      if (!messages[i + 1] || messages[i + 1].mine != messages[i].mine) {
+      if (!messages[i + 1] || messages[i + 1].mine !== messages[i].mine) {
         output.push(
           <div
             className={`${messages[i].mine ? "mine" : "yours"} messages`}
@@ -195,12 +195,12 @@ function ChatPage() {
 
   useEffect(() => {
     if (lastJsonMessage) {
-      if (lastJsonMessage.type == "message") {
-        setchats(chats.concat(lastJsonMessage.message));
+      if (lastJsonMessage.type === "message") {
+        setchats((c) => c.concat(lastJsonMessage.message));
         setTimeout(() => {
           bottomref.current.scrollIntoView();
         }, 10);
-      } else if (lastJsonMessage.type == "typing") {
+      } else if (lastJsonMessage.type === "typing") {
         settypingdata({
           typing: lastJsonMessage.typing,
           length: lastJsonMessage.length,
@@ -210,7 +210,7 @@ function ChatPage() {
     }
   }, [lastJsonMessage]);
 
-  if (error || loading || readyState != ReadyState.OPEN) {
+  if (error || loading || readyState !== ReadyState.OPEN) {
     return error ? <LoadError error={String(error)} /> : <Loader />;
   } else if (!data.exists) {
     return <ChatNotFound></ChatNotFound>;
@@ -256,7 +256,7 @@ function ChatPage() {
             onSubmit={(e: any) => {
               e.preventDefault();
               const message = e.target[0].value.trim();
-              if (message != "") {
+              if (message !== "") {
                 e.target[0].value = "";
                 sendJsonMessage({
                   type: "message",

@@ -18,32 +18,37 @@ import "./pages/css/highlight.css";
 import Error404 from "./pages/404";
 import useLocalStorage from "./hooks/useLocalStorage";
 import UserSettings from "./pages/usersettings";
-import snooze from "./snooze"
+import snooze from "./snooze";
+import Contacts from "./pages/contacts";
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
-  const [getuserdataonupdate, setgetuserdataonupdate] = useState(false)
-  const [userdata, setuserdata] = useState(data)
-  useEffect(() => { setuserdata(data) }, [data])
+  const [getuserdataonupdate, setgetuserdataonupdate] = useState(false);
+  const [userdata, setuserdata] = useState(data);
+  useEffect(() => {
+    setuserdata(data);
+  }, [data]);
   useEffect(() => {
     (async () => {
       try {
         if (!getuserdataonupdate) {
-          setgetuserdataonupdate(true)
-          const response = (await (await fetch("/api/getuserdataonupdate")).json())
+          setgetuserdataonupdate(true);
+          const response = await (
+            await fetch("/api/getuserdataonupdate")
+          ).json();
           if (!response.reconnect) {
-            setuserdata(response)
+            setuserdata(response);
           }
-          setgetuserdataonupdate(false)
+          setgetuserdataonupdate(false);
         }
       } catch {
-        await snooze(1000)
-        setgetuserdataonupdate(false)
+        await snooze(1000);
+        setgetuserdataonupdate(false);
       }
-    })()
-  })
+    })();
+  });
   return (
     <div style={{ overflowWrap: "anywhere" }}>
       {error || loading ? (
@@ -69,6 +74,9 @@ function App() {
                 </Route>
                 <Route path="/chat" exact>
                   <Chat />
+                </Route>
+                <Route path="/contacts" exact>
+                  <Contacts />
                 </Route>
                 <Route path="/login" exact>
                   <Login />

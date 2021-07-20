@@ -181,11 +181,19 @@ console.time("express boot");
       { ":token": req.cookies.token }
     );
     if (accountdata.password == hasher(req.body.pass + accountdata.salt)) {
+      const exist = await db.get(
+        "SELECT * FROM accounts WHERE username=:username and tag=:tag",
+        { ":username": req.body.username, ":tag": accountdata.tag }
+      );
+      if (!exist) {
       await db.run(
         "UPDATE accounts SET username=:username WHERE accountID=:accountID",
         { ":username": req.body.username, ":accountID": accountdata.accountID }
       );
-      res.send({ resp: true });
+      res.send({ resp: true });} else {
+        
+      res.send({ resp: false, err: "someone already has that name with your tag!" });
+      }
     } else {
       res.send({ resp: false, err: "incorrect password!" });
     }
@@ -212,6 +220,28 @@ console.time("express boot");
       res.send(true);
     } else {
       res.send(false);
+    }
+  });
+  app.post("/api/setprofilepic", async (req, res) => {
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      { ":token": req.cookies.token }
+    );
+    if (accountdata) {
+      if (req.files) {
+        const { exists, path, id } = await createFileID(req.files.profilepic);
+        if (!exists) {
+          req.files.profilepic.mv(path);
+        }
+        await db.run(
+          "UPDATE accounts SET profilePic=:profilePic WHERE accountID=:accountID",
+          { ":profilePic": id, ":accountID": accountdata.accountID }
+        );
+        res.send({ resp: true });} else {
+          res.send({ resp: false, err: "no image!" });
+        }
+    } else {
+      res.send({ resp: false, err: "invalid cookie" });
     }
   });
   app.post("/login", async (req, res) => {
