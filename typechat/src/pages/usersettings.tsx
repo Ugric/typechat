@@ -1,4 +1,4 @@
-import { Link, Redirect } from "react-router-dom";
+import { Redirect } from "react-router-dom";
 import { useData } from "../hooks/datahook";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
@@ -6,12 +6,12 @@ import "./css/usersettings.css";
 import ProfilePage from "./profilePage";
 import { useState, useRef } from "react";
 import Modal from "react-modal";
-import { RouterForm } from "./RouterForm"
+import { RouterForm } from "./RouterForm";
 
 function Changebutton({
   name,
   children,
-  onClick = () => { },
+  onClick = () => {},
   clickable,
 }: {
   name: string;
@@ -31,13 +31,17 @@ function Changebutton({
     >
       <p style={{ margin: "0", color: "lightgray" }}>{name}</p>
       <p style={{ margin: "0" }}>
-        <a
-          onClick={clickable ? onClick : undefined}
-          className={clickable ? "changebutton" : ""}
-          style={{ color: "white" }}
-        >
-          {children}
-        </a>
+        {clickable ? (
+          <div
+            onClick={onClick}
+            className={"changebutton"}
+            style={{ color: "white" }}
+          >
+            {children}
+          </div>
+        ) : (
+          <div>{children}</div>
+        )}
       </p>
     </div>
   );
@@ -45,8 +49,12 @@ function Changebutton({
 Modal.setAppElement("#root");
 function UserSettings() {
   const { loggedin, user, rechecklogged } = useData();
-  const [error, seterror] = useState("")
-  const [backgroundImage, setbackgroundImage] = useState<string | undefined>(undefined)
+  const [error, seterror] = useState("");
+  const backgroundinputref = useRef<any>(null);
+  const [uploading, setuploading] = useState(false);
+  const [backgroundImage, setbackgroundImage] = useState<string | undefined>(
+    undefined
+  );
   const [UsernameModelIsOpen, setUsernameModelIsOpen] = useState(false);
   if (!loggedin) {
     return <Redirect to="/" />;
@@ -65,11 +73,25 @@ function UserSettings() {
           borderRadius: "10px",
           backgroundColor: "var(--dark-bg-colour)",
           padding: "1rem",
-          maxWidth: "700px"
+          maxWidth: "700px",
         }}
       >
         <ProfilePage user={user} />
         <div style={{ textAlign: "center" }}>EDIT</div>
+        <button
+          style={{
+            color: "white",
+            backgroundColor: "var(--dark-bg-colour)",
+            border: "solid 2px var(--light-bg-colour)",
+            borderRadius: "5px",
+            margin: "0 1rem",
+          }}
+          onClick={() => {
+            rechecklogged();
+          }}
+        >
+          update
+        </button>
         <Changebutton
           name="PROFILE PICTURE"
           onClick={() => {
@@ -78,6 +100,7 @@ function UserSettings() {
           clickable={true}
         >
           <img
+            alt="profile"
             src={"/files/" + user.profilePic}
             style={{
               height: "75px",
@@ -87,30 +110,62 @@ function UserSettings() {
           />
           <FontAwesomeIcon icon={faPen} />
         </Changebutton>
-        <Changebutton
-          name="Background Image"
-          clickable={false}
-        >
+        <Changebutton name="Background Image" clickable={false}>
           <RouterForm
             action="/api/setbackgroundimage"
-            beforecallback={(e: any) => true}
-            callback={(resp) => { if (resp) { rechecklogged() } }}>
-            <img src={backgroundImage} style={{
-              maxHeight: "100px",
-              maxWidth: "100px"
-            }} /><input type="file" name="backgroundImage" onChange={(e: any) => {
-              setbackgroundImage(e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : undefined)
-            }} /> <button
-              style={{
-                color: "white",
-                backgroundColor: "var(--dark-bg-colour)",
-                border: "solid 2px var(--light-bg-colour)",
-                borderRadius: "5px",
+            beforecallback={(e: any) => {
+              setuploading(true);
+              return true;
+            }}
+            callback={() => {
+              if (backgroundinputref.current) {
+                backgroundinputref.current.value = "";
+                setbackgroundImage(undefined);
+              }
+              setuploading(false);
+            }}
+          >
+            {backgroundImage ? (
+              <img
+                src={backgroundImage}
+                alt="background"
+                style={{
+                  maxHeight: "100px",
+                  maxWidth: "100px",
+                }}
+              />
+            ) : (
+              <></>
+            )}
+            <input
+              type="file"
+              name="backgroundImage"
+              style={{ maxWidth: "100%" }}
+              onChange={(e: any) => {
+                setbackgroundImage(
+                  e.target.files[0]
+                    ? URL.createObjectURL(e.target.files[0])
+                    : undefined
+                );
               }}
-              type="submit"
-            >
-              Save
-            </button>
+              accept="image/*"
+              ref={backgroundinputref}
+            />{" "}
+            {!uploading ? (
+              <button
+                style={{
+                  color: "white",
+                  backgroundColor: "var(--dark-bg-colour)",
+                  border: "solid 2px var(--light-bg-colour)",
+                  borderRadius: "5px",
+                }}
+                type="submit"
+              >
+                Save
+              </button>
+            ) : (
+              <></>
+            )}
           </RouterForm>
         </Changebutton>
         <Changebutton
@@ -131,7 +186,9 @@ function UserSettings() {
           onRequestClose={() => {
             setUsernameModelIsOpen(false);
           }}
-          onAfterOpen={() => { seterror("") }}
+          onAfterOpen={() => {
+            seterror("");
+          }}
           style={{
             overlay: { backgroundColor: "rgb(18 18 18 / 50%)" },
             content: {
@@ -146,21 +203,32 @@ function UserSettings() {
             },
           }}
           contentLabel="Username Change"
-        ><form onSubmit={async (e: any) => {
-          e.preventDefault();
-          if (e.target[0].value.trim() !== "" && e.target[1].value.trim() !== "") {
-            const fd = new FormData()
-            fd.append("username", e.target[0].value)
-            fd.append("pass", e.target[1].value)
-            const resp = await (await fetch("/api/setusername", { method: "POST", body: fd })).json()
-            if (resp.resp) {
-              rechecklogged()
-              setUsernameModelIsOpen(false)
-            } else {
-              seterror(resp.err)
-            }
-          } else { seterror("input a username and password!") }
-        }}>
+        >
+          <form
+            onSubmit={async (e: any) => {
+              e.preventDefault();
+              setuploading(true);
+              if (
+                e.target[0].value.trim() !== "" &&
+                e.target[1].value.trim() !== ""
+              ) {
+                const fd = new FormData();
+                fd.append("username", e.target[0].value);
+                fd.append("pass", e.target[1].value);
+                const resp = await (
+                  await fetch("/api/setusername", { method: "POST", body: fd })
+                ).json();
+                if (resp.resp) {
+                  setUsernameModelIsOpen(false);
+                } else {
+                  seterror(resp.err);
+                }
+              } else {
+                seterror("input a username and password!");
+              }
+              setuploading(false);
+            }}
+          >
             USERNAME
             <div
               style={{
@@ -171,7 +239,12 @@ function UserSettings() {
               }}
             >
               <input
-                onInput={(e: any) => { e.target.value = e.target.value.trimStart() }}
+                onInput={(e: any) => {
+                  e.target.value = e.target.value.trimStart();
+                  if (e.target.value.length > 30) {
+                    e.target.value = e.target.value.substring(0, 30);
+                  }
+                }}
                 style={{
                   color: "white",
                   backgroundColor: "transparent",
@@ -205,20 +278,26 @@ function UserSettings() {
               placeholder="Current Password"
               autoComplete="new-password"
               type="password"
-            /><p style={{ color: "red" }}>{error}</p>
-            <button
-              style={{
-                float: "right",
-                marginTop: "1rem",
-                color: "white",
-                backgroundColor: "var(--dark-bg-colour)",
-                border: "solid 2px var(--light-bg-colour)",
-                borderRadius: "5px",
-              }}
-              type="submit"
-            >
-              Save
-            </button></form>
+            />
+            <p style={{ color: "red" }}>{error}</p>
+            {!uploading ? (
+              <button
+                style={{
+                  float: "right",
+                  marginTop: "1rem",
+                  color: "white",
+                  backgroundColor: "var(--dark-bg-colour)",
+                  border: "solid 2px var(--light-bg-colour)",
+                  borderRadius: "5px",
+                }}
+                type="submit"
+              >
+                Save
+              </button>
+            ) : (
+              <></>
+            )}
+          </form>
         </Modal>
       </div>
     </div>
