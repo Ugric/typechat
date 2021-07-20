@@ -1,5 +1,4 @@
 import { open } from "sqlite";
-import blobToHash from "blob-to-hash";
 const express = require("express");
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
@@ -27,7 +26,7 @@ console.time("express boot");
       { ":hash": hashed }
     );
     if (existsindatabase) {
-      const id = existsindatabase.id;
+      const id = existsindatabase.imageID;
       const filename = existsindatabase.filename;
       const paths = path.join(__dirname, "files", filename);
       return {
@@ -108,6 +107,39 @@ console.time("express boot");
       });
     }
   });
+  app.get("/api/getuserdataonupdate", async (req, res) => {
+    let open = true;
+    const currentaccountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      {
+        ":token": req.cookies.token,
+      }
+    );
+    for (let index = 0; index < 30; index++) {
+      await snooze(1000);
+      const nowaccountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (
+        JSON.stringify(currentaccountdata) !== JSON.stringify(nowaccountdata)
+      ) {
+        return res.send({
+          loggedin: true,
+          user: {
+            username: nowaccountdata.username,
+            id: nowaccountdata.accountID,
+            profilePic: nowaccountdata.profilePic,
+            tag: nowaccountdata.tag,
+            backgroundImage: nowaccountdata.backgroundImage,
+          },
+        });
+      }
+    }
+    return res.send({ reconnect: true });
+  });
   app.get("/api/userdata", async (req, res) => {
     const accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
@@ -164,11 +196,14 @@ console.time("express boot");
       { ":token": req.cookies.token }
     );
     if (accountdata) {
-      const { id, path, exists } = await createFileID(
-        req.files.backgroundImage
-      );
-      if (!exists) {
-        req.files.backgroundImage.mv(path);
+      let id = null;
+      if (req.files) {
+        const fileiddata = await createFileID(req.files.backgroundImage);
+        id = fileiddata.id;
+        const { exists, path } = fileiddata;
+        if (!exists) {
+          req.files.backgroundImage.mv(path);
+        }
       }
       await db.run(
         "UPDATE accounts SET backgroundImage=:backgroundImage WHERE accountID=:accountID",
