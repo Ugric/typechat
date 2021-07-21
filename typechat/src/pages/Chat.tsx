@@ -5,13 +5,15 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useRef, useState } from "react";
-import { Link, Redirect } from "react-router-dom";
+import { Link, Redirect, useParams } from "react-router-dom";
 import "./css/message.css";
 import { useData } from "../hooks/datahook";
 import useApi from "../hooks/useapi";
 import LoadError from "./error";
 import Loader from "./loader";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import KeyboardEventHandler from "react-keyboard-event-handler";
+
 function random(seed: number) {
   var x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
@@ -30,6 +32,8 @@ function numToSSColumn(num: number) {
 function MessageMaker({
   messages,
   typingdata,
+  scrollref,
+  settoscroll,
 }: {
   messages: Array<{ mine: boolean; message: string }>;
   typingdata: {
@@ -37,8 +41,11 @@ function MessageMaker({
     length: Number;
     specialchars: { [key: number]: any };
   };
+  scrollref: React.RefObject<any>;
+  settoscroll: Function;
 }) {
   const [output, setoutput] = useState(<></>);
+  const { navbarsize } = useData();
   const [faketext, setfaketext] = useState("");
   useEffect(() => {
     const output = [];
@@ -75,35 +82,54 @@ function MessageMaker({
     setfaketext(output.join("").toLowerCase());
   }, [typingdata]);
   return (
-    <div className="chat" style={{ marginBottom: "3rem" }}>
-      {messages.length > 0 ? (
-        output
-      ) : (
-        <p style={{ color: "gray", textAlign: "center" }}>
-          this chat is empty... say hi!
-        </p>
-      )}
-      {typingdata.typing ? (
-        <div className={`yours messages`}>
-          <div className="message" style={{ opacity: 0.5 }}>
-            <div className="spinner">
-              <div className="bounce1"></div>
-              <div className="bounce2"></div>
-              <div className="bounce3"></div>
-            </div>
-            <p
+    <div
+      style={{
+        width: "100%",
+        position: "fixed",
+        height: `calc(100vh - ${navbarsize.height}px)`,
+        overflow: "overlay",
+      }}
+      onScroll={(e: any) => {
+        console.log(
+          e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight,
+          e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight <=
+            200
+        );
+        settoscroll(
+          e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight <=
+            200
+        );
+      }}
+      ref={scrollref}
+    >
+      <div
+        className="chat"
+        style={{ margin: "90px auto 3rem auto", maxWidth: "900px" }}
+      >
+        {messages.length > 0 ? (
+          output
+        ) : (
+          <p style={{ color: "gray", textAlign: "center" }}>
+            this chat is empty... say hi!
+          </p>
+        )}
+        {typingdata.typing ? (
+          <div className={`yours messages`}>
+            <div
+              className="message"
               style={{
+                opacity: 0.5,
                 textShadow: "0 0 7px black",
                 color: "transparent",
               }}
             >
               {faketext}
-            </p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <></>
-      )}
+        ) : (
+          <></>
+        )}
+      </div>
     </div>
   );
 }
@@ -142,7 +168,6 @@ function ChatNotFound() {
 }
 
 function ChatPage() {
-  const bottomref = useRef<any>();
   const bypassChars: string[] = [
     " ",
     "?",
@@ -163,7 +188,8 @@ function ChatPage() {
     "}",
   ];
   const [chats, setchats] = useState<{ message: string; mine: boolean }[]>([]);
-  const { chattingto } = useData();
+  const { id: chattingto } = useParams<{ id: string }>();
+  const { setchattingto } = useData();
   const { error, loading, data } = useApi(
     "/api/userdatafromid?" + new URLSearchParams({ id: chattingto }).toString()
   );
@@ -176,6 +202,13 @@ function ChatPage() {
   const metypinglengthref = useRef<number>(0);
   const metypingref = useRef<any>(false);
   const typingTimer = useRef<any>(null);
+  const inputref = useRef<any>(null);
+  const scrollerref = useRef<any>(null);
+  const [toscroll, settoscroll] = useState(false);
+  useEffect(() => {
+    setchattingto(chattingto);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const doneTypingInterval = 5000;
   function doneTyping() {
     if (metypingref.current) {
@@ -190,16 +223,16 @@ function ChatPage() {
   }
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     socketUrl,
-    { shouldReconnect: (closeEvent) => true }
+    { shouldReconnect: () => true }
   );
-
+  const scrolltobottom = () => {};
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
         setchats((c) => c.concat(lastJsonMessage.message));
-        setTimeout(() => {
-          bottomref.current.scrollIntoView();
-        }, 10);
+        if (toscroll) {
+          setTimeout(scrolltobottom, 0);
+        }
       } else if (lastJsonMessage.type === "typing") {
         settypingdata({
           typing: lastJsonMessage.typing,
@@ -208,8 +241,8 @@ function ChatPage() {
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
-
   if (error || loading || readyState !== ReadyState.OPEN) {
     return error ? <LoadError error={String(error)} /> : <Loader />;
   } else if (!data.exists) {
@@ -240,8 +273,18 @@ function ChatPage() {
           />
           <p style={{ textAlign: "center" }}>{data.username}</p>
         </div>
-        <div style={{ height: "90px" }}></div>
-        <MessageMaker messages={chats} typingdata={typingdata} />
+        <KeyboardEventHandler
+          handleKeys={["alphanumeric", "space", "shift", "cap"]}
+          onKeyEvent={() => {
+            inputref.current.focus();
+          }}
+        />
+        <MessageMaker
+          scrollref={scrollerref}
+          messages={chats}
+          typingdata={typingdata}
+          settoscroll={settoscroll}
+        />
         <div
           style={{
             position: "fixed",
@@ -263,9 +306,7 @@ function ChatPage() {
                   message: { mine: false, message: message },
                 });
                 setchats(chats.concat({ mine: true, message: message }));
-                setTimeout(() => {
-                  if (bottomref.current) bottomref.current.scrollIntoView();
-                }, 10);
+                setTimeout(scrolltobottom, 0);
                 metypingref.current = false;
                 sendJsonMessage({
                   type: "typing",
@@ -277,6 +318,7 @@ function ChatPage() {
             style={{ margin: "auto", width: "100%", maxWidth: "800px" }}
           >
             <input
+              ref={inputref}
               onInput={(e: any) => {
                 const message = e.target.value.trim();
                 if (message.length <= 2000) {
@@ -343,14 +385,14 @@ function ChatPage() {
             </button>
           </form>
         </div>
-        <div ref={bottomref}></div>
       </div>
     </div>
   );
 }
 
 function Chat() {
-  const { loggedin, chattingto } = useData();
+  const { loggedin } = useData();
+  const { id: chattingto } = useParams<{ id: string }>();
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
   } else if (chattingto) {

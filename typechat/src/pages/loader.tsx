@@ -10,7 +10,6 @@ function Loader() {
         justifyContent: "center",
       }}
     >
-      {" "}
       <div className="loader"></div>
     </div>
   );

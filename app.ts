@@ -78,7 +78,7 @@ console.time("express boot");
   const port = 5050;
   app.ws("/", (ws, req) => {
     ws.on("message", async (msg: String) => {
-      await ws.send(msg);
+      setTimeout(()=>ws.send(msg), 5000);
     });
   });
   app.get("/api/logout", async (req, res) => {
@@ -109,12 +109,12 @@ console.time("express boot");
   });
   app.get("/api/getuserdataonupdate", async (req, res) => {
     let open = true;
-    const currentaccountdata = await db.get(
+    const currentaccountdata = JSON.stringify(await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
       {
         ":token": req.cookies.token,
       }
-    );
+    ));
     for (let index = 0; index < 30; index++) {
       await snooze(1000);
       const nowaccountdata = await db.get(
@@ -123,9 +123,11 @@ console.time("express boot");
           ":token": req.cookies.token,
         }
       );
+      const stringed = JSON.stringify(nowaccountdata)
       if (
-        JSON.stringify(currentaccountdata) !== JSON.stringify(nowaccountdata)
+        currentaccountdata !== stringed
       ) {
+        console.log("update")
         return res.send({
           loggedin: true,
           user: {

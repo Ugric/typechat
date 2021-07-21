@@ -170,6 +170,7 @@ function UserSettings() {
                   fetched.blob().then((blob) => setprofile(blob))
                 );
               }}
+              src={"/files/" + user.profilePic}
               labelStyle={{ color: "white" }}
               onClose={() => {
                 setprofile(null);

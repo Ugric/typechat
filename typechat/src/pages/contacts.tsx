@@ -15,7 +15,6 @@ function Contact({
     [key: string]: any;
   };
 }) {
-  const { setchattingto } = useData();
   const history = useHistory();
   const [backgroundcolour, setbackgroundcolour] = useState({
     r: 86,
@@ -38,12 +37,12 @@ function Contact({
         backgroundPosition: user.backgroundImage ? "center" : "",
       }}
       onClick={() => {
-        setchattingto(user.id);
-        history.push("/chat");
+        history.push(`/chat/${user.id}`);
       }}
     >
       <img
         alt="profile"
+        loading="lazy"
         src={"/files/" + user.profilePic}
         style={{
           maxHeight: "75px",

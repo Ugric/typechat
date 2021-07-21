@@ -32,7 +32,7 @@ const PageNav = () => {
       <Navbar ref={Navbarref} bg="darkpurple" variant="dark" fixed="top">
         <Navbar.Brand as={Link} to={loggedin ? "/contacts" : "/"}>
           <img
-          alt="TypeChat"
+            alt="TypeChat"
             src={width > 700 ? bigLogo : smallLogo}
             style={{
               height: "40px",
@@ -46,9 +46,12 @@ const PageNav = () => {
               {chattingto ? (
                 <Nav.Link
                   as={Link}
-                  to="/chat"
+                  to={`/chat/${chattingto}`}
                   style={{
-                    color: location.pathname === "/chat" ? "white" : "",
+                    color:
+                      location.pathname === `/chat/${chattingto}`
+                        ? "white"
+                        : "",
                   }}
                 >
                   <FontAwesomeIcon icon={faComment} />
@@ -95,13 +98,11 @@ const PageNav = () => {
                 }}
               >
                 <img
-                alt="Profile"
+                  alt="Profile"
                   src={"/files/" + user.profilePic}
                   style={{ height: "24px", borderRadius: "50%" }}
                 />
-                <span style={{ marginLeft: "5px" }}>
-                  {user.username}
-                </span>
+                <span style={{ marginLeft: "5px" }}>{user.username}</span>
               </Nav.Link>
               <Nav.Link
                 onClick={async () => {

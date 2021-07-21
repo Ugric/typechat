@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import "./pages/css/toggleswitch.css";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Redirect,
+} from "react-router-dom";
 import "./pages/css/scrollbar.css";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -73,6 +78,9 @@ function App() {
                   <Home />
                 </Route>
                 <Route path="/chat" exact>
+                  <Redirect to={`/chat/${chattingto}`} />
+                </Route>
+                <Route path="/chat/:id" exact>
                   <Chat />
                 </Route>
                 <Route path="/contacts" exact>
