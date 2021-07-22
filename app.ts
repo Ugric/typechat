@@ -77,17 +77,31 @@ console.time("express boot");
   app.use(require("express-fileupload")());
   const port = 5050;
   app.ws("/", (ws, req) => {
-    ws.on("message", async (msg: String) => {
-      setTimeout(()=>ws.send(msg), 5000);
+    ws.on("message", async (data: string) => {
+      const msg = JSON.parse(data);
+
+      setTimeout(() => {
+        if (msg.type === "message") {
+          msg.message.time = new Date().getTime();
+        }
+        ws.send(JSON.stringify(msg));
+      }, 5000);
     });
   });
-  app.get("/api/logout", async (req, res) => {
+  app.get("/api/searchusers", async (req: any, res: any) => {
+    const accounts = await db.all(
+      "SELECT *  FROM accounts WHERE username+'#'+tag like :search",
+      { ":search": req.query.q }
+    );
+    res.send(accounts);
+  });
+  app.get("/api/logout", async (req: any, res: any) => {
     await db.get("DELETE FROM tokens WHERE token=:token", {
       ":token": req.cookies.token,
     });
     res.send(true);
   });
-  app.get("/api/userdatafromid", async (req, res) => {
+  app.get("/api/userdatafromid", async (req: any, res: any) => {
     const accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=:ID",
       {
@@ -107,14 +121,16 @@ console.time("express boot");
       });
     }
   });
-  app.get("/api/getuserdataonupdate", async (req, res) => {
+  app.get("/api/getuserdataonupdate", async (req: any, res: any) => {
     let open = true;
-    const currentaccountdata = JSON.stringify(await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
-      {
-        ":token": req.cookies.token,
-      }
-    ));
+    const currentaccountdata = JSON.stringify(
+      await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+        {
+          ":token": req.cookies.token,
+        }
+      )
+    );
     for (let index = 0; index < 30; index++) {
       await snooze(1000);
       const nowaccountdata = await db.get(
@@ -123,11 +139,9 @@ console.time("express boot");
           ":token": req.cookies.token,
         }
       );
-      const stringed = JSON.stringify(nowaccountdata)
-      if (
-        currentaccountdata !== stringed
-      ) {
-        console.log("update")
+      const stringed = JSON.stringify(nowaccountdata);
+      if (currentaccountdata !== stringed) {
+        console.log("update");
         return res.send({
           loggedin: true,
           user: {
@@ -142,7 +156,7 @@ console.time("express boot");
     }
     return res.send({ reconnect: true });
   });
-  app.get("/api/userdata", async (req, res) => {
+  app.get("/api/userdata", async (req: any, res: any) => {
     const accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
       {
@@ -164,7 +178,7 @@ console.time("express boot");
       });
     }
   });
-  app.get("/files/:id", async (req, res) => {
+  app.get("/files/:id", async (req: any, res: any) => {
     const imagedata = await db.get(
       `SELECT filename FROM images WHERE imageID=:id`,
       {
@@ -177,7 +191,7 @@ console.time("express boot");
       res.status(404).send("image not found in the database!");
     }
   });
-  app.post("/api/setusername", async (req, res) => {
+  app.post("/api/setusername", async (req: any, res: any) => {
     const accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
       { ":token": req.cookies.token }
@@ -188,19 +202,25 @@ console.time("express boot");
         { ":username": req.body.username, ":tag": accountdata.tag }
       );
       if (!exist) {
-      await db.run(
-        "UPDATE accounts SET username=:username WHERE accountID=:accountID",
-        { ":username": req.body.username, ":accountID": accountdata.accountID }
-      );
-      res.send({ resp: true });} else {
-        
-      res.send({ resp: false, err: "someone already has that name with your tag!" });
+        await db.run(
+          "UPDATE accounts SET username=:username WHERE accountID=:accountID",
+          {
+            ":username": req.body.username,
+            ":accountID": accountdata.accountID,
+          }
+        );
+        res.send({ resp: true });
+      } else {
+        res.send({
+          resp: false,
+          err: "someone already has that name with your tag!",
+        });
       }
     } else {
       res.send({ resp: false, err: "incorrect password!" });
     }
   });
-  app.post("/api/setbackgroundimage", async (req, res) => {
+  app.post("/api/setbackgroundimage", async (req: any, res: any) => {
     const accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
       { ":token": req.cookies.token }
@@ -224,7 +244,7 @@ console.time("express boot");
       res.send(false);
     }
   });
-  app.post("/api/setprofilepic", async (req, res) => {
+  app.post("/api/setprofilepic", async (req: any, res: any) => {
     const accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
       { ":token": req.cookies.token }
@@ -239,14 +259,15 @@ console.time("express boot");
           "UPDATE accounts SET profilePic=:profilePic WHERE accountID=:accountID",
           { ":profilePic": id, ":accountID": accountdata.accountID }
         );
-        res.send({ resp: true });} else {
-          res.send({ resp: false, err: "no image!" });
-        }
+        res.send({ resp: true });
+      } else {
+        res.send({ resp: false, err: "no image!" });
+      }
     } else {
       res.send({ resp: false, err: "invalid cookie" });
     }
   });
-  app.post("/login", async (req, res) => {
+  app.post("/login", async (req: any, res: any) => {
     const accounts = await db.all("SELECT * FROM accounts");
     let accountdata: any;
     for (let i = 0; i < accounts.length; i++) {
@@ -270,7 +291,7 @@ console.time("express boot");
       return res.send({ resp: false, err: "invalid email or password!" });
     }
   });
-  app.post("/signup", async (req, res) => {
+  app.post("/signup", async (req: any, res: any) => {
     const emailInUse =
       (await db.get("SELECT * FROM accounts WHERE email=:email", {
         ":email": req.body.email,

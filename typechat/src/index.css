@@ -15,7 +15,7 @@ input:focus,
 select:focus,
 textarea:focus,
 button:focus {
-    outline: none;
+  outline: none;
 }
 ::placeholder {
   color: white;
@@ -23,9 +23,14 @@ button:focus {
 }
 
 :-ms-input-placeholder {
- color: white;
+  color: white;
 }
 
 ::-ms-input-placeholder {
- color: white;
+  color: white;
+}
+
+p,
+pre {
+  margin: 0 !important;
 }

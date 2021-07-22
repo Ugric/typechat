@@ -25,6 +25,9 @@ import useLocalStorage from "./hooks/useLocalStorage";
 import UserSettings from "./pages/usersettings";
 import snooze from "./snooze";
 import Contacts from "./pages/contacts";
+import ReactNotification, { store } from "react-notifications-component";
+import "react-notifications-component/dist/theme.css";
+import AddPeople from "./pages/addpeople";
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
@@ -69,9 +72,11 @@ function App() {
               navbarsize,
               chattingto,
               setchattingto,
+              notifications: store,
             }}
           >
             <PageNav />
+            <ReactNotification />
             <div>
               <Switch>
                 <Route path="/" exact>
@@ -94,6 +99,9 @@ function App() {
                 </Route>
                 <Route path="/user/settings" exact>
                   <UserSettings />
+                </Route>
+                <Route path="/add" exact>
+                  <AddPeople></AddPeople>
                 </Route>
                 <Route>
                   <Error404></Error404>

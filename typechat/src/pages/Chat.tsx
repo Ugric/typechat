@@ -5,7 +5,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useRef, useState } from "react";
-import { Link, Redirect, useParams } from "react-router-dom";
+import { Link, Redirect, useHistory, useParams } from "react-router-dom";
 import "./css/message.css";
 import { useData } from "../hooks/datahook";
 import useApi from "../hooks/useapi";
@@ -13,6 +13,9 @@ import LoadError from "./error";
 import Loader from "./loader";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import KeyboardEventHandler from "react-keyboard-event-handler";
+import TimeAgo from "react-timeago";
+import TextareaAutosize from "react-textarea-autosize";
+import SyntaxHighlighter from "react-syntax-highlighter";
 
 function random(seed: number) {
   var x = Math.sin(seed) * 10000;
@@ -33,16 +36,16 @@ function MessageMaker({
   messages,
   typingdata,
   scrollref,
-  settoscroll,
+  toscroll,
 }: {
-  messages: Array<{ mine: boolean; message: string }>;
+  messages: Array<{ mine: boolean; message: string; time: number }>;
   typingdata: {
     typing: Boolean;
     length: Number;
     specialchars: { [key: number]: any };
   };
   scrollref: React.RefObject<any>;
-  settoscroll: Function;
+  toscroll: any;
 }) {
   const [output, setoutput] = useState(<></>);
   const { navbarsize } = useData();
@@ -50,21 +53,68 @@ function MessageMaker({
   useEffect(() => {
     const output = [];
     let tempmessages: Array<any> = [];
+    let lastmessagegrouptime;
     for (let i = 0; i < messages.length; i++) {
       tempmessages.push(
         <div className="message" key={i}>
-          {messages[i].message}
+          {messages[i].message
+            .split("```")
+            .map((value, index) =>
+              index % 2 === 0 ? (
+                <div key={index}>{value.trim()}</div>
+              ) : (
+                <SyntaxHighlighter>{value.trim()}</SyntaxHighlighter>
+              )
+            )}
         </div>
       );
       if (!messages[i + 1] || messages[i + 1].mine !== messages[i].mine) {
         output.push(
-          <div
-            className={`${messages[i].mine ? "mine" : "yours"} messages`}
-            key={i}
-          >
-            {tempmessages}
-          </div>
+          <>
+            {lastmessagegrouptime &&
+            messages[i].time - lastmessagegrouptime > 300000 ? (
+              <p
+                style={{
+                  margin: "0",
+                  color: `lightgray`,
+                  fontSize: "10px",
+                  textAlign: "center",
+                }}
+              >
+                <TimeAgo
+                  date={
+                    lastmessagegrouptime
+                      ? lastmessagegrouptime
+                      : messages[i].time
+                  }
+                />
+              </p>
+            ) : (
+              <></>
+            )}
+            <div
+              className={`${messages[i].mine ? "mine" : "yours"} messages`}
+              key={i}
+            >
+              {tempmessages}
+            </div>
+            {!messages[i + 1] ? (
+              <p
+                style={{
+                  margin: "0",
+                  color: `lightgray`,
+                  fontSize: "10px",
+                  textAlign: "center",
+                }}
+              >
+                <TimeAgo date={messages[i].time} />
+              </p>
+            ) : (
+              <></>
+            )}
+          </>
         );
+        lastmessagegrouptime = messages[i].time;
         tempmessages = [];
       }
     }
@@ -90,15 +140,9 @@ function MessageMaker({
         overflow: "overlay",
       }}
       onScroll={(e: any) => {
-        console.log(
-          e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight,
+        toscroll.current =
           e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight <=
-            200
-        );
-        settoscroll(
-          e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight <=
-            200
-        );
+          200;
       }}
       ref={scrollref}
     >
@@ -186,13 +230,32 @@ function ChatPage() {
     "]",
     "{",
     "}",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "0",
   ];
-  const [chats, setchats] = useState<{ message: string; mine: boolean }[]>([]);
+  const [chats, setchats] = useState<
+    { message: string; mine: boolean; time: number }[]
+  >([]);
+  const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
-  const { setchattingto } = useData();
+  const { setchattingto, notifications } = useData();
   const { error, loading, data } = useApi(
     "/api/userdatafromid?" + new URLSearchParams({ id: chattingto }).toString()
   );
+  const [metypingdata, setmetypingdata] = useState({
+    type: "typing",
+    typing: false,
+    length: 0,
+    specialchars: {},
+  });
   const [socketUrl] = useState(`ws://${window.location.hostname}:5050/`);
   const [typingdata, settypingdata] = useState<{
     typing: Boolean;
@@ -204,7 +267,7 @@ function ChatPage() {
   const typingTimer = useRef<any>(null);
   const inputref = useRef<any>(null);
   const scrollerref = useRef<any>(null);
-  const [toscroll, settoscroll] = useState(false);
+  const toscroll = useRef(true);
   useEffect(() => {
     setchattingto(chattingto);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,7 +276,7 @@ function ChatPage() {
   function doneTyping() {
     if (metypingref.current) {
       metypingref.current = false;
-      sendJsonMessage({
+      setmetypingdata({
         type: "typing",
         typing: false,
         length: 0,
@@ -225,15 +288,48 @@ function ChatPage() {
     socketUrl,
     { shouldReconnect: () => true }
   );
-  const scrolltobottom = () => {};
+  const scrolltobottom = () => {
+    if (scrollerref && scrollerref.current)
+      scrollerref.current.scrollTo(0, scrollerref.current.scrollHeight);
+  };
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
         setchats((c) => c.concat(lastJsonMessage.message));
-        if (toscroll) {
+
+        settypingdata({
+          typing: false,
+          length: 0,
+          specialchars: {},
+        });
+        if (toscroll.current) {
           setTimeout(scrolltobottom, 0);
+        } else {
+          notifications.addNotification({
+            title: `${data.username}#${data.tag}`,
+            message: lastJsonMessage.message.message,
+            type: "default",
+            onRemoval: (_: number, type: string) => {
+              if (type === "click") {
+                history.push(`/chat/${chattingto}`);
+                scrolltobottom();
+              }
+            },
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animate__animated", "animate__fadeIn"],
+            animationOut: ["animate__animated", "animate__fadeOut"],
+            dismiss: {
+              pauseOnHover: true,
+              duration: 5000,
+              onScreen: true,
+            },
+          });
         }
       } else if (lastJsonMessage.type === "typing") {
+        if (toscroll.current) {
+          setTimeout(scrolltobottom, 0);
+        }
         settypingdata({
           typing: lastJsonMessage.typing,
           length: lastJsonMessage.length,
@@ -243,6 +339,10 @@ function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
+  useEffect(() => {
+    sendJsonMessage(metypingdata);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metypingdata]);
   if (error || loading || readyState !== ReadyState.OPEN) {
     return error ? <LoadError error={String(error)} /> : <Loader />;
   } else if (!data.exists) {
@@ -283,7 +383,7 @@ function ChatPage() {
           scrollref={scrollerref}
           messages={chats}
           typingdata={typingdata}
-          settoscroll={settoscroll}
+          toscroll={toscroll}
         />
         <div
           style={{
@@ -301,23 +401,34 @@ function ChatPage() {
               const message = e.target[0].value.trim();
               if (message !== "") {
                 e.target[0].value = "";
+                const time = new Date().getTime();
                 sendJsonMessage({
                   type: "message",
-                  message: { mine: false, message: message },
+                  message: {
+                    mine: false,
+                    message: message,
+                    time,
+                  },
                 });
-                setchats(chats.concat({ mine: true, message: message }));
+                setchats(chats.concat({ mine: true, message: message, time }));
                 setTimeout(scrolltobottom, 0);
                 metypingref.current = false;
-                sendJsonMessage({
+                setmetypingdata({
                   type: "typing",
                   typing: metypingref.current,
                   length: 0,
+                  specialchars: {},
                 });
               }
             }}
-            style={{ margin: "auto", width: "100%", maxWidth: "800px" }}
+            style={{
+              margin: "auto",
+              width: "100%",
+              maxWidth: "800px",
+              display: "flex",
+            }}
           >
-            <input
+            <TextareaAutosize
               ref={inputref}
               onInput={(e: any) => {
                 const message = e.target.value.trim();
@@ -331,7 +442,7 @@ function ChatPage() {
                         specialchars[i.toString()] = message[i];
                       }
                     }
-                    sendJsonMessage({
+                    setmetypingdata({
                       type: "typing",
                       typing: metypingref.current,
                       length: metypinglengthref.current,
@@ -344,7 +455,7 @@ function ChatPage() {
                     );
                   } else {
                     metypingref.current = false;
-                    sendJsonMessage({
+                    setmetypingdata({
                       type: "typing",
                       typing: false,
                       length: 0,
@@ -365,7 +476,9 @@ function ChatPage() {
                 width: "calc(100% - 65px)",
                 border: "solid 1px var(--light-bg-colour)",
                 color: "white",
+                resize: "none",
               }}
+              maxRows={10}
               placeholder="Type Something..."
             />
             <button
