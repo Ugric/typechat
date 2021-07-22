@@ -65,6 +65,7 @@ console.time("express boot");
       "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
+    db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
     db.run("CREATE TABLE IF NOT EXISTS chats (chatID)"),
     db.run("CREATE TABLE IF NOT EXISTS chatUsers (chatID, accountID)"),
     db.run(
@@ -88,12 +89,34 @@ console.time("express boot");
       }, 5000);
     });
   });
+  90;
   app.get("/api/searchusers", async (req: any, res: any) => {
-    const accounts = await db.all(
-      "SELECT *  FROM accounts WHERE username+'#'+tag like :search",
-      { ":search": req.query.q }
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      {
+        ":token": req.cookies.token,
+      }
     );
-    res.send(accounts);
+    if (accountdata) {
+      return res.send({
+        resp: true,
+        data: await db.all(
+          `SELECT username,
+    tag,
+    backgroundImage,
+    profilePic,
+    accountID as id
+FROM accounts
+WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:search)) > 0 LIMIT 10`,
+          { ":search": req.query.q, ":accountID": accountdata.accountID }
+        ),
+      });
+    } else {
+      return res.send({
+        resp: false,
+        err: "Invalid token!",
+      });
+    }
   });
   app.get("/api/logout", async (req: any, res: any) => {
     await db.get("DELETE FROM tokens WHERE token=:token", {
