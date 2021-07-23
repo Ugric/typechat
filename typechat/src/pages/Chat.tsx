@@ -1,6 +1,8 @@
 import {
   faCommentSlash,
+  faFile,
   faPaperPlane,
+  faPlus,
   faSadCry,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,9 +15,9 @@ import LoadError from "./error";
 import Loader from "./loader";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import KeyboardEventHandler from "react-keyboard-event-handler";
-import TimeAgo from "react-timeago";
 import TextareaAutosize from "react-textarea-autosize";
 import SyntaxHighlighter from "react-syntax-highlighter";
+import snooze from "../snooze";
 
 function random(seed: number) {
   var x = Math.sin(seed) * 10000;
@@ -32,13 +34,28 @@ function numToSSColumn(num: number) {
   }
   return s || undefined;
 }
+
+interface messageTypes {
+  time: number;
+  mine: boolean;
+}
+
+interface messageWithText extends messageTypes {
+  message: string;
+  file: undefined;
+}
+interface messageWithFile extends messageTypes {
+  file: string;
+  message: undefined;
+}
+
 function MessageMaker({
   messages,
   typingdata,
   scrollref,
   toscroll,
 }: {
-  messages: Array<{ mine: boolean; message: string; time: number }>;
+  messages: Array<messageWithText | messageWithFile>;
   typingdata: {
     typing: Boolean;
     length: Number;
@@ -48,29 +65,50 @@ function MessageMaker({
   toscroll: any;
 }) {
   const [output, setoutput] = useState(<></>);
-  const { navbarsize } = useData();
   const [faketext, setfaketext] = useState("");
   useEffect(() => {
     const output = [];
     let tempmessages: Array<any> = [];
     let lastmessagegrouptime;
     for (let i = 0; i < messages.length; i++) {
+      const message = messages[i].message;
+      const file = messages[i].file;
       tempmessages.push(
         <div className="message" key={i}>
-          {messages[i].message
-            .split("```")
-            .map((value, index) =>
-              index % 2 === 0 ? (
-                <div key={index}>{value.trim()}</div>
-              ) : (
-                <SyntaxHighlighter>{value.trim()}</SyntaxHighlighter>
+          {message ? (
+            message
+              .split("```")
+              .map((value, index) =>
+                index % 2 === 0 ? (
+                  <div key={index}>{value.trim()}</div>
+                ) : (
+                  <SyntaxHighlighter>{value.trim()}</SyntaxHighlighter>
+                )
               )
-            )}
+          ) : (
+            <div>
+              <div
+                onClick={() => {
+                  window.open(
+                    `http://${window.location.hostname}:5050/files/${file}`,
+                    file,
+                    "width=600,height=400"
+                  );
+                }}
+                style={{
+                  color: "var(--secondary-text-colour)",
+                  cursor: "pointer",
+                }}
+              >
+                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+              </div>
+            </div>
+          )}
         </div>
       );
       if (!messages[i + 1] || messages[i + 1].mine !== messages[i].mine) {
         output.push(
-          <>
+          <div className="messagegroup" key={i}>
             {lastmessagegrouptime &&
             messages[i].time - lastmessagegrouptime > 300000 ? (
               <p
@@ -81,13 +119,7 @@ function MessageMaker({
                   textAlign: "center",
                 }}
               >
-                <TimeAgo
-                  date={
-                    lastmessagegrouptime
-                      ? lastmessagegrouptime
-                      : messages[i].time
-                  }
-                />
+                {new Date(messages[i].time).toLocaleString()}
               </p>
             ) : (
               <></>
@@ -107,12 +139,12 @@ function MessageMaker({
                   textAlign: "center",
                 }}
               >
-                <TimeAgo date={messages[i].time} />
+                {new Date(messages[i].time).toLocaleString()}
               </p>
             ) : (
               <></>
             )}
-          </>
+          </div>
         );
         lastmessagegrouptime = messages[i].time;
         tempmessages = [];
@@ -131,18 +163,22 @@ function MessageMaker({
     }
     setfaketext(output.join("").toLowerCase());
   }, [typingdata]);
+  useEffect(() => {
+    document.body.onscroll = (e: any) => {
+      toscroll.current =
+        document.documentElement.scrollHeight -
+          document.documentElement.scrollTop -
+          document.documentElement.clientHeight <=
+        200;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div
       style={{
         width: "100%",
-        position: "fixed",
-        height: `calc(100vh - ${navbarsize.height}px)`,
+        height: `100%`,
         overflow: "overlay",
-      }}
-      onScroll={(e: any) => {
-        toscroll.current =
-          e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight <=
-          200;
       }}
       ref={scrollref}
     >
@@ -241,9 +277,9 @@ function ChatPage() {
     "9",
     "0",
   ];
-  const [chats, setchats] = useState<
-    { message: string; mine: boolean; time: number }[]
-  >([]);
+  const [chats, setchats] = useState<Array<messageWithText | messageWithFile>>(
+    []
+  );
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
   const { setchattingto, notifications } = useData();
@@ -267,11 +303,21 @@ function ChatPage() {
   const typingTimer = useRef<any>(null);
   const inputref = useRef<any>(null);
   const scrollerref = useRef<any>(null);
+  const bottomref = useRef<any>(null);
   const toscroll = useRef(true);
   useEffect(() => {
     setchattingto(chattingto);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const [oldmessagsize, setoldmessagesize] = useState(chats.length > 0);
+  const messagesize = chats.length > 0;
+  useEffect(() => {
+    if (messagesize !== oldmessagsize) {
+      scrolltobottom();
+      setoldmessagesize(messagesize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messagesize]);
   const doneTypingInterval = 5000;
   function doneTyping() {
     if (metypingref.current) {
@@ -286,12 +332,21 @@ function ChatPage() {
   }
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     socketUrl,
-    { shouldReconnect: () => true }
+    {
+      shouldReconnect: () => true,
+      onOpen() {
+        sendJsonMessage({ type: "start", to: chattingto });
+      },
+    }
   );
   const scrolltobottom = () => {
-    if (scrollerref && scrollerref.current)
-      scrollerref.current.scrollTo(0, scrollerref.current.scrollHeight);
+    document.documentElement.scrollTo(
+      -10000,
+      document.documentElement.offsetHeight
+    );
   };
+  const fileref = useRef<any>(null);
+
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
@@ -335,6 +390,9 @@ function ChatPage() {
           length: lastJsonMessage.length,
           specialchars: lastJsonMessage.specialchars,
         });
+      } else if (lastJsonMessage.type === "setmessages") {
+        setchats(lastJsonMessage.messages);
+        setTimeout(scrolltobottom, 250);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -386,6 +444,12 @@ function ChatPage() {
           toscroll={toscroll}
         />
         <div
+          ref={bottomref}
+          onLoad={() => {
+            console.log("Hello");
+          }}
+        ></div>
+        <div
           style={{
             position: "fixed",
             padding: "1rem",
@@ -393,34 +457,10 @@ function ChatPage() {
             bottom: "0px",
             background:
               "linear-gradient(180deg, transparent, var(--dark-mode))",
+            display: "flex",
           }}
         >
-          <form
-            onSubmit={(e: any) => {
-              e.preventDefault();
-              const message = e.target[0].value.trim();
-              if (message !== "") {
-                e.target[0].value = "";
-                const time = new Date().getTime();
-                sendJsonMessage({
-                  type: "message",
-                  message: {
-                    mine: false,
-                    message: message,
-                    time,
-                  },
-                });
-                setchats(chats.concat({ mine: true, message: message, time }));
-                setTimeout(scrolltobottom, 0);
-                metypingref.current = false;
-                setmetypingdata({
-                  type: "typing",
-                  typing: metypingref.current,
-                  length: 0,
-                  specialchars: {},
-                });
-              }
-            }}
+          <div
             style={{
               margin: "auto",
               width: "100%",
@@ -428,63 +468,80 @@ function ChatPage() {
               display: "flex",
             }}
           >
-            <TextareaAutosize
-              ref={inputref}
-              onInput={(e: any) => {
-                const message = e.target.value.trim();
-                if (message.length <= 2000) {
-                  metypinglengthref.current = message.length;
-                  if (metypinglengthref.current > 0) {
-                    metypingref.current = true;
-                    const specialchars: { [key: string]: any } = {};
-                    for (let i = 0; i < message.length; i++) {
-                      if (bypassChars.includes(message[i])) {
-                        specialchars[i.toString()] = message[i];
-                      }
+            <input
+              type="file"
+              style={{ display: "none" }}
+              ref={fileref}
+              onInput={async (e: any) => {
+                if (e.target.files) {
+                  const id = Math.random();
+                  notifications.addNotification({
+                    title: "File",
+                    message: "Uploading...",
+                    type: "warning",
+                    insert: "top",
+                    id,
+                    container: "top-right",
+                    animationIn: ["animate__animated", "animate__fadeIn"],
+                    animationOut: ["animate__animated", "animate__fadeOut"],
+                  });
+                  try {
+                    const formdata = new FormData();
+                    formdata.append("file", e.target.files[0]);
+                    const resp = await (
+                      await fetch("/api/uploadfile", {
+                        method: "POST",
+                        body: formdata,
+                      })
+                    ).json();
+                    if (resp.resp) {
+                      notifications.removeNotification(id);
+                      const time = new Date().getTime();
+                      sendJsonMessage({
+                        type: "file",
+                        file: resp.id,
+                      });
+                      setchats(
+                        chats.concat({
+                          mine: true,
+                          message: undefined,
+                          file: resp.id,
+                          time,
+                        })
+                      );
+                      notifications.removeNotification(id);
+                    } else {
+                      notifications.removeNotification(id);
+                      notifications.addNotification({
+                        title: "Upload Error",
+                        message: resp.err,
+                        type: "danger",
+                        insert: "top",
+                        container: "top-right",
+                        animationIn: ["animate__animated", "animate__fadeIn"],
+                        animationOut: ["animate__animated", "animate__fadeOut"],
+                      });
                     }
-                    setmetypingdata({
-                      type: "typing",
-                      typing: metypingref.current,
-                      length: metypinglengthref.current,
-                      specialchars,
-                    });
-                    clearTimeout(typingTimer.current);
-                    typingTimer.current = setTimeout(
-                      doneTyping,
-                      doneTypingInterval
-                    );
-                  } else {
-                    metypingref.current = false;
-                    setmetypingdata({
-                      type: "typing",
-                      typing: false,
-                      length: 0,
-                      specialchars: {},
+                  } catch (e) {
+                    notifications.removeNotification(id);
+                    notifications.addNotification({
+                      title: "Upload Error",
+                      message: String(e),
+                      type: "danger",
+                      insert: "top",
+                      container: "top-right",
+                      animationIn: ["animate__animated", "animate__fadeIn"],
+                      animationOut: ["animate__animated", "animate__fadeOut"],
                     });
                   }
-                } else {
-                  e.target.value = e.target.value.substring(0, 2000);
                 }
               }}
-              onKeyDown={() => {
-                clearTimeout(typingTimer.current);
-              }}
-              style={{
-                backgroundColor: "var(--dark-bg-colour)",
-                padding: "5px",
-                borderRadius: "20px",
-                width: "calc(100% - 65px)",
-                border: "solid 1px var(--light-bg-colour)",
-                color: "white",
-                resize: "none",
-              }}
-              maxRows={10}
-              placeholder="Type Something..."
             />
+            ​
             <button
               style={{
-                width: "60px",
-                marginLeft: "5px",
+                width: "37px",
+                marginRight: "5px",
                 backgroundColor: "var(--dark-bg-colour)",
                 padding: "5px",
                 borderRadius: "20px",
@@ -492,11 +549,111 @@ function ChatPage() {
                 color: "white",
                 textAlign: "center",
               }}
-              type="submit"
+              onClick={() => {
+                fileref.current.click();
+              }}
             >
-              <FontAwesomeIcon icon={faPaperPlane} />
+              <FontAwesomeIcon icon={faPlus} />
             </button>
-          </form>
+            <form
+              onSubmit={(e: any) => {
+                e.preventDefault();
+                const message = e.target[0].value.trim();
+                if (message !== "") {
+                  e.target[0].value = "";
+                  const time = new Date().getTime();
+                  sendJsonMessage({
+                    type: "message",
+                    message,
+                  });
+                  setchats(
+                    chats.concat({ mine: true, file: undefined, message, time })
+                  );
+                  setTimeout(scrolltobottom, 0);
+                  metypingref.current = false;
+                  setmetypingdata({
+                    type: "typing",
+                    typing: metypingref.current,
+                    length: 0,
+                    specialchars: {},
+                  });
+                }
+              }}
+              style={{
+                width: "100%",
+                display: "flex",
+              }}
+            >
+              <TextareaAutosize
+                ref={inputref}
+                onInput={(e: any) => {
+                  const message = e.target.value.trim();
+                  if (message.length <= 2000) {
+                    metypinglengthref.current = message.length;
+                    if (metypinglengthref.current > 0) {
+                      metypingref.current = true;
+                      const specialchars: { [key: string]: any } = {};
+                      for (let i = 0; i < message.length; i++) {
+                        if (bypassChars.includes(message[i])) {
+                          specialchars[i.toString()] = message[i];
+                        }
+                      }
+                      setmetypingdata({
+                        type: "typing",
+                        typing: metypingref.current,
+                        length: metypinglengthref.current,
+                        specialchars,
+                      });
+                      clearTimeout(typingTimer.current);
+                      typingTimer.current = setTimeout(
+                        doneTyping,
+                        doneTypingInterval
+                      );
+                    } else {
+                      metypingref.current = false;
+                      setmetypingdata({
+                        type: "typing",
+                        typing: false,
+                        length: 0,
+                        specialchars: {},
+                      });
+                    }
+                  } else {
+                    e.target.value = e.target.value.substring(0, 2000);
+                  }
+                }}
+                onKeyDown={() => {
+                  clearTimeout(typingTimer.current);
+                }}
+                style={{
+                  backgroundColor: "var(--dark-bg-colour)",
+                  padding: "5px",
+                  borderRadius: "20px",
+                  width: "calc(100% - 65px)",
+                  border: "solid 1px var(--light-bg-colour)",
+                  color: "white",
+                  resize: "none",
+                }}
+                maxRows={10}
+                placeholder="Type Something..."
+              />
+              <button
+                style={{
+                  width: "60px",
+                  marginLeft: "5px",
+                  backgroundColor: "var(--dark-bg-colour)",
+                  padding: "5px",
+                  borderRadius: "20px",
+                  border: "solid 1px var(--light-bg-colour)",
+                  color: "white",
+                  textAlign: "center",
+                }}
+                type="submit"
+              >
+                <FontAwesomeIcon icon={faPaperPlane} />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -504,11 +661,11 @@ function ChatPage() {
 }
 
 function Chat() {
-  const { loggedin } = useData();
+  const { loggedin, user } = useData();
   const { id: chattingto } = useParams<{ id: string }>();
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
-  } else if (chattingto) {
+  } else if (chattingto && chattingto !== user.id) {
     return <ChatPage />;
   }
   return <ChatNotFound></ChatNotFound>;

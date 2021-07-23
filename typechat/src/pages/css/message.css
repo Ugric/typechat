@@ -6,6 +6,10 @@
   padding: 20px;
 }
 
+.chat a {
+  color: var(--secondary-text-colour);
+}
+
 .messages {
   margin-top: 5px;
   display: flex;
@@ -24,10 +28,10 @@
 }
 
 .yours .message {
-      max-width: 75%;
+  max-width: 75%;
   background-color: #eee;
-    word-break:normal;
-    word-wrap:break-word;
+  word-break: normal;
+  word-wrap: break-word;
   position: relative;
   color: black;
 }
@@ -46,7 +50,6 @@
 .yours .message:last-child:after {
   content: "";
   position: absolute;
-  z-index: 1;
   bottom: 0;
   left: -10px;
   width: 10px;
@@ -61,9 +64,9 @@
 
 .mine .message {
   color: white;
-      max-width: 75%;
-    word-break:normal;
-    word-wrap:break-word;
+  max-width: 75%;
+  word-break: normal;
+  word-wrap: break-word;
   background: linear-gradient(
     to bottom,
     var(--light-bg-colour) 0%,
@@ -93,7 +96,6 @@
 .mine .message:last-child:after {
   content: "";
   position: absolute;
-  z-index: 1;
   bottom: 0;
   right: -10px;
   width: 10px;
@@ -125,16 +127,25 @@
 }
 
 @-webkit-keyframes sk-bouncedelay {
-  0%, 80%, 100% { -webkit-transform: scale(0) }
-  40% { -webkit-transform: scale(1.0) }
+  0%,
+  80%,
+  100% {
+    -webkit-transform: scale(0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+  }
 }
 
 @keyframes sk-bouncedelay {
-  0%, 80%, 100% { 
+  0%,
+  80%,
+  100% {
     -webkit-transform: scale(0);
     transform: scale(0);
-  } 40% { 
-    -webkit-transform: scale(1.0);
-    transform: scale(1.0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
   }
 }

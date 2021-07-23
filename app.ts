@@ -11,6 +11,7 @@ const snooze = (milliseconds: number) =>
 const { generate } = require("randomstring");
 console.time("express boot");
 
+const messagefunctions = {};
 (async () => {
   const tagGenerator = (): string => {
     const output = [];
@@ -66,6 +67,9 @@ console.time("express boot");
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS friendsChatMessages (accountID, toAccountID, message, time, file)"
+    ),
     db.run("CREATE TABLE IF NOT EXISTS chats (chatID)"),
     db.run("CREATE TABLE IF NOT EXISTS chatUsers (chatID, accountID)"),
     db.run(
@@ -78,44 +82,208 @@ console.time("express boot");
   app.use(require("express-fileupload")());
   const port = 5050;
   app.ws("/", (ws, req) => {
+    let to: string;
     ws.on("message", async (data: string) => {
-      const msg = JSON.parse(data);
-
-      setTimeout(() => {
-        if (msg.type === "message") {
-          msg.message.time = new Date().getTime();
+      let accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
         }
-        ws.send(JSON.stringify(msg));
-      }, 5000);
+      );
+      if (!accountdata) {
+        return ws.close();
+      }
+      const msg = JSON.parse(data);
+      if (msg.type === "start" && !to) {
+        if (msg.to === accountdata.accountID) {
+          return ws.close();
+        }
+        const messages = await db.all(
+          `SELECT
+          (accountID=:accountID) as mine, message, time, file
+          FROM friendsChatMessages
+          WHERE (
+                  accountID = :accountID
+                  and toAccountID = :toUser
+              )
+              or (
+                  accountID = :toUser
+                  and toAccountID = :accountID
+              )`,
+          {
+            ":accountID": accountdata.accountID,
+            ":toUser": msg.to,
+          }
+        );
+        for (const message of messages) {
+          message.mine = message.mine === 1;
+        }
+        ws.send(
+          JSON.stringify({
+            type: "setmessages",
+            messages,
+          })
+        );
+        to = String(msg.to);
+        if (!messagefunctions[accountdata.accountID]) {
+          messagefunctions[accountdata.accountID] = {};
+        }
+        if (!messagefunctions[accountdata.accountID][msg.to]) {
+          messagefunctions[accountdata.accountID][msg.to] = [];
+        }
+        const functionidex =
+          messagefunctions[accountdata.accountID][msg.to].length;
+        messagefunctions[accountdata.accountID][msg.to].push(ws);
+        while (!ws._socket._writableState.finished) {
+          await snooze(100);
+          accountdata = await db.get(
+            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+            {
+              ":token": req.cookies.token,
+            }
+          );
+          if (!accountdata) {
+            break;
+          }
+        }
+        messagefunctions[accountdata.accountID][msg.to].splice(functionidex, 1);
+        ws.close();
+      } else if (msg.type === "message" || msg.type === "file") {
+        const time = new Date().getTime();
+        const id = generate(100);
+        if (
+          messagefunctions[to] &&
+          messagefunctions[to][accountdata.accountID]
+        ) {
+          for (const ws of messagefunctions[to][accountdata.accountID]) {
+            ws.send(
+              JSON.stringify({
+                type: "message",
+                message: {
+                  mine: false,
+                  time,
+                  message: msg.message,
+                  file: msg.file,
+                  id,
+                },
+              })
+            );
+          }
+        }
+        if (msg.type === "message") {
+          await db
+            .run(
+              `INSERT INTO friendsChatMessages (accountID, toAccountID, message, time) VALUES  (:accountID, :toAccountID, :message, :time)`,
+              {
+                ":accountID": accountdata.accountID,
+                ":toAccountID": to,
+                ":message": msg.message,
+                ":time": time,
+              }
+            )
+            .catch(console.error);
+        } else {
+          await db
+            .run(
+              `INSERT INTO friendsChatMessages (accountID, toAccountID, file, time) VALUES  (:accountID, :toAccountID, :file, :time)`,
+              {
+                ":accountID": accountdata.accountID,
+                ":toAccountID": to,
+                ":file": msg.file,
+                ":time": time,
+              }
+            )
+            .catch(console.error);
+        }
+      } else if (msg.type === "typing") {
+        if (
+          messagefunctions[to] &&
+          messagefunctions[to][accountdata.accountID]
+        ) {
+          for (const ws of messagefunctions[to][accountdata.accountID]) {
+            ws.send(
+              JSON.stringify({
+                type: "typing",
+                typing: msg.typing,
+                length: msg.length,
+                specialchars: msg.specialchars,
+              })
+            );
+          }
+        }
+      }
     });
   });
   90;
-  app.get("/api/searchusers", async (req: any, res: any) => {
+  app.post("/api/uploadfile", async (req: any, res: any) => {
     const accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       {
         ":token": req.cookies.token,
       }
     );
     if (accountdata) {
-      return res.send({
+      const { id, path, exists } = await createFileID(req.files.file);
+      if (!exists) {
+        req.files.file.mv(path);
+      }
+      res.send({ resp: true, id: id });
+    } else {
+      res.send({ resp: false, err: "invalid token" });
+    }
+  });
+  app.get("/api/searchusers", async (req: any, res: any) => {
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+      {
+        ":token": req.cookies.token,
+      }
+    );
+    if (accountdata) {
+      res.send({
         resp: true,
         data: await db.all(
-          `SELECT username,
-    tag,
-    backgroundImage,
-    profilePic,
-    accountID as id
-FROM accounts
-WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:search)) > 0 LIMIT 10`,
+          `WITH frendslist AS (
+            SELECT toAccountID
+            FROM friends
+            WHERE accountID == :accountID
+        )
+        SELECT username,
+            tag,
+            backgroundImage,
+            profilePic,
+            accountID as id
+        FROM accounts
+        WHERE accountID != :accountID
+            and accountID not in frendslist
+            and instr(lower(username || '#' || tag), lower(:search)) > 0
+        LIMIT 10`,
           { ":search": req.query.q, ":accountID": accountdata.accountID }
         ),
       });
     } else {
-      return res.send({
+      res.send({
         resp: false,
         err: "Invalid token!",
       });
+    }
+  });
+  app.post("/api/frienduserfromid", async (req: any, res: any) => {
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+      {
+        ":token": req.cookies.token,
+      }
+    );
+    if (accountdata) {
+      const toFriendUserData = await db.get(
+        "SELECT * FROM accounts WHERE accountID=:id LIMIT 1",
+        {
+          ":id": req.body.user,
+        }
+      );
+      res.send(toFriendUserData);
+    } else {
     }
   });
   app.get("/api/logout", async (req: any, res: any) => {
@@ -148,7 +316,7 @@ WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:se
     let open = true;
     const currentaccountdata = JSON.stringify(
       await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -157,7 +325,7 @@ WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:se
     for (let index = 0; index < 30; index++) {
       await snooze(1000);
       const nowaccountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -181,7 +349,7 @@ WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:se
   });
   app.get("/api/userdata", async (req: any, res: any) => {
     const accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       {
         ":token": req.cookies.token,
       }
@@ -216,7 +384,7 @@ WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:se
   });
   app.post("/api/setusername", async (req: any, res: any) => {
     const accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       { ":token": req.cookies.token }
     );
     if (accountdata.password == hasher(req.body.pass + accountdata.salt)) {
@@ -245,7 +413,7 @@ WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:se
   });
   app.post("/api/setbackgroundimage", async (req: any, res: any) => {
     const accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       { ":token": req.cookies.token }
     );
     if (accountdata) {
@@ -269,7 +437,7 @@ WHERE accountID != :accountID and instr(lower(username || '#' || tag), lower(:se
   });
   app.post("/api/setprofilepic", async (req: any, res: any) => {
     const accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       { ":token": req.cookies.token }
     );
     if (accountdata) {
