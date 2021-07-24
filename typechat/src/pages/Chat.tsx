@@ -17,7 +17,6 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import KeyboardEventHandler from "react-keyboard-event-handler";
 import TextareaAutosize from "react-textarea-autosize";
 import SyntaxHighlighter from "react-syntax-highlighter";
-import snooze from "../snooze";
 
 function random(seed: number) {
   var x = Math.sin(seed) * 10000;
@@ -119,7 +118,7 @@ function MessageMaker({
                   textAlign: "center",
                 }}
               >
-                {new Date(messages[i].time).toLocaleString()}
+                {new Date(lastmessagegrouptime).toLocaleString()}
               </p>
             ) : (
               <></>
@@ -305,6 +304,7 @@ function ChatPage() {
   const scrollerref = useRef<any>(null);
   const bottomref = useRef<any>(null);
   const toscroll = useRef(true);
+  const [loadingchatmessages, setloadingchatmessages] = useState(true);
   useEffect(() => {
     setchattingto(chattingto);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -340,10 +340,8 @@ function ChatPage() {
     }
   );
   const scrolltobottom = () => {
-    document.documentElement.scrollTo(
-      -10000,
-      document.documentElement.offsetHeight
-    );
+    const scrollingElement = document.scrollingElement || document.body;
+    scrollingElement.scrollTop = scrollingElement.scrollHeight;
   };
   const fileref = useRef<any>(null);
 
@@ -392,7 +390,7 @@ function ChatPage() {
         });
       } else if (lastJsonMessage.type === "setmessages") {
         setchats(lastJsonMessage.messages);
-        setTimeout(scrolltobottom, 250);
+        setloadingchatmessages(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -401,7 +399,21 @@ function ChatPage() {
     sendJsonMessage(metypingdata);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metypingdata]);
-  if (error || loading || readyState !== ReadyState.OPEN) {
+  window.onload = () => setTimeout(scrolltobottom, 0);
+  useEffect(() => {
+    setTimeout(scrolltobottom, 0);
+  }, [loading, data, readyState]);
+  useEffect(() => {
+    if (toscroll.current) {
+      setTimeout(scrolltobottom, 0);
+    }
+  }, [chats]);
+  if (
+    error ||
+    loading ||
+    readyState !== ReadyState.OPEN ||
+    loadingchatmessages
+  ) {
     return error ? <LoadError error={String(error)} /> : <Loader />;
   } else if (!data.exists) {
     return <ChatNotFound></ChatNotFound>;
@@ -474,47 +486,64 @@ function ChatPage() {
               ref={fileref}
               onInput={async (e: any) => {
                 if (e.target.files) {
-                  const id = Math.random();
-                  notifications.addNotification({
-                    title: "File",
-                    message: "Uploading...",
-                    type: "warning",
-                    insert: "top",
-                    id,
-                    container: "top-right",
-                    animationIn: ["animate__animated", "animate__fadeIn"],
-                    animationOut: ["animate__animated", "animate__fadeOut"],
-                  });
-                  try {
-                    const formdata = new FormData();
-                    formdata.append("file", e.target.files[0]);
-                    const resp = await (
-                      await fetch("/api/uploadfile", {
-                        method: "POST",
-                        body: formdata,
-                      })
-                    ).json();
-                    if (resp.resp) {
-                      notifications.removeNotification(id);
-                      const time = new Date().getTime();
-                      sendJsonMessage({
-                        type: "file",
-                        file: resp.id,
-                      });
-                      setchats(
-                        chats.concat({
-                          mine: true,
-                          message: undefined,
-                          file: resp.id,
-                          time,
+                  const file = e.target.files[0];
+                  if (file.size <= 10000000) {
+                    const id = Math.random();
+                    notifications.addNotification({
+                      title: "File",
+                      message: "Uploading...",
+                      type: "warning",
+                      insert: "top",
+                      id,
+                      container: "top-right",
+                      animationIn: ["animate__animated", "animate__fadeIn"],
+                      animationOut: ["animate__animated", "animate__fadeOut"],
+                    });
+                    try {
+                      const formdata = new FormData();
+                      formdata.append("file", file);
+                      const resp = await (
+                        await fetch("/api/uploadfile", {
+                          method: "POST",
+                          body: formdata,
                         })
-                      );
-                      notifications.removeNotification(id);
-                    } else {
+                      ).json();
+                      if (resp.resp) {
+                        notifications.removeNotification(id);
+                        const time = new Date().getTime();
+                        sendJsonMessage({
+                          type: "file",
+                          file: resp.id,
+                        });
+                        setchats(
+                          chats.concat({
+                            mine: true,
+                            message: undefined,
+                            file: resp.id,
+                            time,
+                          })
+                        );
+                        notifications.removeNotification(id);
+                      } else {
+                        notifications.removeNotification(id);
+                        notifications.addNotification({
+                          title: "Upload Error",
+                          message: resp.err,
+                          type: "danger",
+                          insert: "top",
+                          container: "top-right",
+                          animationIn: ["animate__animated", "animate__fadeIn"],
+                          animationOut: [
+                            "animate__animated",
+                            "animate__fadeOut",
+                          ],
+                        });
+                      }
+                    } catch (e) {
                       notifications.removeNotification(id);
                       notifications.addNotification({
                         title: "Upload Error",
-                        message: resp.err,
+                        message: String(e),
                         type: "danger",
                         insert: "top",
                         container: "top-right",
@@ -522,11 +551,11 @@ function ChatPage() {
                         animationOut: ["animate__animated", "animate__fadeOut"],
                       });
                     }
-                  } catch (e) {
-                    notifications.removeNotification(id);
+                  } else {
+                    console.log("hello");
                     notifications.addNotification({
-                      title: "Upload Error",
-                      message: String(e),
+                      title: "File too big!",
+                      message: "file needs to be less the 10MB!",
                       type: "danger",
                       insert: "top",
                       container: "top-right",
@@ -625,6 +654,7 @@ function ChatPage() {
                 onKeyDown={() => {
                   clearTimeout(typingTimer.current);
                 }}
+                autoFocus
                 style={{
                   backgroundColor: "var(--dark-bg-colour)",
                   padding: "5px",
@@ -649,6 +679,9 @@ function ChatPage() {
                   textAlign: "center",
                 }}
                 type="submit"
+                onClick={(e: any) => {
+                  inputref.current.focus();
+                }}
               >
                 <FontAwesomeIcon icon={faPaperPlane} />
               </button>

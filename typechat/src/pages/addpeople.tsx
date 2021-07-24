@@ -42,6 +42,9 @@ function UserListing({
         border: "solid 1px var(--light-bg-colour)",
         margin: "1rem",
         backgroundPosition: user.backgroundImage ? "center" : "",
+        textOverflow: "ellipsis",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
       }}
     >
       <img
@@ -66,8 +69,8 @@ function UserListing({
             color: "white",
             WebkitTextStroke: "1px black",
             fontWeight: "bold",
-            fontSize: "25px",
-            marginLeft: "1rem",
+            fontSize: "20px",
+            marginLeft: "5px",
           }}
         >
           {user.username}

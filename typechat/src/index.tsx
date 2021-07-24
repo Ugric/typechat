@@ -32,10 +32,7 @@ import AddPeople from "./pages/addpeople";
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
-  const [chattingto, setchattingto] = useLocalStorage(
-    "chattingto",
-    "Wl4rWzk8o3QaxrblNRjE"
-  );
+  const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
   const [getuserdataonupdate, setgetuserdataonupdate] = useState(false);
   const [userdata, setuserdata] = useState(data);
   useEffect(() => {

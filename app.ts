@@ -68,7 +68,7 @@ const messagefunctions = {};
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS friendsChatMessages (accountID, toAccountID, message, time, file)"
+      "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS chats (chatID)"),
     db.run("CREATE TABLE IF NOT EXISTS chatUsers (chatID, accountID)"),
@@ -83,6 +83,7 @@ const messagefunctions = {};
   const port = 5050;
   app.ws("/", (ws, req) => {
     let to: string;
+    const connectionID = generate(20);
     ws.on("message", async (data: string) => {
       let accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -100,7 +101,7 @@ const messagefunctions = {};
         }
         const messages = await db.all(
           `SELECT
-          (accountID=:accountID) as mine, message, time, file
+          ID,(accountID=:accountID) as mine, message, time, file
           FROM friendsChatMessages
           WHERE (
                   accountID = :accountID
@@ -133,7 +134,10 @@ const messagefunctions = {};
         }
         const functionidex =
           messagefunctions[accountdata.accountID][msg.to].length;
-        messagefunctions[accountdata.accountID][msg.to].push(ws);
+        messagefunctions[accountdata.accountID][msg.to].push({
+          connectionID,
+          ws,
+        });
         while (!ws._socket._writableState.finished) {
           await snooze(100);
           accountdata = await db.get(
@@ -156,7 +160,7 @@ const messagefunctions = {};
           messagefunctions[to][accountdata.accountID]
         ) {
           for (const ws of messagefunctions[to][accountdata.accountID]) {
-            ws.send(
+            ws.ws.send(
               JSON.stringify({
                 type: "message",
                 message: {
@@ -170,38 +174,47 @@ const messagefunctions = {};
             );
           }
         }
-        if (msg.type === "message") {
-          await db
-            .run(
-              `INSERT INTO friendsChatMessages (accountID, toAccountID, message, time) VALUES  (:accountID, :toAccountID, :message, :time)`,
-              {
-                ":accountID": accountdata.accountID,
-                ":toAccountID": to,
-                ":message": msg.message,
-                ":time": time,
-              }
-            )
-            .catch(console.error);
-        } else {
-          await db
-            .run(
-              `INSERT INTO friendsChatMessages (accountID, toAccountID, file, time) VALUES  (:accountID, :toAccountID, :file, :time)`,
-              {
-                ":accountID": accountdata.accountID,
-                ":toAccountID": to,
-                ":file": msg.file,
-                ":time": time,
-              }
-            )
-            .catch(console.error);
+        if (
+          messagefunctions[accountdata.accountID] &&
+          messagefunctions[accountdata.accountID][to]
+        ) {
+          for (const ws of messagefunctions[accountdata.accountID][to]) {
+            if (ws.connectionID !== connectionID) {
+              ws.ws.send(
+                JSON.stringify({
+                  type: "message",
+                  message: {
+                    mine: true,
+                    time,
+                    message: msg.message,
+                    file: msg.file,
+                    id,
+                  },
+                })
+              );
+            }
+          }
         }
+        await db
+          .run(
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time) VALUES  (:ID, :accountID, :toAccountID, :message, :file, :time)`,
+            {
+              ":ID": id,
+              ":accountID": accountdata.accountID,
+              ":toAccountID": to,
+              ":message": msg.message,
+              ":file": msg.file,
+              ":time": time,
+            }
+          )
+          .catch(console.error);
       } else if (msg.type === "typing") {
         if (
           messagefunctions[to] &&
           messagefunctions[to][accountdata.accountID]
         ) {
           for (const ws of messagefunctions[to][accountdata.accountID]) {
-            ws.send(
+            ws.ws.send(
               JSON.stringify({
                 type: "typing",
                 typing: msg.typing,
@@ -282,8 +295,44 @@ const messagefunctions = {};
           ":id": req.body.user,
         }
       );
-      res.send(toFriendUserData);
+      const alreadyfriendrequest = await db.get(
+        "SELECT * FROM friends WHERE accountID=:accountID and toAccountID=:toAccountID",
+        {
+          ":accountID": accountdata.accountID,
+          ":toAccountID": toFriendUserData.accountID,
+        }
+      );
+      if (!alreadyfriendrequest) {
+        const time = new Date().getTime();
+        await db.run(
+          `INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)`,
+          {
+            ":accountID": accountdata.accountID,
+            ":toAccountID": toFriendUserData.accountID,
+            ":time": time,
+          }
+        );
+      }
+      res.send({
+        friends:
+          (await db.get(
+            `WITH friendrequestlist as (
+        SELECT accountID
+        FROM friends
+        WHERE toAccountID == :accountID
+    )
+    SELECT *
+    FROM friends
+    WHERE accountID == :accountID and toAccountID==:toAccountID
+        and toAccountID in friendrequestlist`,
+            {
+              ":accountID": accountdata.accountID,
+              ":toAccountID": toFriendUserData.accountID,
+            }
+          )) != null,
+      });
     } else {
+      res.send({ friends: false });
     }
   });
   app.get("/api/logout", async (req: any, res: any) => {
@@ -312,6 +361,46 @@ const messagefunctions = {};
       });
     }
   });
+  app.get("/api/getallcontacts", async (req: any, res: any) => {
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+      {
+        ":token": req.cookies.token,
+      }
+    );
+    if (accountdata) {
+      const oldcontacts = await db.all(
+        `WITH friendrequestlist as (
+      SELECT accountID
+      FROM friends
+      WHERE toAccountID == :accountID
+  )
+  SELECT toAccountID
+  FROM friends
+  WHERE accountID == :accountID
+      and toAccountID in friendrequestlist`,
+        { ":accountID": accountdata.accountID }
+      );
+      const contacts = [];
+      for (const friend of oldcontacts) {
+        contacts.push(
+          await db.get(
+            "SELECT username, accountID as id, profilePic, tag, backgroundImage FROM accounts WHERE accountID=:toAccountID",
+            { ":toAccountID": friend.toAccountID }
+          )
+        );
+      }
+      res.send({
+        resp: true,
+        contacts,
+      });
+    } else {
+      res.send({
+        resp: false,
+        err: "invalid token!",
+      });
+    }
+  });
   app.get("/api/getuserdataonupdate", async (req: any, res: any) => {
     let open = true;
     const currentaccountdata = JSON.stringify(
@@ -332,7 +421,6 @@ const messagefunctions = {};
       );
       const stringed = JSON.stringify(nowaccountdata);
       if (currentaccountdata !== stringed) {
-        console.log("update");
         return res.send({
           loggedin: true,
           user: {

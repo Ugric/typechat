@@ -95,6 +95,10 @@ const PageNav = () => {
                 to="/user/settings"
                 style={{
                   color: location.pathname === "/user/settings" ? "white" : "",
+                  textOverflow: "ellipsis",
+                  maxWidth: "30vw",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
                 }}
               >
                 <img
@@ -102,7 +106,6 @@ const PageNav = () => {
                   src={"/files/" + user.profilePic}
                   style={{ height: "24px", borderRadius: "50%" }}
                 />
-                <span style={{ marginLeft: "5px" }}>{user.username}</span>
               </Nav.Link>
               <Nav.Link
                 onClick={async () => {

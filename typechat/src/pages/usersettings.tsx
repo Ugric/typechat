@@ -31,19 +31,17 @@ function Changebutton({
       }}
     >
       <p style={{ margin: "0", color: "lightgray" }}>{name}</p>
-      <p style={{ margin: "0" }}>
-        {clickable ? (
-          <div
-            onClick={onClick}
-            className={"changebutton"}
-            style={{ color: "white" }}
-          >
-            {children}
-          </div>
-        ) : (
-          <div>{children}</div>
-        )}
-      </p>
+      {clickable ? (
+        <div
+          onClick={onClick}
+          className={"changebutton"}
+          style={{ color: "white" }}
+        >
+          {children}
+        </div>
+      ) : (
+        <div>{children}</div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useData } from "../hooks/datahook";
 import ColorThief from "colorthief";
-import { useHistory } from "react-router-dom";
+import { Link, Redirect, useHistory } from "react-router-dom";
+import useApi from "../hooks/useapi";
+import Loader from "./loader";
+import LoadError from "./error";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faComment, faUserCircle } from "@fortawesome/free-solid-svg-icons";
+const colorThief = new ColorThief();
 
 function Contact({
   user,
@@ -35,56 +41,72 @@ function Contact({
         border: "solid 1px var(--light-bg-colour)",
         margin: "1rem",
         backgroundPosition: user.backgroundImage ? "center" : "",
-      }}
-      onClick={() => {
-        history.push(`/chat/${user.id}`);
+        textOverflow: "ellipsis",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
       }}
     >
-      <img
-        alt="profile"
-        loading="lazy"
-        src={"/files/" + user.profilePic}
-        style={{
-          maxHeight: "75px",
-          maxWidth: "100%",
-          height: "auto",
-          width: "auto",
-          borderRadius: "50%",
-        }}
-        onLoad={async (e: any) => {
-          const colorThief = new ColorThief();
-          const resp = await colorThief.getColor(e.target);
-          setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
-        }}
-      />
-      <span>
-        <span
+      <Link to={`/chat/${user.id}`} style={{ textDecoration: "none" }}>
+        <img
+          alt="profile"
+          loading="lazy"
+          src={"/files/" + user.profilePic}
           style={{
-            color: "white",
-            WebkitTextStroke: "1px black",
-            fontWeight: "bold",
-            fontSize: "25px",
-            marginLeft: "1rem",
+            maxHeight: "50px",
+            maxWidth: "100%",
+            height: "auto",
+            width: "auto",
+            borderRadius: "50%",
           }}
-        >
-          {user.username}
+          onLoad={async (e: any) => {
+            const resp = await colorThief.getColor(e.target);
+            setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
+          }}
+        />
+        <span>
           <span
             style={{
-              color: "lightgray",
-              fontWeight: "normal",
+              color: "white",
+              WebkitTextStroke: "1px black",
+              fontWeight: "bold",
+              fontSize: "20px",
+              marginLeft: "5px",
             }}
           >
-            #{user.tag}
+            {user.username}
           </span>
         </span>
-      </span>
+      </Link>
+      <div
+        style={{
+          float: "right",
+          marginLeft: "3px",
+          background: "var(--main-bg-colour)",
+          padding: "5px",
+          borderRadius: "10px",
+          cursor: "pointer",
+        }}
+        onClick={async () => {}}
+      >
+        <FontAwesomeIcon icon={faUserCircle}></FontAwesomeIcon>
+      </div>
     </div>
   );
 }
 
 function Contacts() {
-  const { user } = useData();
-  return (
+  const { loggedin } = useData();
+  const { data, loading, error } = useApi("/api/getallcontacts");
+  if (!loggedin) {
+    return <Redirect to="/"></Redirect>;
+  }
+  return loading || error ? (
+    error ? (
+      <LoadError error={String(error)}></LoadError>
+    ) : (
+      <Loader></Loader>
+    )
+  ) : (
     <div
       style={{
         margin: "1rem",
@@ -102,15 +124,13 @@ function Contacts() {
       >
         <h1 style={{ textAlign: "center" }}>Contacts</h1>
         <div>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
-          <Contact user={user}></Contact>
+          {data.resp ? (
+            data.contacts.map((contact: any) => (
+              <Contact key={contact.id} user={contact}></Contact>
+            ))
+          ) : (
+            <p style={{ color: "red", textAlign: "center" }}>{data.err}</p>
+          )}
         </div>
       </div>
     </div>
