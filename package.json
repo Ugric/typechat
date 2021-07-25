@@ -11,6 +11,7 @@
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "express-ws": "^5.0.2",
+    "follow-redirects": "^1.14.1",
     "nodemailer": "^6.6.2",
     "randomstring": "^1.2.1",
     "sqlite": "^4.0.23",

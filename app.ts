@@ -11,6 +11,11 @@ const snooze = (milliseconds: number) =>
 const { generate } = require("randomstring");
 console.time("express boot");
 
+const truncate = (input: string, limit: number) =>
+  input.length > limit ? `${input.substring(0, limit)}...` : input;
+
+const notificationsockets = {};
+
 const messagefunctions = {};
 (async () => {
   const tagGenerator = (): string => {
@@ -81,7 +86,39 @@ const messagefunctions = {};
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const port = 5050;
-  app.ws("/", (ws, req) => {
+  app.ws("/notifications", async (ws, req) => {
+    let accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+      {
+        ":token": req.cookies.token,
+      }
+    );
+    if (!accountdata) {
+      return ws.close();
+    }
+    if (!notificationsockets[accountdata.accountID]) {
+      notificationsockets[accountdata.accountID] = [];
+    }
+    const functionidex = notificationsockets[accountdata.accountID].length;
+    notificationsockets[accountdata.accountID].push({
+      ws,
+    });
+    while (!ws._socket._writableState.finished) {
+      await snooze(100);
+      accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (!accountdata) {
+        break;
+      }
+    }
+    notificationsockets[accountdata.accountID].splice(functionidex, 1);
+    ws.close();
+  });
+  app.ws("/chat", (ws, req) => {
     let to: string;
     const connectionID = generate(20);
     ws.on("message", async (data: string) => {
@@ -195,9 +232,30 @@ const messagefunctions = {};
             }
           }
         }
+        if (
+          !(
+            messagefunctions[to] &&
+            messagefunctions[to][accountdata.accountID] &&
+            messagefunctions[to][accountdata.accountID].length > 0
+          ) &&
+          notificationsockets[to]
+        ) {
+          for (const ws of notificationsockets[to]) {
+            if (ws.connectionID !== connectionID) {
+              ws.ws.send(
+                JSON.stringify({
+                  type: "notification",
+                  title: accountdata.username,
+                  message: msg.message ? truncate(msg.message, 25) : "file",
+                  to: `/chat/${accountdata.accountID}`,
+                })
+              );
+            }
+          }
+        }
         await db
           .run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time) VALUES  (:ID, :accountID, :toAccountID, :message, :file, :time)`,
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time)`,
             {
               ":ID": id,
               ":accountID": accountdata.accountID,
@@ -335,6 +393,9 @@ const messagefunctions = {};
       res.send({ friends: false });
     }
   });
+  app.get("/sounds/:filename", async (req: any, res: any) => {
+    res.sendFile(path.join(__dirname, "sounds", req.params.filename));
+  });
   app.get("/api/logout", async (req: any, res: any) => {
     await db.get("DELETE FROM tokens WHERE token=:token", {
       ":token": req.cookies.token,
@@ -369,27 +430,19 @@ const messagefunctions = {};
       }
     );
     if (accountdata) {
-      const oldcontacts = await db.all(
+      const contacts = await db.all(
         `WITH friendrequestlist as (
       SELECT accountID
       FROM friends
       WHERE toAccountID == :accountID
   )
-  SELECT toAccountID
-  FROM friends
-  WHERE accountID == :accountID
+  SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage
+  FROM friends 
+  JOIN accounts ON friends.toAccountID=accounts.accountID
+  WHERE friends.accountID == :accountID
       and toAccountID in friendrequestlist`,
         { ":accountID": accountdata.accountID }
       );
-      const contacts = [];
-      for (const friend of oldcontacts) {
-        contacts.push(
-          await db.get(
-            "SELECT username, accountID as id, profilePic, tag, backgroundImage FROM accounts WHERE accountID=:toAccountID",
-            { ":toAccountID": friend.toAccountID }
-          )
-        );
-      }
       res.send({
         resp: true,
         contacts,

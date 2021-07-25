@@ -17,6 +17,10 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import KeyboardEventHandler from "react-keyboard-event-handler";
 import TextareaAutosize from "react-textarea-autosize";
 import SyntaxHighlighter from "react-syntax-highlighter";
+import playSound from "../playsound";
+
+const truncate = (input: string, limit: number) =>
+  input.length > limit ? `${input.substring(0, limit)}...` : input;
 
 function random(seed: number) {
   var x = Math.sin(seed) * 10000;
@@ -291,7 +295,7 @@ function ChatPage() {
     length: 0,
     specialchars: {},
   });
-  const [socketUrl] = useState(`ws://${window.location.hostname}:5050/`);
+  const [socketUrl] = useState(`ws://${window.location.hostname}:5050/chat`);
   const [typingdata, settypingdata] = useState<{
     typing: Boolean;
     length: Number;
@@ -348,6 +352,9 @@ function ChatPage() {
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
+        if (!lastJsonMessage.mine) {
+          playSound("/sounds/newmessage.mp3");
+        }
         setchats((c) => c.concat(lastJsonMessage.message));
 
         settypingdata({
@@ -359,8 +366,8 @@ function ChatPage() {
           setTimeout(scrolltobottom, 0);
         } else {
           notifications.addNotification({
-            title: `${data.username}#${data.tag}`,
-            message: lastJsonMessage.message.message,
+            title: `${data.username}`,
+            message: truncate(lastJsonMessage.message.message, 25),
             type: "default",
             onRemoval: (_: number, type: string) => {
               if (type === "click") {

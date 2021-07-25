@@ -7,6 +7,7 @@ import {
   Switch,
   Route,
   Redirect,
+  useHistory,
 } from "react-router-dom";
 import "./pages/css/scrollbar.css";
 import Home from "./pages/Home";
@@ -28,6 +29,7 @@ import Contacts from "./pages/contacts";
 import ReactNotification, { store } from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
 import AddPeople from "./pages/addpeople";
+import NotificationComponent from "./notification";
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
@@ -77,6 +79,7 @@ function App() {
           >
             <PageNav />
             <ReactNotification />
+            <NotificationComponent />
             <div>
               <Switch>
                 <Route path="/" exact>
