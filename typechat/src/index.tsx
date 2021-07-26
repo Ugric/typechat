@@ -30,6 +30,7 @@ import ReactNotification, { store } from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
 import AddPeople from "./pages/addpeople";
 import NotificationComponent from "./notification";
+import LoadError from "./pages/error";
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
@@ -60,11 +61,15 @@ function App() {
     })();
   });
   return (
-    <div style={{ overflowWrap: "anywhere" }}>
-      {error || loading ? (
-        <Loader></Loader>
-      ) : (
-        <Router>
+    <Router>
+      <div style={{ overflowWrap: "anywhere" }}>
+        {error || loading ? (
+          error ? (
+            <LoadError error={String(error)}></LoadError>
+          ) : (
+            <Loader></Loader>
+          )
+        ) : (
           <datahook.Provider
             value={{
               loggedin: userdata.loggedin,
@@ -112,9 +117,9 @@ function App() {
               </Switch>
             </div>
           </datahook.Provider>
-        </Router>
-      )}
-    </div>
+        )}
+      </div>
+    </Router>
   );
 }
 

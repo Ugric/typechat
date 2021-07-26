@@ -1,5 +1,7 @@
 import {
   faCommentSlash,
+  faEye,
+  faEyeSlash,
   faFile,
   faPaperPlane,
   faPlus,
@@ -70,6 +72,7 @@ function MessageMaker({
   const [output, setoutput] = useState(<></>);
   const [faketext, setfaketext] = useState("");
   useEffect(() => {
+    console.time("chatrender");
     const output = [];
     let tempmessages: Array<any> = [];
     let lastmessagegrouptime;
@@ -154,6 +157,7 @@ function MessageMaker({
       }
     }
     setoutput(<>{output}</>);
+    console.timeEnd("chatrender");
   }, [messages]);
   useEffect(() => {
     let output = [];
@@ -287,8 +291,15 @@ function ChatPage() {
   const { id: chattingto } = useParams<{ id: string }>();
   const { setchattingto, notifications } = useData();
   const { error, loading, data } = useApi(
-    "/api/userdatafromid?" + new URLSearchParams({ id: chattingto }).toString()
+    "/api/friendsuserdatafromid?" +
+      new URLSearchParams({ id: chattingto }).toString()
   );
+  const [oldmetypingdata, setoldmetypingdata] = useState({
+    type: "typing",
+    typing: false,
+    length: 0,
+    specialchars: {},
+  });
   const [metypingdata, setmetypingdata] = useState({
     type: "typing",
     typing: false,
@@ -301,6 +312,7 @@ function ChatPage() {
     length: Number;
     specialchars: { [key: number]: any };
   }>({ typing: false, length: 0, specialchars: {} });
+  const [isonline, setisonline] = useState(false);
   const metypinglengthref = useRef<number>(0);
   const metypingref = useRef<any>(false);
   const typingTimer = useRef<any>(null);
@@ -338,14 +350,25 @@ function ChatPage() {
     socketUrl,
     {
       shouldReconnect: () => true,
+      reconnectInterval: 1,
       onOpen() {
-        sendJsonMessage({ type: "start", to: chattingto });
+        sendJsonMessage({
+          type: "start",
+          to: chattingto,
+          mobile:
+            /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+              navigator.userAgent
+            ),
+        });
       },
-    }
+    },
+    data ? data.exists : false
   );
   const scrolltobottom = () => {
     const scrollingElement = document.scrollingElement || document.body;
-    scrollingElement.scrollTop = scrollingElement.scrollHeight;
+    if (window.innerHeight + window.scrollY < document.body.offsetHeight) {
+      scrollingElement.scrollTop = scrollingElement.scrollHeight;
+    }
   };
   const fileref = useRef<any>(null);
 
@@ -386,7 +409,16 @@ function ChatPage() {
             },
           });
         }
+      } else if (lastJsonMessage.type === "ping") {
+        sendJsonMessage({ type: "pong" });
+      } else if (lastJsonMessage.type === "online") {
+        setisonline(lastJsonMessage.online);
       } else if (lastJsonMessage.type === "typing") {
+        if (lastJsonMessage.length > typingdata.length) {
+          playSound(`/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`);
+        } else if (lastJsonMessage.length < typingdata.length) {
+          playSound(`/sounds/click3.mp3`);
+        }
         if (toscroll.current) {
           setTimeout(scrolltobottom, 0);
         }
@@ -403,7 +435,10 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
   useEffect(() => {
-    sendJsonMessage(metypingdata);
+    if (JSON.stringify(oldmetypingdata) !== JSON.stringify(metypingdata)) {
+      sendJsonMessage(metypingdata);
+      setoldmetypingdata(metypingdata);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metypingdata]);
   window.onload = () => setTimeout(scrolltobottom, 0);
@@ -415,10 +450,18 @@ function ChatPage() {
       setTimeout(scrolltobottom, 0);
     }
   }, [chats]);
+  useEffect(() => {
+    console.log("sup");
+    if (data && !data.exists) {
+      console.log("Hi");
+      setloadingchatmessages(false);
+    }
+  }, [data]);
   if (
     error ||
     loading ||
-    readyState !== ReadyState.OPEN ||
+    (readyState !== ReadyState.OPEN &&
+      readyState !== ReadyState.UNINSTANTIATED) ||
     loadingchatmessages
   ) {
     return error ? <LoadError error={String(error)} /> : <Loader />;
@@ -448,7 +491,12 @@ function ChatPage() {
             }}
             alt={data.username}
           />
-          <p style={{ textAlign: "center" }}>{data.username}</p>
+          <p style={{ textAlign: "center" }}>
+            {data.username}{" "}
+            <FontAwesomeIcon
+              icon={isonline ? faEye : faEyeSlash}
+            ></FontAwesomeIcon>
+          </p>
         </div>
         <KeyboardEventHandler
           handleKeys={["alphanumeric", "space", "shift", "cap"]}
@@ -462,12 +510,9 @@ function ChatPage() {
           typingdata={typingdata}
           toscroll={toscroll}
         />
-        <div
-          ref={bottomref}
-          onLoad={() => {
-            console.log("Hello");
-          }}
-        ></div>
+        <div ref={bottomref}>
+          <FontAwesomeIcon icon={["far", "eye"]}></FontAwesomeIcon>
+        </div>
         <div
           style={{
             position: "fixed",

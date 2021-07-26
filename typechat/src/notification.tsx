@@ -7,7 +7,7 @@ import playSound from "./playsound";
 function NotificationComponent() {
   const { loggedin, notifications } = useData();
   const history = useHistory();
-  const { lastJsonMessage } = useWebSocket(
+  const { lastJsonMessage, sendJsonMessage } = useWebSocket(
     `ws://${window.location.hostname}:5050/notifications`,
     {
       shouldReconnect: () => true,
@@ -16,8 +16,16 @@ function NotificationComponent() {
   );
   useEffect(() => {
     if (lastJsonMessage) {
-      if (lastJsonMessage.type === "notification") {
-        playSound("/sounds/notification.mp3");
+      if (lastJsonMessage.type === "ping") {
+        sendJsonMessage({ type: "pong" });
+      } else {
+        if (lastJsonMessage.sound !== false) {
+          playSound(
+            lastJsonMessage.sound
+              ? lastJsonMessage.sound
+              : "/sounds/notification.mp3"
+          );
+        }
         notifications.addNotification({
           title: lastJsonMessage.title,
           message: lastJsonMessage.message,

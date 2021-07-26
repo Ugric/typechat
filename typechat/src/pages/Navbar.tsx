@@ -99,12 +99,13 @@ const PageNav = () => {
                   maxWidth: "30vw",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
+                  padding: "0",
                 }}
               >
                 <img
                   alt="Profile"
                   src={"/files/" + user.profilePic}
-                  style={{ height: "24px", borderRadius: "50%" }}
+                  style={{ height: "40px", borderRadius: "50%" }}
                 />
               </Nav.Link>
               <Nav.Link

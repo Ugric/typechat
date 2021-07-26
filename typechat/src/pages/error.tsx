@@ -1,8 +1,14 @@
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import playSound from "../playsound";
+import errordataurl from "../errordataurl.json";
 
 function LoadError({ error }: { error: String }) {
+  useEffect(() => {
+    playSound(errordataurl);
+  }, []);
   return (
     <div
       style={{

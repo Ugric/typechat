@@ -21,7 +21,6 @@ function Contact({
     [key: string]: any;
   };
 }) {
-  const history = useHistory();
   const [backgroundcolour, setbackgroundcolour] = useState({
     r: 86,
     g: 86,
@@ -125,9 +124,24 @@ function Contacts() {
         <h1 style={{ textAlign: "center" }}>Contacts</h1>
         <div>
           {data.resp ? (
-            data.contacts.map((contact: any) => (
-              <Contact key={contact.id} user={contact}></Contact>
-            ))
+            data.contacts.length > 0 ? (
+              data.contacts.map((contact: any) => (
+                <Contact key={contact.id} user={contact}></Contact>
+              ))
+            ) : (
+              <p style={{ textAlign: "center" }}>
+                You have no contacts,{" "}
+                <span>
+                  <Link
+                    style={{ color: "var(--secondary-text-colour)" }}
+                    to="/add"
+                  >
+                    add people
+                  </Link>
+                </span>{" "}
+                or wait for them to add you back!
+              </p>
+            )
           ) : (
             <p style={{ color: "red", textAlign: "center" }}>{data.err}</p>
           )}

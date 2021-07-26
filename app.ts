@@ -9,6 +9,8 @@ const mime = require("mime-types");
 const snooze = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
 const { generate } = require("randomstring");
+const { NotificationEmail } = require("./emailer");
+const autoaccountdetails = require("./autoaccountdetails.json");
 console.time("express boot");
 
 const truncate = (input: string, limit: number) =>
@@ -17,6 +19,7 @@ const truncate = (input: string, limit: number) =>
 const notificationsockets = {};
 
 const messagefunctions = {};
+
 (async () => {
   const tagGenerator = (): string => {
     const output = [];
@@ -62,6 +65,26 @@ const messagefunctions = {};
   };
   const hasher = (string: string) =>
     createHash("md5").update(string).digest("hex");
+
+  const sendNotification = async (
+    to: string,
+    data: { title: string; message: string; to: string; sound?: string }
+  ) => {
+    if (notificationsockets[to]) {
+      for (const ws of notificationsockets[to]) {
+        ws.ws.send(JSON.stringify(data));
+      }
+    }
+    if (!(notificationsockets[to] && notificationsockets[to].length > 0)) {
+      const { email } = await db.get(
+        "SELECT email FROM accounts WHERE accountID=:to",
+        {
+          ":to": to,
+        }
+      );
+      await NotificationEmail(email, data);
+    }
+  };
   const db = await open({
     filename: "./database.db",
     driver: sqlite3.Database,
@@ -82,11 +105,56 @@ const messagefunctions = {};
     ),
     db.run("CREATE TABLE IF NOT EXISTS images (imageID, filename, hash)"),
   ]);
+  let defaultaccount = await db.get(
+    "SELECT * FROM accounts WHERE email=:email",
+    {
+      ":email": autoaccountdetails.email,
+    }
+  );
+  if (!defaultaccount) {
+    const salt = generate(150);
+    const password = hasher(autoaccountdetails.pass + salt);
+    await db.run(
+      "INSERT INTO accounts (accountID, email, username, password, salt, tag) VALUES  (:accountID, :email, :username, :password, :salt, :tag)",
+      {
+        ":accountID": "TypeChat",
+        ":email": autoaccountdetails.email,
+        ":username": "TypeChat",
+        ":password": password,
+        ":salt": salt,
+        ":tag": "0000",
+      } // work on this next! // thanks lol
+    );
+    defaultaccount = await db.get("SELECT * FROM accounts WHERE email=:email", {
+      ":email": autoaccountdetails.email,
+    });
+  }
   const { app, getWss, applyTo } = expressWs(express());
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const port = 5050;
   app.ws("/notifications", async (ws, req) => {
+    ws.on("close", () => {
+      console.log("close notifications");
+      notificationsockets[accountdata.accountID].splice(functionindex, 1);
+    });
+    let lastping = 0;
+    const pingpong = async () => {
+      await snooze(10000);
+      ws.send(JSON.stringify({ type: "ping" }));
+      await snooze(2500);
+      const time = new Date().getTime();
+      if (time - lastping > 5000) {
+        ws.close();
+      }
+    };
+    ws.on("message", (data) => {
+      const msg = JSON.parse(data);
+      if (msg.type == "pong") {
+        lastping = new Date().getTime();
+        pingpong();
+      }
+    });
     let accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       {
@@ -99,38 +167,57 @@ const messagefunctions = {};
     if (!notificationsockets[accountdata.accountID]) {
       notificationsockets[accountdata.accountID] = [];
     }
-    const functionidex = notificationsockets[accountdata.accountID].length;
+    const functionindex = notificationsockets[accountdata.accountID].length;
     notificationsockets[accountdata.accountID].push({
       ws,
     });
-    while (!ws._socket._writableState.finished) {
-      await snooze(100);
-      accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
-        {
-          ":token": req.cookies.token,
-        }
-      );
-      if (!accountdata) {
-        break;
-      }
-    }
-    notificationsockets[accountdata.accountID].splice(functionidex, 1);
-    ws.close();
+
+    pingpong();
   });
-  app.ws("/chat", (ws, req) => {
+  app.ws("/chat", async (ws, req) => {
     let to: string;
+    let functionindex: number | undefined;
     const connectionID = generate(20);
-    ws.on("message", async (data: string) => {
-      let accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-        {
-          ":token": req.cookies.token,
-        }
-      );
-      if (!accountdata) {
-        return ws.close();
+    let accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+      {
+        ":token": req.cookies.token,
       }
+    );
+    if (!accountdata) {
+      return ws.close();
+    }
+    let lastping = 0;
+    const pingpong = async () => {
+      await snooze(10000);
+      ws.send(JSON.stringify({ type: "ping" }));
+      await snooze(2500);
+      const time = new Date().getTime();
+      if (time - lastping > 5000) {
+        ws.close();
+      }
+    };
+    ws.on("close", () => {
+      console.log(`close chat from ${accountdata.accountID} to ${to}`);
+      if (to && functionindex !== undefined) {
+        messagefunctions[accountdata.accountID][to].splice(functionindex, 1);
+        if (
+          messagefunctions[accountdata.accountID][to].length <= 0 &&
+          messagefunctions[to] &&
+          messagefunctions[to][accountdata.accountID]
+        ) {
+          for (const ws of messagefunctions[to][accountdata.accountID]) {
+            ws.ws.send(
+              JSON.stringify({
+                type: "online",
+                online: false,
+              })
+            );
+          }
+        }
+      }
+    });
+    ws.on("message", async (data: string) => {
       const msg = JSON.parse(data);
       if (msg.type === "start" && !to) {
         if (msg.to === accountdata.accountID) {
@@ -163,32 +250,43 @@ const messagefunctions = {};
           })
         );
         to = String(msg.to);
+        ws.send(
+          JSON.stringify({
+            type: "online",
+            online:
+              (messagefunctions[to] &&
+                messagefunctions[to][accountdata.accountID] &&
+                messagefunctions[to][accountdata.accountID].length > 0) ===
+              true,
+          })
+        );
+        if (
+          messagefunctions[to] &&
+          messagefunctions[to][accountdata.accountID]
+        ) {
+          for (const ws of messagefunctions[to][accountdata.accountID]) {
+            ws.ws.send(
+              JSON.stringify({
+                type: "online",
+                online: true,
+              })
+            );
+          }
+        }
         if (!messagefunctions[accountdata.accountID]) {
           messagefunctions[accountdata.accountID] = {};
         }
         if (!messagefunctions[accountdata.accountID][msg.to]) {
           messagefunctions[accountdata.accountID][msg.to] = [];
         }
-        const functionidex =
-          messagefunctions[accountdata.accountID][msg.to].length;
+        functionindex = messagefunctions[accountdata.accountID][msg.to].length;
         messagefunctions[accountdata.accountID][msg.to].push({
           connectionID,
           ws,
         });
-        while (!ws._socket._writableState.finished) {
-          await snooze(100);
-          accountdata = await db.get(
-            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token)",
-            {
-              ":token": req.cookies.token,
-            }
-          );
-          if (!accountdata) {
-            break;
-          }
-        }
-        messagefunctions[accountdata.accountID][msg.to].splice(functionidex, 1);
-        ws.close();
+      } else if (msg.type == "pong") {
+        lastping = new Date().getTime();
+        pingpong();
       } else if (msg.type === "message" || msg.type === "file") {
         const time = new Date().getTime();
         const id = generate(100);
@@ -237,21 +335,13 @@ const messagefunctions = {};
             messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID] &&
             messagefunctions[to][accountdata.accountID].length > 0
-          ) &&
-          notificationsockets[to]
+          )
         ) {
-          for (const ws of notificationsockets[to]) {
-            if (ws.connectionID !== connectionID) {
-              ws.ws.send(
-                JSON.stringify({
-                  type: "notification",
-                  title: accountdata.username,
-                  message: msg.message ? truncate(msg.message, 25) : "file",
-                  to: `/chat/${accountdata.accountID}`,
-                })
-              );
-            }
-          }
+          sendNotification(to, {
+            title: accountdata.username,
+            message: msg.message ? truncate(msg.message, 25) : "file",
+            to: `/chat/${accountdata.accountID}`,
+          });
         }
         await db
           .run(
@@ -284,6 +374,7 @@ const messagefunctions = {};
         }
       }
     });
+    pingpong();
   });
   90;
   app.post("/api/uploadfile", async (req: any, res: any) => {
@@ -371,23 +462,41 @@ const messagefunctions = {};
           }
         );
       }
-      res.send({
-        friends:
-          (await db.get(
-            `WITH friendrequestlist as (
-        SELECT accountID
-        FROM friends
-        WHERE toAccountID == :accountID
-    )
-    SELECT *
+      const isfriends =
+        (await db.get(
+          `WITH friendrequestlist as (
+    SELECT accountID
     FROM friends
-    WHERE accountID == :accountID and toAccountID==:toAccountID
-        and toAccountID in friendrequestlist`,
-            {
-              ":accountID": accountdata.accountID,
-              ":toAccountID": toFriendUserData.accountID,
-            }
-          )) != null,
+    WHERE toAccountID == :accountID
+)
+SELECT *
+FROM friends
+WHERE accountID == :accountID and toAccountID==:toAccountID
+    and toAccountID in friendrequestlist`,
+          {
+            ":accountID": accountdata.accountID,
+            ":toAccountID": toFriendUserData.accountID,
+          }
+        )) != null;
+      if (!alreadyfriendrequest) {
+        if (isfriends) {
+          sendNotification(toFriendUserData.accountID, {
+            title: "New Contact!",
+            message: `${accountdata.username}#${accountdata.tag} added you back!`,
+            to: `/chat/${accountdata.accountID}`,
+            sound: "/sounds/friends.mp3",
+          });
+        } else {
+          sendNotification(toFriendUserData.accountID, {
+            title: "Friend Request!",
+            message: `${accountdata.username}#${accountdata.tag} sent a friend request!`,
+            to: `/add`,
+            sound: "/sounds/friendrequest.mp3",
+          });
+        }
+      }
+      res.send({
+        friends: isfriends,
       });
     } else {
       res.send({ friends: false });
@@ -402,24 +511,45 @@ const messagefunctions = {};
     });
     res.send(true);
   });
-  app.get("/api/userdatafromid", async (req: any, res: any) => {
+  app.get("/api/friendsuserdatafromid", async (req: any, res: any) => {
     const accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=:ID",
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       {
-        ":ID": req.query.id,
+        ":token": req.cookies.token,
       }
     );
-    if (!accountdata) {
-      return res.send({ exists: false });
+    if (accountdata) {
+      const friendsaccountdata = await db.get(
+        `WITH friendrequestlist as (
+        SELECT accountID
+        FROM friends
+        WHERE toAccountID == :accountID
+    )
+    SELECT *
+    FROM friends 
+    JOIN accounts ON friends.toAccountID=accounts.accountID
+    WHERE friends.accountID == :accountID and friends.toAccountID==:ID
+        and toAccountID in friendrequestlist`,
+        {
+          ":accountID": accountdata.accountID,
+          ":ID": req.query.id,
+        }
+      );
+      if (!friendsaccountdata) {
+        console.log("lol");
+        return res.send({ exists: false });
+      } else {
+        return res.send({
+          exists: true,
+          username: friendsaccountdata.username,
+          id: friendsaccountdata.accountID,
+          profilePic: friendsaccountdata.profilePic,
+          tag: friendsaccountdata.tag,
+          backgroundImage: friendsaccountdata.backgroundImage,
+        });
+      }
     } else {
-      return res.send({
-        exists: true,
-        username: accountdata.username,
-        id: accountdata.accountID,
-        profilePic: accountdata.profilePic,
-        tag: accountdata.tag,
-        backgroundImage: accountdata.backgroundImage,
-      });
+      return res.send({ exists: false });
     }
   });
   app.get("/api/getallcontacts", async (req: any, res: any) => {
@@ -644,6 +774,8 @@ const messagefunctions = {};
       if (!exists) {
         req.files.profile.mv(profilePath);
       }
+      const time = new Date().getTime();
+      const firstMessage = `Hello New User! The Team hope you will enjoy your time on typechat! If you have any issues, just text text us!`;
       await Promise.all([
         db.run(
           "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag)",
@@ -661,7 +793,38 @@ const messagefunctions = {};
           "INSERT INTO tokens (accountID, token) VALUES  (:accountID, :token)",
           { ":accountID": accountID, ":token": token }
         ),
+        db.run(
+          "INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)",
+          {
+            ":accountID": accountID,
+            ":toAccountID": defaultaccount.accountID,
+            ":time": time,
+          }
+        ),
+        db.run(
+          "INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)",
+          {
+            ":accountID": defaultaccount.accountID,
+            ":toAccountID": accountID,
+            ":time": time,
+          }
+        ),
+        db.run(
+          `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+          {
+            ":ID": generate(100),
+            ":accountID": defaultaccount.accountID,
+            ":toAccountID": accountID,
+            ":message": firstMessage,
+            ":time": time,
+          }
+        ),
       ]);
+      sendNotification(accountID, {
+        title: "TypeChat",
+        message: truncate(firstMessage, 25),
+        to: `/chat/${defaultaccount.accountID}`,
+      });
       return res.send({ resp: true, token });
     }
   });

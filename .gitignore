@@ -25,3 +25,4 @@ yarn-debug.log*
 yarn-error.log*
 database.db
 test.sql
+emailconfig.json
