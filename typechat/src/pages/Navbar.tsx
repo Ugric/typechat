@@ -17,6 +17,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import useComponentSize from "@rehooks/component-size";
+import playSound from "../playsound";
 const PageNav = () => {
   const { width } = useWindowSize();
   const Navbarref = useRef(null);
@@ -30,7 +31,16 @@ const PageNav = () => {
   return (
     <>
       <Navbar ref={Navbarref} bg="darkpurple" variant="dark" fixed="top">
-        <Navbar.Brand as={Link} to={loggedin ? "/contacts" : "/"}>
+        <Navbar.Brand
+          onPointerDown={() => {
+            playSound("/sounds/click2.mp3");
+          }}
+          onPointerUp={() => {
+            playSound("/sounds/click1.mp3");
+          }}
+          as={Link}
+          to={loggedin ? "/contacts" : "/"}
+        >
           <img
             alt="TypeChat"
             src={width > 700 ? bigLogo : smallLogo}
@@ -45,6 +55,12 @@ const PageNav = () => {
             <>
               {chattingto ? (
                 <Nav.Link
+                  onPointerDown={() => {
+                    playSound("/sounds/click2.mp3");
+                  }}
+                  onPointerUp={() => {
+                    playSound("/sounds/click1.mp3");
+                  }}
                   as={Link}
                   to={`/chat/${chattingto}`}
                   style={{
@@ -60,6 +76,12 @@ const PageNav = () => {
                 <></>
               )}
               <Nav.Link
+                onPointerDown={() => {
+                  playSound("/sounds/click2.mp3");
+                }}
+                onPointerUp={() => {
+                  playSound("/sounds/click1.mp3");
+                }}
                 as={Link}
                 to="/contacts"
                 style={{
@@ -69,6 +91,12 @@ const PageNav = () => {
                 <FontAwesomeIcon icon={faUserFriends} />
               </Nav.Link>
               <Nav.Link
+                onPointerDown={() => {
+                  playSound("/sounds/click2.mp3");
+                }}
+                onPointerUp={() => {
+                  playSound("/sounds/click1.mp3");
+                }}
                 as={Link}
                 to="/add"
                 style={{ color: location.pathname === "/add" ? "white" : "" }}
@@ -82,6 +110,12 @@ const PageNav = () => {
         </Nav>
         <Nav>
           <Nav.Link
+            onPointerDown={() => {
+              playSound("/sounds/click2.mp3");
+            }}
+            onPointerUp={() => {
+              playSound("/sounds/click1.mp3");
+            }}
             as={Link}
             to="/settings"
             style={{ color: location.pathname === "/settings" ? "white" : "" }}
@@ -91,6 +125,12 @@ const PageNav = () => {
           {loggedin ? (
             <>
               <Nav.Link
+                onPointerDown={() => {
+                  playSound("/sounds/click2.mp3");
+                }}
+                onPointerUp={() => {
+                  playSound("/sounds/click1.mp3");
+                }}
                 as={Link}
                 to="/user/settings"
                 style={{
@@ -109,6 +149,12 @@ const PageNav = () => {
                 />
               </Nav.Link>
               <Nav.Link
+                onPointerDown={() => {
+                  playSound("/sounds/click2.mp3");
+                }}
+                onPointerUp={() => {
+                  playSound("/sounds/click1.mp3");
+                }}
                 onClick={async () => {
                   await fetch("/api/logout");
                   cookies.remove("token");
@@ -121,6 +167,12 @@ const PageNav = () => {
           ) : (
             <>
               <Nav.Link
+                onPointerDown={() => {
+                  playSound("/sounds/click2.mp3");
+                }}
+                onPointerUp={() => {
+                  playSound("/sounds/click1.mp3");
+                }}
                 as={Link}
                 to="/login"
                 style={{ color: location.pathname === "/login" ? "white" : "" }}
@@ -128,6 +180,12 @@ const PageNav = () => {
                 Login
               </Nav.Link>
               <Nav.Link
+                onPointerDown={() => {
+                  playSound("/sounds/click2.mp3");
+                }}
+                onPointerUp={() => {
+                  playSound("/sounds/click1.mp3");
+                }}
                 as={Link}
                 to="/signup"
                 style={{

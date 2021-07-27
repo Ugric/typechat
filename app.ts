@@ -28,7 +28,7 @@ const messagefunctions = {};
     }
     return output.join("");
   };
-  const createFileID = async (file: any) => {
+  const createFileID = async (file: any, from?: string) => {
     const hashed = createHash("md5").update(file.data).digest("hex");
     const existsindatabase = await db.get(
       "SELECT * FROM images WHERE hash=:hash LIMIT 1",
@@ -49,11 +49,12 @@ const messagefunctions = {};
     const filename = generate(45) + "." + mime.extension(file.mimetype);
     const paths = path.join(__dirname, "files", filename);
     db.run(
-      "INSERT INTO images (imageID, filename, hash) VALUES  (:id, :filename, :hash)",
+      "INSERT INTO images (imageID, filename, hash, fromID) VALUES  (:id, :filename, :hash, :fromID)",
       {
         ":id": id,
         ":filename": filename,
         ":hash": hashed,
+        ":fromID": from,
       }
     );
     return {
@@ -103,7 +104,9 @@ const messagefunctions = {};
     db.run(
       "CREATE TABLE IF NOT EXISTS chatMessages (chatID, accountID, message, time)"
     ),
-    db.run("CREATE TABLE IF NOT EXISTS images (imageID, filename, hash)"),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID)"
+    ),
   ]);
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
@@ -122,22 +125,19 @@ const messagefunctions = {};
         ":username": "TypeChat",
         ":password": password,
         ":salt": salt,
-        ":tag": "0000",
-      } // work on this next! // thanks lol
+        ":tag": "OFFICIAL",
+      }
     );
     defaultaccount = await db.get("SELECT * FROM accounts WHERE email=:email", {
       ":email": autoaccountdetails.email,
     });
   }
   const { app, getWss, applyTo } = expressWs(express());
+  app.use(express.static(path.join(__dirname, "public")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const port = 5050;
   app.ws("/notifications", async (ws, req) => {
-    ws.on("close", () => {
-      console.log("close notifications");
-      notificationsockets[accountdata.accountID].splice(functionindex, 1);
-    });
     let lastping = 0;
     const pingpong = async () => {
       await snooze(10000);
@@ -164,6 +164,10 @@ const messagefunctions = {};
     if (!accountdata) {
       return ws.close();
     }
+    ws.on("close", () => {
+      console.log("close notifications");
+      notificationsockets[accountdata.accountID].splice(functionindex, 1);
+    });
     if (!notificationsockets[accountdata.accountID]) {
       notificationsockets[accountdata.accountID] = [];
     }
@@ -258,6 +262,14 @@ const messagefunctions = {};
                 messagefunctions[to][accountdata.accountID] &&
                 messagefunctions[to][accountdata.accountID].length > 0) ===
               true,
+            mobile:
+              messagefunctions[to] &&
+              messagefunctions[to][accountdata.accountID] &&
+              messagefunctions[to][accountdata.accountID].length > 0
+                ? messagefunctions[to][accountdata.accountID][
+                    messagefunctions[to][accountdata.accountID].length - 1
+                  ].mobile
+                : undefined,
           })
         );
         if (
@@ -269,6 +281,7 @@ const messagefunctions = {};
               JSON.stringify({
                 type: "online",
                 online: true,
+                mobile: msg.mobile,
               })
             );
           }
@@ -283,6 +296,7 @@ const messagefunctions = {};
         messagefunctions[accountdata.accountID][msg.to].push({
           connectionID,
           ws,
+          mobile: msg.mobile,
         });
       } else if (msg.type == "pong") {
         lastping = new Date().getTime();
@@ -385,7 +399,10 @@ const messagefunctions = {};
       }
     );
     if (accountdata) {
-      const { id, path, exists } = await createFileID(req.files.file);
+      const { id, path, exists } = await createFileID(
+        req.files.file,
+        accountdata.accountID
+      );
       if (!exists) {
         req.files.file.mv(path);
       }
@@ -570,7 +587,8 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
   FROM friends 
   JOIN accounts ON friends.toAccountID=accounts.accountID
   WHERE friends.accountID == :accountID
-      and toAccountID in friendrequestlist`,
+      and toAccountID in friendrequestlist ORDER BY
+      username ASC`,
         { ":accountID": accountdata.accountID }
       );
       res.send({
@@ -690,7 +708,10 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     if (accountdata) {
       let id = null;
       if (req.files) {
-        const fileiddata = await createFileID(req.files.backgroundImage);
+        const fileiddata = await createFileID(
+          req.files.backgroundImage,
+          accountdata.accountID
+        );
         id = fileiddata.id;
         const { exists, path } = fileiddata;
         if (!exists) {
@@ -713,7 +734,10 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     );
     if (accountdata) {
       if (req.files) {
-        const { exists, path, id } = await createFileID(req.files.profilepic);
+        const { exists, path, id } = await createFileID(
+          req.files.profilepic,
+          accountdata.accountID
+        );
         if (!exists) {
           req.files.profilepic.mv(path);
         }
@@ -770,12 +794,12 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         id: profileID,
         path: profilePath,
         exists,
-      } = await createFileID(req.files.profile);
+      } = await createFileID(req.files.profile, accountID);
       if (!exists) {
         req.files.profile.mv(profilePath);
       }
       const time = new Date().getTime();
-      const firstMessage = `Hello New User! The Team hope you will enjoy your time on typechat! If you have any issues, just text text us!`;
+      const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text text us!`;
       await Promise.all([
         db.run(
           "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag)",
@@ -827,6 +851,9 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
       });
       return res.send({ resp: true, token });
     }
+  });
+  app.use((_: any, res: any) => {
+    res.sendFile(path.join("templates", "index.html"));
   });
   app.listen(port, () => {
     console.timeEnd("express boot");

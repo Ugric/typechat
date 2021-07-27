@@ -5,8 +5,11 @@ import { Link, Redirect, useHistory } from "react-router-dom";
 import useApi from "../hooks/useapi";
 import Loader from "./loader";
 import LoadError from "./error";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faComment, faUserCircle } from "@fortawesome/free-solid-svg-icons";
+import { useRef } from "react";
+import "./css/contacts.css";
+import Modal from "react-modal";
+import ProfilePage from "./profilePage";
+import playSound from "../playsound";
 const colorThief = new ColorThief();
 
 function Contact({
@@ -18,6 +21,7 @@ function Contact({
     id: string;
     tag: string;
     backgroundImage: string | null;
+    aboutme: string;
     [key: string]: any;
   };
 }) {
@@ -26,26 +30,46 @@ function Contact({
     g: 86,
     b: 255,
   });
+  const history = useHistory();
+  const holdref = useRef<any>();
+  const [UserModelIsOpen, setUserModelIsOpen] = useState(false);
   return (
-    <div
-      style={{
-        backgroundImage: user.backgroundImage
-          ? `url(/files/${user.backgroundImage})`
-          : "",
-        backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
-        padding: "1rem",
-        backgroundRepeat: user.backgroundImage ? "no-repeat" : "",
-        backgroundSize: user.backgroundImage ? "cover" : "",
-        borderRadius: "10px",
-        border: "solid 1px var(--light-bg-colour)",
-        margin: "1rem",
-        backgroundPosition: user.backgroundImage ? "center" : "",
-        textOverflow: "ellipsis",
-        overflow: "hidden",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <Link to={`/chat/${user.id}`} style={{ textDecoration: "none" }}>
+    <>
+      <div
+        onPointerDown={() => {
+          holdref.current = setTimeout(() => {
+            holdref.current = undefined;
+            setUserModelIsOpen(true);
+          }, 500);
+          playSound("/sounds/click2.mp3");
+        }}
+        onPointerUp={() => {
+          if (holdref.current) {
+            clearInterval(holdref.current);
+            history.push(`/chat/${user.id}`);
+          }
+          playSound("/sounds/click1.mp3");
+        }}
+        style={{
+          backgroundImage: user.backgroundImage
+            ? `url(/files/${user.backgroundImage})`
+            : "",
+          backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
+          padding: "1rem",
+          marginBottom: "1rem",
+          backgroundRepeat: user.backgroundImage ? "no-repeat" : "",
+          backgroundSize: user.backgroundImage ? "cover" : "",
+          borderRadius: "10px",
+          backgroundPosition: user.backgroundImage ? "center" : "",
+          textOverflow: "ellipsis",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          cursor: "pointer",
+
+          minHeight: "82px",
+        }}
+        className={"contactbutton noselect"}
+      >
         <img
           alt="profile"
           loading="lazy"
@@ -75,21 +99,43 @@ function Contact({
             {user.username}
           </span>
         </span>
-      </Link>
-      <div
-        style={{
-          float: "right",
-          marginLeft: "3px",
-          background: "var(--main-bg-colour)",
-          padding: "5px",
-          borderRadius: "10px",
-          cursor: "pointer",
-        }}
-        onClick={async () => {}}
-      >
-        <FontAwesomeIcon icon={faUserCircle}></FontAwesomeIcon>
+        <div
+          style={{
+            float: "right",
+            marginLeft: "3px",
+            background: "var(--main-bg-colour)",
+            padding: "5px",
+            borderRadius: "10px",
+            cursor: "pointer",
+          }}
+        >
+          Hold for Profile
+        </div>
       </div>
-    </div>
+      <Modal
+        isOpen={UserModelIsOpen}
+        onRequestClose={() => {
+          setUserModelIsOpen(false);
+        }}
+        style={{
+          overlay: { backgroundColor: "rgb(18 18 18 / 50%)", zIndex: 10 },
+          content: {
+            backgroundColor: "transparent",
+            zIndex: 11,
+            border: "none",
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -50%)",
+          },
+        }}
+        contentLabel="Username Change"
+      >
+        <ProfilePage user={user}></ProfilePage>
+      </Modal>
+    </>
   );
 }
 
@@ -108,15 +154,13 @@ function Contacts() {
   ) : (
     <div
       style={{
-        margin: "1rem",
+        margin: "1rem 0",
       }}
     >
       <div
         style={{
           margin: "auto",
-          border: "solid 1px var(--light-bg-colour)",
           borderRadius: "10px",
-          backgroundColor: "var(--dark-bg-colour)",
           padding: "1rem",
           maxWidth: "700px",
         }}

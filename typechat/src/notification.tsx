@@ -8,7 +8,11 @@ function NotificationComponent() {
   const { loggedin, notifications } = useData();
   const history = useHistory();
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(
-    `ws://${window.location.hostname}:5050/notifications`,
+    `ws://${
+      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
+        ? window.location.hostname + ":5050"
+        : window.location.host
+    }/notifications`,
     {
       shouldReconnect: () => true,
     },

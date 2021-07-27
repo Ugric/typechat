@@ -1,8 +1,9 @@
 import {
   faCommentSlash,
-  faEye,
+  faDesktop,
   faEyeSlash,
   faFile,
+  faMobileAlt,
   faPaperPlane,
   faPlus,
   faSadCry,
@@ -95,11 +96,7 @@ function MessageMaker({
             <div>
               <div
                 onClick={() => {
-                  window.open(
-                    `http://${window.location.hostname}:5050/files/${file}`,
-                    file,
-                    "width=600,height=400"
-                  );
+                  window.open(`/files/${file}`, file, "width=600,height=400");
                 }}
                 style={{
                   color: "var(--secondary-text-colour)",
@@ -306,13 +303,19 @@ function ChatPage() {
     length: 0,
     specialchars: {},
   });
-  const [socketUrl] = useState(`ws://${window.location.hostname}:5050/chat`);
+  const [socketUrl] = useState(
+    `ws://${
+      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
+        ? window.location.hostname + ":5050"
+        : window.location.host
+    }/chat`
+  );
   const [typingdata, settypingdata] = useState<{
     typing: Boolean;
     length: Number;
     specialchars: { [key: number]: any };
   }>({ typing: false, length: 0, specialchars: {} });
-  const [isonline, setisonline] = useState(false);
+  const [isonline, setisonline] = useState("0");
   const metypinglengthref = useRef<number>(0);
   const metypingref = useRef<any>(false);
   const typingTimer = useRef<any>(null);
@@ -375,7 +378,7 @@ function ChatPage() {
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
-        if (!lastJsonMessage.mine) {
+        if (!lastJsonMessage.message.mine) {
           playSound("/sounds/newmessage.mp3");
         }
         setchats((c) => c.concat(lastJsonMessage.message));
@@ -412,7 +415,9 @@ function ChatPage() {
       } else if (lastJsonMessage.type === "ping") {
         sendJsonMessage({ type: "pong" });
       } else if (lastJsonMessage.type === "online") {
-        setisonline(lastJsonMessage.online);
+        setisonline(
+          lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
+        );
       } else if (lastJsonMessage.type === "typing") {
         if (lastJsonMessage.length > typingdata.length) {
           playSound(`/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`);
@@ -451,9 +456,7 @@ function ChatPage() {
     }
   }, [chats]);
   useEffect(() => {
-    console.log("sup");
     if (data && !data.exists) {
-      console.log("Hi");
       setloadingchatmessages(false);
     }
   }, [data]);
@@ -494,7 +497,14 @@ function ChatPage() {
           <p style={{ textAlign: "center" }}>
             {data.username}{" "}
             <FontAwesomeIcon
-              icon={isonline ? faEye : faEyeSlash}
+              style={{ color: isonline === "0" ? "#5c5c5c" : "lightgreen" }}
+              icon={
+                isonline === "1"
+                  ? faDesktop
+                  : isonline === "M"
+                  ? faMobileAlt
+                  : faEyeSlash
+              }
             ></FontAwesomeIcon>
           </p>
         </div>
@@ -510,9 +520,7 @@ function ChatPage() {
           typingdata={typingdata}
           toscroll={toscroll}
         />
-        <div ref={bottomref}>
-          <FontAwesomeIcon icon={["far", "eye"]}></FontAwesomeIcon>
-        </div>
+        <div ref={bottomref}></div>
         <div
           style={{
             position: "fixed",
@@ -643,6 +651,7 @@ function ChatPage() {
                 if (message !== "") {
                   e.target[0].value = "";
                   const time = new Date().getTime();
+                  playSound("/sounds/send.mp3");
                   sendJsonMessage({
                     type: "message",
                     message,
@@ -670,6 +679,9 @@ function ChatPage() {
                 onInput={(e: any) => {
                   const message = e.target.value.trim();
                   if (message.length <= 2000) {
+                    playSound(
+                      `/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`
+                    );
                     metypinglengthref.current = message.length;
                     if (metypinglengthref.current > 0) {
                       metypingref.current = true;

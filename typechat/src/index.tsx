@@ -7,7 +7,6 @@ import {
   Switch,
   Route,
   Redirect,
-  useHistory,
 } from "react-router-dom";
 import "./pages/css/scrollbar.css";
 import Home from "./pages/Home";
@@ -38,6 +37,7 @@ function App() {
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
   const [getuserdataonupdate, setgetuserdataonupdate] = useState(false);
   const [userdata, setuserdata] = useState(data);
+  const [catchedcontacts, setcachedcontacts] = useState<any>(null);
   useEffect(() => {
     setuserdata(data);
   }, [data]);
@@ -80,6 +80,8 @@ function App() {
               chattingto,
               setchattingto,
               notifications: store,
+              catchedcontacts,
+              setcachedcontacts,
             }}
           >
             <PageNav />

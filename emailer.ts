@@ -62,7 +62,7 @@ async function NotificationEmail(
   const info = await transporter.sendMail({
     from: `"TypeChat💬" <${email}>`,
     to,
-    subject: `${data.title} | ${data.message} | NEW NOTIFICATION ✨`,
+    subject: `${data.title} | ${data.message}`,
     text: `TypeChat\n\nNEW NOTIFICATION ✨\n\n${data.title}\n${
       data.message
     }\n\nopen: ${new URL(data.to, "http://localhost:3000/").href}\n© TypeChat`,
@@ -94,8 +94,6 @@ async function NotificationEmail(
 </table>
 </table></div></div><hr /><p>© TypeChat</p></center></div>`,
   });
-
-  console.log("Message sent:", info);
 }
 
 module.exports = { verifyemail, NotificationEmail };
