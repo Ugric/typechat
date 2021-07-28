@@ -83,7 +83,7 @@ const messagefunctions = {};
           ":to": to,
         }
       );
-      await NotificationEmail(email, data);
+      await NotificationEmail(email, data).catch();
     }
   };
   const db = await open({
@@ -133,10 +133,10 @@ const messagefunctions = {};
     });
   }
   const { app, getWss, applyTo } = expressWs(express());
-  app.use(express.static(path.join(__dirname, "public")));
+  app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
-  const port = 5050;
+  const port = 5000;
   app.ws("/notifications", async (ws, req) => {
     let lastping = 0;
     const pingpong = async () => {
@@ -165,7 +165,6 @@ const messagefunctions = {};
       return ws.close();
     }
     ws.on("close", () => {
-      console.log("close notifications");
       notificationsockets[accountdata.accountID].splice(functionindex, 1);
     });
     if (!notificationsockets[accountdata.accountID]) {
@@ -202,7 +201,6 @@ const messagefunctions = {};
       }
     };
     ws.on("close", () => {
-      console.log(`close chat from ${accountdata.accountID} to ${to}`);
       if (to && functionindex !== undefined) {
         messagefunctions[accountdata.accountID][to].splice(functionindex, 1);
         if (
@@ -227,8 +225,10 @@ const messagefunctions = {};
         if (msg.to === accountdata.accountID) {
           return ws.close();
         }
-        const messages = await db.all(
-          `SELECT
+        const messages = (
+          await db.all(
+            `SELECT * 
+          FROM (SELECT
           ID,(accountID=:accountID) as mine, message, time, file
           FROM friendsChatMessages
           WHERE (
@@ -238,12 +238,13 @@ const messagefunctions = {};
               or (
                   accountID = :toUser
                   and toAccountID = :accountID
-              )`,
-          {
-            ":accountID": accountdata.accountID,
-            ":toUser": msg.to,
-          }
-        );
+              ) ORDER  BY time DESC) LIMIT 25`,
+            {
+              ":accountID": accountdata.accountID,
+              ":toUser": msg.to,
+            }
+          )
+        ).reverse();
         for (const message of messages) {
           message.mine = message.mine === 1;
         }
@@ -298,6 +299,37 @@ const messagefunctions = {};
           ws,
           mobile: msg.mobile,
         });
+      } else if (msg.type == "getmessages") {
+        const messages = (
+          await db.all(
+            `SELECT * FROM (SELECT
+          ID,(accountID=:accountID) as mine, message, time, file
+          FROM friendsChatMessages
+          WHERE (
+                  accountID = :accountID
+                  and toAccountID = :toUser
+              )
+              or (
+                  accountID = :toUser
+                  and toAccountID = :accountID
+              ) ORDER  BY time DESC) LIMIT :start, :max`,
+            {
+              ":accountID": accountdata.accountID,
+              ":toUser": to,
+              ":start": msg.start,
+              ":max": msg.max,
+            }
+          )
+        ).reverse();
+        for (const message of messages) {
+          message.mine = message.mine === 1;
+        }
+        ws.send(
+          JSON.stringify({
+            type: "prependmessages",
+            messages,
+          })
+        );
       } else if (msg.type == "pong") {
         lastping = new Date().getTime();
         pingpong();
@@ -622,16 +654,22 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
       );
       const stringed = JSON.stringify(nowaccountdata);
       if (currentaccountdata !== stringed) {
-        return res.send({
-          loggedin: true,
-          user: {
-            username: nowaccountdata.username,
-            id: nowaccountdata.accountID,
-            profilePic: nowaccountdata.profilePic,
-            tag: nowaccountdata.tag,
-            backgroundImage: nowaccountdata.backgroundImage,
-          },
-        });
+        if (nowaccountdata) {
+          return res.send({
+            loggedin: true,
+            user: {
+              username: nowaccountdata.username,
+              id: nowaccountdata.accountID,
+              profilePic: nowaccountdata.profilePic,
+              tag: nowaccountdata.tag,
+              backgroundImage: nowaccountdata.backgroundImage,
+            },
+          });
+        } else {
+          return res.send({
+            loggedin: false,
+          });
+        }
       }
     }
     return res.send({ reconnect: true });
@@ -853,7 +891,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     }
   });
   app.use((_: any, res: any) => {
-    res.sendFile(path.join("templates", "index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
   });
   app.listen(port, () => {
     console.timeEnd("express boot");

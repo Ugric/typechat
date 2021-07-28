@@ -1,5 +1,5 @@
 import { useData } from "../hooks/datahook";
-import { Nav, Navbar } from "react-bootstrap";
+import { Nav, Navbar, Dropdown } from "react-bootstrap";
 import bigLogo from "../images/logos/TypeChat.svg";
 import smallLogo from "../images/logos/TS.svg";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -124,45 +124,58 @@ const PageNav = () => {
           </Nav.Link>
           {loggedin ? (
             <>
-              <Nav.Link
-                onPointerDown={() => {
-                  playSound("/sounds/click2.mp3");
-                }}
-                onPointerUp={() => {
-                  playSound("/sounds/click1.mp3");
-                }}
-                as={Link}
-                to="/user/settings"
-                style={{
-                  color: location.pathname === "/user/settings" ? "white" : "",
-                  textOverflow: "ellipsis",
-                  maxWidth: "30vw",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  padding: "0",
-                }}
-              >
-                <img
-                  alt="Profile"
-                  src={"/files/" + user.profilePic}
-                  style={{ height: "40px", borderRadius: "50%" }}
-                />
-              </Nav.Link>
-              <Nav.Link
-                onPointerDown={() => {
-                  playSound("/sounds/click2.mp3");
-                }}
-                onPointerUp={() => {
-                  playSound("/sounds/click1.mp3");
-                }}
-                onClick={async () => {
-                  await fetch("/api/logout");
-                  cookies.remove("token");
-                  rechecklogged();
-                }}
-              >
-                <FontAwesomeIcon icon={faSignOutAlt} />
-              </Nav.Link>
+              <Dropdown>
+                <Dropdown.Toggle
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    margin: "0",
+                    padding: "0",
+                  }}
+                  onPointerDown={() => {
+                    playSound("/sounds/click2.mp3");
+                  }}
+                  onPointerUp={() => {
+                    playSound("/sounds/click1.mp3");
+                  }}
+                >
+                  <img
+                    alt="Profile"
+                    src={"/files/" + user.profilePic}
+                    style={{ height: "40px", borderRadius: "50%" }}
+                  />
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu alignRight className={"db-darkpurple"}>
+                  <Dropdown.Item
+                    as={Link}
+                    to="/user/settings"
+                    onPointerDown={() => {
+                      playSound("/sounds/click2.mp3");
+                    }}
+                    onPointerUp={() => {
+                      playSound("/sounds/click1.mp3");
+                    }}
+                  >
+                    User Settings
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    onClick={async () => {
+                      await fetch("/api/logout");
+                      cookies.remove("token");
+                      rechecklogged();
+                    }}
+                    onPointerDown={() => {
+                      playSound("/sounds/click2.mp3");
+                    }}
+                    onPointerUp={() => {
+                      playSound("/sounds/click1.mp3");
+                    }}
+                  >
+                    Logout <FontAwesomeIcon icon={faSignOutAlt} />
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
             </>
           ) : (
             <>

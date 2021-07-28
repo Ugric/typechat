@@ -5,4 +5,6 @@
   --primary-text-colour: #ffff00;
   --secondary-text-colour: #ffaa56;
   --dark-mode: #121212;
+  --online: #90ee90;
+  --offline: rgb(92, 92, 92);
 }

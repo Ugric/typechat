@@ -10,7 +10,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useRef, useState } from "react";
-import { Link, Redirect, useHistory, useParams } from "react-router-dom";
+import {
+  Link,
+  Redirect,
+  useHistory,
+  useLocation,
+  useParams,
+} from "react-router-dom";
 import "./css/message.css";
 import { useData } from "../hooks/datahook";
 import useApi from "../hooks/useapi";
@@ -21,6 +27,8 @@ import KeyboardEventHandler from "react-keyboard-event-handler";
 import TextareaAutosize from "react-textarea-autosize";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import playSound from "../playsound";
+import useLocalStorage from "../hooks/useLocalStorage";
+import emoji from "../emojis";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -60,6 +68,9 @@ function MessageMaker({
   typingdata,
   scrollref,
   toscroll,
+  canloadmore,
+  loadmore,
+  firstmessageref,
 }: {
   messages: Array<messageWithText | messageWithFile>;
   typingdata: {
@@ -69,19 +80,31 @@ function MessageMaker({
   };
   scrollref: React.RefObject<any>;
   toscroll: any;
+  canloadmore: boolean;
+  loadmore: Function;
+  firstmessageref: any;
 }) {
   const [output, setoutput] = useState(<></>);
+  const { id: chattingto } = useParams<{ id: string }>();
+  const location = useLocation();
   const [faketext, setfaketext] = useState("");
   useEffect(() => {
     console.time("chatrender");
     const output = [];
+    if (canloadmore) {
+      output.push(<p style={{ textAlign: "center" }}>Loading...</p>);
+    }
     let tempmessages: Array<any> = [];
     let lastmessagegrouptime;
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i].message;
       const file = messages[i].file;
       tempmessages.push(
-        <div className="message" key={i}>
+        <div
+          className="message"
+          key={i}
+          ref={i === 0 ? firstmessageref : undefined}
+        >
           {message ? (
             message
               .split("```")
@@ -155,10 +178,11 @@ function MessageMaker({
     }
     setoutput(<>{output}</>);
     console.timeEnd("chatrender");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
   useEffect(() => {
     let output = [];
-    for (let i = 0; i <= Number(typingdata.length); i++) {
+    for (let i = 0; i <= typingdata.length; i++) {
       output.push(
         typingdata.specialchars && i - 1 in typingdata.specialchars
           ? typingdata.specialchars[i - 1]
@@ -167,16 +191,20 @@ function MessageMaker({
     }
     setfaketext(output.join("").toLowerCase());
   }, [typingdata]);
-  useEffect(() => {
-    document.body.onscroll = (e: any) => {
+  window.onscroll = () => {
+    if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
         document.documentElement.scrollHeight -
           document.documentElement.scrollTop -
           document.documentElement.clientHeight <=
         200;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      if (canloadmore) {
+        if (document.documentElement.scrollTop < 10) {
+          loadmore(messages);
+        }
+      }
+    }
+  };
   return (
     <div
       style={{
@@ -188,7 +216,10 @@ function MessageMaker({
     >
       <div
         className="chat"
-        style={{ margin: "90px auto 3rem auto", maxWidth: "900px" }}
+        style={{
+          margin: `90px auto 3rem auto`,
+          maxWidth: "900px",
+        }}
       >
         {messages.length > 0 ? (
           output
@@ -253,6 +284,7 @@ function ChatNotFound() {
 
 function ChatPage() {
   const bypassChars: string[] = [
+    ...emoji,
     " ",
     "?",
     "!",
@@ -324,6 +356,12 @@ function ChatPage() {
   const bottomref = useRef<any>(null);
   const toscroll = useRef(true);
   const [loadingchatmessages, setloadingchatmessages] = useState(true);
+  const [canloadmore, setcanloadmore] = useState(true);
+  const firstmessageref = useRef<any>(null);
+  const isLoadMore = useRef<boolean>(false);
+  const [localchats, setlocalchats] = useLocalStorage<{
+    [key: string]: Array<messageWithText | messageWithFile>;
+  }>("chats", {});
   useEffect(() => {
     setchattingto(chattingto);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -389,6 +427,8 @@ function ChatPage() {
           specialchars: {},
         });
         if (toscroll.current) {
+          setchats((c) => c.slice(Math.max(c.length - 25, 0)));
+          setcanloadmore(true);
           setTimeout(scrolltobottom, 0);
         } else {
           notifications.addNotification({
@@ -434,7 +474,21 @@ function ChatPage() {
         });
       } else if (lastJsonMessage.type === "setmessages") {
         setchats(lastJsonMessage.messages);
+        if (lastJsonMessage.messages < 25) {
+          setcanloadmore(false);
+        }
         setloadingchatmessages(false);
+      } else if (lastJsonMessage.type === "prependmessages") {
+        setchats([...lastJsonMessage.messages, ...chats]);
+        if (lastJsonMessage.messages.length > 0) {
+          setTimeout(() => {
+            if (firstmessageref.current) {
+              firstmessageref.current.scrollIntoView();
+            }
+          }, 0);
+        }
+        setcanloadmore(lastJsonMessage.messages.length > 0);
+        isLoadMore.current = false;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -454,21 +508,38 @@ function ChatPage() {
     if (toscroll.current) {
       setTimeout(scrolltobottom, 0);
     }
+    if (!loadingchatmessages) {
+      localchats[chattingto] = chats.slice(Math.max(chats.length - 25, 0));
+      setlocalchats(localchats);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chats]);
   useEffect(() => {
     if (data && !data.exists) {
       setloadingchatmessages(false);
     }
   }, [data]);
+  const loadmore = () => {
+    if (!isLoadMore.current) {
+      isLoadMore.current = true;
+      console.log(chats);
+      sendJsonMessage({
+        type: "getmessages",
+        start: chats.length,
+        max: 10,
+      });
+    }
+  };
   if (
-    error ||
-    loading ||
-    (readyState !== ReadyState.OPEN &&
-      readyState !== ReadyState.UNINSTANTIATED) ||
-    loadingchatmessages
+    (error ||
+      loading ||
+      (readyState !== ReadyState.OPEN &&
+        readyState !== ReadyState.UNINSTANTIATED) ||
+      loadingchatmessages) &&
+    !localchats[chattingto]
   ) {
     return error ? <LoadError error={String(error)} /> : <Loader />;
-  } else if (!data.exists) {
+  } else if (!localchats[chattingto] || (data && !data.exists)) {
     return <ChatNotFound></ChatNotFound>;
   }
   return (
@@ -484,29 +555,38 @@ function ChatPage() {
             background: "linear-gradient(0deg, transparent, var(--dark-mode))",
           }}
         >
-          <img
-            src={"/files/" + String(data.profilePic)}
-            style={{
-              display: "block",
-              height: "65%",
-              margin: "auto",
-              borderRadius: "100%",
-            }}
-            alt={data.username}
-          />
-          <p style={{ textAlign: "center" }}>
-            {data.username}{" "}
-            <FontAwesomeIcon
-              style={{ color: isonline === "0" ? "#5c5c5c" : "lightgreen" }}
-              icon={
-                isonline === "1"
-                  ? faDesktop
-                  : isonline === "M"
-                  ? faMobileAlt
-                  : faEyeSlash
-              }
-            ></FontAwesomeIcon>
-          </p>
+          {data && readyState === ReadyState.OPEN ? (
+            <>
+              {" "}
+              <img
+                src={"/files/" + String(data.profilePic)}
+                style={{
+                  display: "block",
+                  height: "65%",
+                  margin: "auto",
+                  borderRadius: "100%",
+                }}
+                alt={data.username}
+              />
+              <p style={{ textAlign: "center" }}>
+                {data.username}{" "}
+                <FontAwesomeIcon
+                  style={{ color: isonline === "0" ? "#5c5c5c" : "lightgreen" }}
+                  icon={
+                    isonline === "1"
+                      ? faDesktop
+                      : isonline === "M"
+                      ? faMobileAlt
+                      : faEyeSlash
+                  }
+                ></FontAwesomeIcon>
+              </p>
+            </>
+          ) : (
+            <p style={{ margin: "1rem", textAlign: "center" }}>
+              {ReadyState[readyState]}
+            </p>
+          )}
         </div>
         <KeyboardEventHandler
           handleKeys={["alphanumeric", "space", "shift", "cap"]}
@@ -516,9 +596,12 @@ function ChatPage() {
         />
         <MessageMaker
           scrollref={scrollerref}
-          messages={chats}
+          messages={loadingchatmessages ? localchats[chattingto] : chats}
           typingdata={typingdata}
           toscroll={toscroll}
+          canloadmore={canloadmore}
+          firstmessageref={firstmessageref}
+          loadmore={loadmore}
         />
         <div ref={bottomref}></div>
         <div
@@ -656,8 +739,11 @@ function ChatPage() {
                     type: "message",
                     message,
                   });
+                  setcanloadmore(true);
                   setchats(
-                    chats.concat({ mine: true, file: undefined, message, time })
+                    chats
+                      .slice(Math.max(chats.length - 25, 0))
+                      .concat({ mine: true, file: undefined, message, time })
                   );
                   setTimeout(scrolltobottom, 0);
                   metypingref.current = false;

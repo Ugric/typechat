@@ -30,6 +30,7 @@ import "react-notifications-component/dist/theme.css";
 import AddPeople from "./pages/addpeople";
 import NotificationComponent from "./notification";
 import LoadError from "./pages/error";
+import Settings from "./pages/settings";
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
@@ -95,11 +96,16 @@ function App() {
                 <Route path="/chat" exact>
                   <Redirect to={`/chat/${chattingto}`} />
                 </Route>
-                <Route path="/chat/:id" exact>
-                  <Chat />
-                </Route>
+                <Route
+                  path="/chat/:id"
+                  render={(props: any) => <Chat key={props.match.params.id} />}
+                  exact
+                ></Route>
                 <Route path="/contacts" exact>
                   <Contacts />
+                </Route>
+                <Route path="/settings" exact>
+                  <Settings />
                 </Route>
                 <Route path="/login" exact>
                   <Login />

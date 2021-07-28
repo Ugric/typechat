@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useData } from "../hooks/datahook";
 import ColorThief from "colorthief";
 import { Link, Redirect, useHistory } from "react-router-dom";
@@ -10,6 +10,7 @@ import "./css/contacts.css";
 import Modal from "react-modal";
 import ProfilePage from "./profilePage";
 import playSound from "../playsound";
+import useLocalStorage from "../hooks/useLocalStorage";
 const colorThief = new ColorThief();
 
 function Contact({
@@ -142,10 +143,19 @@ function Contact({
 function Contacts() {
   const { loggedin } = useData();
   const { data, loading, error } = useApi("/api/getallcontacts");
+  const [localcontacts, setlocalcontacts] = useLocalStorage<undefined | any>(
+    "contacts",
+    undefined
+  );
+  useEffect(() => {
+    if (data && data.contacts) {
+      setlocalcontacts(data.contacts);
+    }
+  }, [data]);
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
   }
-  return loading || error ? (
+  return (loading || error) && !localcontacts ? (
     error ? (
       <LoadError error={String(error)}></LoadError>
     ) : (
@@ -167,9 +177,10 @@ function Contacts() {
       >
         <h1 style={{ textAlign: "center" }}>Contacts</h1>
         <div>
-          {data.resp ? (
-            data.contacts.length > 0 ? (
-              data.contacts.map((contact: any) => (
+          {localcontacts || data.resp ? (
+            (data && data.contacts.length > 0) ||
+            (localcontacts && localcontacts.length > 0) ? (
+              (data ? data.contacts : localcontacts).map((contact: any) => (
                 <Contact key={contact.id} user={contact}></Contact>
               ))
             ) : (

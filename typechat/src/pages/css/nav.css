@@ -4,6 +4,13 @@
   align-self: auto;
   border-bottom: solid 1px var(--main-bg-colour);
 }
+.db-darkpurple {
+  background: var(--dark-bg-colour);
+  border-bottom: solid 1px var(--main-bg-colour);
+}
 .mc-auto {
   margin: auto;
+}
+.dropdown-item {
+  color: white !important;
 }
