@@ -133,7 +133,7 @@ const messagefunctions = {};
     });
   }
   const { app, getWss, applyTo } = expressWs(express());
-  app.use(express.static(path.join(__dirname, "typechat", "build")));
+  app.use(express.static(path.join(__dirname, "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const port = 5000;
@@ -891,7 +891,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     }
   });
   app.use((_: any, res: any) => {
-    res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
+    res.sendFile(path.join(__dirname, "build", "index.html"));
   });
   app.listen(port, () => {
     console.timeEnd("express boot");
