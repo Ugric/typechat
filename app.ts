@@ -891,7 +891,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     }
   });
   app.use((_: any, res: any) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
   });
   app.listen(port, () => {
     console.timeEnd("express boot");
