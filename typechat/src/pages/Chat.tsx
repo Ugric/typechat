@@ -29,6 +29,8 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import playSound from "../playsound";
 import useLocalStorage from "../hooks/useLocalStorage";
 import emoji from "../emojis";
+import useWindowFocus from "use-window-focus";
+import { useWindowDimensions } from "../hooks/useWiindowDimentions";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -50,6 +52,7 @@ function numToSSColumn(num: number) {
 }
 
 interface messageTypes {
+  id?: string;
   time: number;
   mine: boolean;
 }
@@ -70,7 +73,6 @@ function MessageMaker({
   toscroll,
   canloadmore,
   loadmore,
-  firstmessageref,
 }: {
   messages: Array<messageWithText | messageWithFile>;
   typingdata: {
@@ -82,7 +84,6 @@ function MessageMaker({
   toscroll: any;
   canloadmore: boolean;
   loadmore: Function;
-  firstmessageref: any;
 }) {
   const [output, setoutput] = useState(<></>);
   const { id: chattingto } = useParams<{ id: string }>();
@@ -100,11 +101,7 @@ function MessageMaker({
       const message = messages[i].message;
       const file = messages[i].file;
       tempmessages.push(
-        <div
-          className="message"
-          key={i}
-          ref={i === 0 ? firstmessageref : undefined}
-        >
+        <div className="message" key={messages[i].id}>
           {message ? (
             message
               .split("```")
@@ -134,7 +131,7 @@ function MessageMaker({
       );
       if (!messages[i + 1] || messages[i + 1].mine !== messages[i].mine) {
         output.push(
-          <div className="messagegroup" key={i}>
+          <div className="messagegroup" key={messages[i].id}>
             {lastmessagegrouptime &&
             messages[i].time - lastmessagegrouptime > 300000 ? (
               <p
@@ -316,6 +313,8 @@ function ChatPage() {
   const [chats, setchats] = useState<Array<messageWithText | messageWithFile>>(
     []
   );
+  const isFocussed = useWindowFocus();
+  const windowsize = useWindowDimensions();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
   const { setchattingto, notifications } = useData();
@@ -357,7 +356,6 @@ function ChatPage() {
   const toscroll = useRef(true);
   const [loadingchatmessages, setloadingchatmessages] = useState(true);
   const [canloadmore, setcanloadmore] = useState(true);
-  const firstmessageref = useRef<any>(null);
   const isLoadMore = useRef<boolean>(false);
   const [localchats, setlocalchats] = useLocalStorage<{
     [key: string]: Array<messageWithText | messageWithFile>;
@@ -393,6 +391,8 @@ function ChatPage() {
       shouldReconnect: () => true,
       reconnectInterval: 1,
       onOpen() {
+        setcanloadmore(true);
+        isLoadMore.current = false;
         sendJsonMessage({
           type: "start",
           to: chattingto,
@@ -455,6 +455,11 @@ function ChatPage() {
       } else if (lastJsonMessage.type === "ping") {
         sendJsonMessage({ type: "pong" });
       } else if (lastJsonMessage.type === "online") {
+        if (!lastJsonMessage.online && (isonline === "M" || isonline === "1")) {
+          playSound("/sounds/leave.mp3");
+        } else if (lastJsonMessage.online && isonline === "0") {
+          playSound("/sounds/join.mp3");
+        }
         setisonline(
           lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
         );
@@ -481,10 +486,11 @@ function ChatPage() {
       } else if (lastJsonMessage.type === "prependmessages") {
         setchats([...lastJsonMessage.messages, ...chats]);
         if (lastJsonMessage.messages.length > 0) {
+          const scrollingElement = document.scrollingElement || document.body;
+          const lastheight = document.documentElement.offsetHeight;
           setTimeout(() => {
-            if (firstmessageref.current) {
-              firstmessageref.current.scrollIntoView();
-            }
+            scrollingElement.scrollTop =
+              document.documentElement.offsetHeight - lastheight;
           }, 0);
         }
         setcanloadmore(lastJsonMessage.messages.length > 0);
@@ -493,6 +499,10 @@ function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
+  useEffect(() => {
+    sendJsonMessage({ type: "setOnline", online: isFocussed });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocussed]);
   useEffect(() => {
     if (JSON.stringify(oldmetypingdata) !== JSON.stringify(metypingdata)) {
       sendJsonMessage(metypingdata);
@@ -600,7 +610,6 @@ function ChatPage() {
           typingdata={typingdata}
           toscroll={toscroll}
           canloadmore={canloadmore}
-          firstmessageref={firstmessageref}
           loadmore={loadmore}
         />
         <div ref={bottomref}></div>

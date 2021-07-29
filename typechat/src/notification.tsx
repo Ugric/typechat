@@ -3,9 +3,11 @@ import { useHistory } from "react-router-dom";
 import useWebSocket from "react-use-websocket";
 import { useData } from "./hooks/datahook";
 import playSound from "./playsound";
+import useWindowFocus from "use-window-focus";
 
 function NotificationComponent() {
   const { loggedin, notifications } = useData();
+  const isFocussed = useWindowFocus();
   const history = useHistory();
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(
     `ws://${
@@ -18,6 +20,11 @@ function NotificationComponent() {
     },
     loggedin
   );
+
+  useEffect(() => {
+    sendJsonMessage({ type: "setFocus", focus: isFocussed });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocussed]);
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "ping") {

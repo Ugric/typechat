@@ -164,6 +164,9 @@ const PageNav = () => {
                       await fetch("/api/logout");
                       cookies.remove("token");
                       rechecklogged();
+                      localStorage.removeItem("chats");
+                      localStorage.removeItem("contacts");
+                      localStorage.removeItem("chattingto");
                     }}
                     onPointerDown={() => {
                       playSound("/sounds/click2.mp3");

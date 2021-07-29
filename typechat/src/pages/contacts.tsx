@@ -151,6 +151,7 @@ function Contacts() {
     if (data && data.contacts) {
       setlocalcontacts(data.contacts);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;

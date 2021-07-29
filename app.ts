@@ -136,7 +136,7 @@ const messagefunctions = {};
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
-  const port = 5000;
+  const port = 5050;
   app.ws("/notifications", async (ws, req) => {
     let lastping = 0;
     const pingpong = async () => {
@@ -148,13 +148,6 @@ const messagefunctions = {};
         ws.close();
       }
     };
-    ws.on("message", (data) => {
-      const msg = JSON.parse(data);
-      if (msg.type == "pong") {
-        lastping = new Date().getTime();
-        pingpong();
-      }
-    });
     let accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
       {
@@ -164,6 +157,16 @@ const messagefunctions = {};
     if (!accountdata) {
       return ws.close();
     }
+    ws.on("message", (data) => {
+      const msg = JSON.parse(data);
+      if (msg.type == "pong") {
+        lastping = new Date().getTime();
+        pingpong();
+      } else if (msg.type == "setFocus") {
+        notificationsockets[accountdata.accountID][functionindex].online =
+          Boolean(msg.online);
+      }
+    });
     ws.on("close", () => {
       notificationsockets[accountdata.accountID].splice(functionindex, 1);
     });
@@ -173,6 +176,7 @@ const messagefunctions = {};
     const functionindex = notificationsockets[accountdata.accountID].length;
     notificationsockets[accountdata.accountID].push({
       ws,
+      online: true,
     });
 
     pingpong();
