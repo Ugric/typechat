@@ -314,7 +314,6 @@ function ChatPage() {
     []
   );
   const isFocussed = useWindowFocus();
-  const windowsize = useWindowDimensions();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
   const { setchattingto, notifications } = useData();

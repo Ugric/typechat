@@ -136,7 +136,7 @@ const messagefunctions = {};
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
-  const port = 5050;
+  const port = 5000;
   app.ws("/notifications", async (ws, req) => {
     let lastping = 0;
     const pingpong = async () => {
