@@ -77,6 +77,7 @@ const messagefunctions = {};
       }
     }
     if (!(notificationsockets[to] && notificationsockets[to].length > 0)) {
+      try {
       const { email } = await db.get(
         "SELECT email FROM accounts WHERE accountID=:to",
         {
@@ -84,7 +85,9 @@ const messagefunctions = {};
         }
       );
       await NotificationEmail(email, data).catch();
-    }
+    }catch (e) {
+      console.error(e)
+    }}
   };
   const db = await open({
     filename: "./database.db",
