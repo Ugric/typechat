@@ -76,12 +76,17 @@ const messagefunctions = {};
         ws.ws.send(JSON.stringify(data));
       }
     }
+<<<<<<< HEAD
     if (
       !(
         notificationsockets[to] &&
         getAllOnline(notificationsockets[to]).length > 0
       )
     ) {
+=======
+    if (!(notificationsockets[to] && notificationsockets[to].length > 0)) {
+      try {
+>>>>>>> 038fcc979221f80668e173a74f056b26e4dfc8e8
       const { email } = await db.get(
         "SELECT email FROM accounts WHERE accountID=:to",
         {
@@ -89,7 +94,9 @@ const messagefunctions = {};
         }
       );
       await NotificationEmail(email, data).catch();
-    }
+    }catch (e) {
+      console.error(e)
+    }}
   };
   const db = await open({
     filename: "./database.db",
