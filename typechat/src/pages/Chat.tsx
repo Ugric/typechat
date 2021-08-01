@@ -133,7 +133,7 @@ function MessageMaker({
         output.push(
           <div className="messagegroup" key={messages[i].id}>
             {lastmessagegrouptime &&
-            messages[i].time - lastmessagegrouptime > 300000 ? (
+              messages[i].time - lastmessagegrouptime > 300000 ? (
               <p
                 style={{
                   margin: "0",
@@ -192,8 +192,8 @@ function MessageMaker({
     if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
         document.documentElement.scrollHeight -
-          document.documentElement.scrollTop -
-          document.documentElement.clientHeight <=
+        document.documentElement.scrollTop -
+        document.documentElement.clientHeight <=
         200;
       if (canloadmore) {
         if (document.documentElement.scrollTop < 10) {
@@ -319,7 +319,7 @@ function ChatPage() {
   const { setchattingto, notifications } = useData();
   const { error, loading, data } = useApi(
     "/api/friendsuserdatafromid?" +
-      new URLSearchParams({ id: chattingto }).toString()
+    new URLSearchParams({ id: chattingto }).toString()
   );
   const [oldmetypingdata, setoldmetypingdata] = useState({
     type: "typing",
@@ -334,10 +334,9 @@ function ChatPage() {
     specialchars: {},
   });
   const [socketUrl] = useState(
-    `ws://${
-      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
-        ? window.location.hostname + ":5050"
-        : window.location.host
+    `ws://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
+      ? window.location.hostname + ":5000"
+      : window.location.host
     }/chat`
   );
   const [typingdata, settypingdata] = useState<{
@@ -488,18 +487,18 @@ function ChatPage() {
           const scrollingElement = document.scrollingElement || document.body;
           const lastheight = document.documentElement.offsetHeight;
           setTimeout(() => {
-            scrollingElement.scrollTop =
-              document.documentElement.offsetHeight - lastheight;
+            window.scrollTo(
+              0, document.documentElement.offsetHeight - lastheight);
+            isLoadMore.current = false;
           }, 0);
         }
         setcanloadmore(lastJsonMessage.messages.length > 0);
-        isLoadMore.current = false;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
   useEffect(() => {
-    sendJsonMessage({ type: "setOnline", online: isFocussed });
+    sendJsonMessage({ type: "setFocus", focus: isFocussed });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocussed]);
   useEffect(() => {
@@ -531,7 +530,6 @@ function ChatPage() {
   const loadmore = () => {
     if (!isLoadMore.current) {
       isLoadMore.current = true;
-      console.log(chats);
       sendJsonMessage({
         type: "getmessages",
         start: chats.length,
@@ -585,8 +583,8 @@ function ChatPage() {
                     isonline === "1"
                       ? faDesktop
                       : isonline === "M"
-                      ? faMobileAlt
-                      : faEyeSlash
+                        ? faMobileAlt
+                        : faEyeSlash
                   }
                 ></FontAwesomeIcon>
               </p>
@@ -703,7 +701,6 @@ function ChatPage() {
                       });
                     }
                   } else {
-                    console.log("hello");
                     notifications.addNotification({
                       title: "File too big!",
                       message: "file needs to be less the 10MB!",
@@ -717,7 +714,7 @@ function ChatPage() {
                 }
               }}
             />
-            ​
+
             <button
               style={{
                 width: "37px",

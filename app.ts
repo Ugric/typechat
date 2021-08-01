@@ -76,7 +76,12 @@ const messagefunctions = {};
         ws.ws.send(JSON.stringify(data));
       }
     }
-    if (!(notificationsockets[to] && notificationsockets[to].length > 0)) {
+    if (
+      !(
+        notificationsockets[to] &&
+        getAllOnline(notificationsockets[to]).length > 0
+      )
+    ) {
       const { email } = await db.get(
         "SELECT email FROM accounts WHERE accountID=:to",
         {
@@ -137,6 +142,17 @@ const messagefunctions = {};
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const port = 5000;
+  const getAllOnline = (
+    sockets: Array<{ focus: boolean; [key: string]: any }>
+  ): { focus: boolean; [key: string]: any }[] => {
+    const online = [];
+    for (const socket of sockets) {
+      if (socket.focus) {
+        online.push(socket);
+      }
+    }
+    return online;
+  };
   app.ws("/notifications", async (ws, req) => {
     let lastping = 0;
     const pingpong = async () => {
@@ -163,8 +179,11 @@ const messagefunctions = {};
         lastping = new Date().getTime();
         pingpong();
       } else if (msg.type == "setFocus") {
-        notificationsockets[accountdata.accountID][functionindex].online =
-          Boolean(msg.online);
+        notificationsockets[accountdata.accountID][functionindex].focus =
+          msg.focus;
+        console.log(
+          notificationsockets[accountdata.accountID][functionindex].focus
+        );
       }
     });
     ws.on("close", () => {
@@ -176,7 +195,7 @@ const messagefunctions = {};
     const functionindex = notificationsockets[accountdata.accountID].length;
     notificationsockets[accountdata.accountID].push({
       ws,
-      online: true,
+      focus: true,
     });
 
     pingpong();
@@ -225,9 +244,27 @@ const messagefunctions = {};
     });
     ws.on("message", async (data: string) => {
       const msg = JSON.parse(data);
-      if (msg.type === "start" && !to) {
+      if (msg.type === "start") {
         if (msg.to === accountdata.accountID) {
           return ws.close();
+        }
+
+        if (to && functionindex !== undefined) {
+          messagefunctions[accountdata.accountID][to].splice(functionindex, 1);
+          if (
+            messagefunctions[accountdata.accountID][to].length <= 0 &&
+            messagefunctions[to] &&
+            messagefunctions[to][accountdata.accountID]
+          ) {
+            for (const ws of messagefunctions[to][accountdata.accountID]) {
+              ws.ws.send(
+                JSON.stringify({
+                  type: "online",
+                  online: false,
+                })
+              );
+            }
+          }
         }
         const messages = (
           await db.all(
@@ -259,21 +296,21 @@ const messagefunctions = {};
           })
         );
         to = String(msg.to);
+        const allonline = getAllOnline(
+          messagefunctions[to] && messagefunctions[to][accountdata.accountID]
+            ? messagefunctions[to][accountdata.accountID]
+            : []
+        );
         ws.send(
           JSON.stringify({
             type: "online",
             online:
               (messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID] &&
-                messagefunctions[to][accountdata.accountID].length > 0) ===
-              true,
+                allonline.length > 0) === true,
             mobile:
-              messagefunctions[to] &&
-              messagefunctions[to][accountdata.accountID] &&
-              messagefunctions[to][accountdata.accountID].length > 0
-                ? messagefunctions[to][accountdata.accountID][
-                    messagefunctions[to][accountdata.accountID].length - 1
-                  ].mobile
+              allonline.length > 0
+                ? allonline[allonline.length - 1].mobile
                 : undefined,
           })
         );
@@ -302,6 +339,7 @@ const messagefunctions = {};
           connectionID,
           ws,
           mobile: msg.mobile,
+          focus: true,
         });
       } else if (msg.type == "getmessages") {
         const messages = (
@@ -334,6 +372,30 @@ const messagefunctions = {};
             messages,
           })
         );
+      } else if (
+        msg.type == "setFocus" &&
+        messagefunctions[accountdata.accountID][to][functionindex]
+      ) {
+        messagefunctions[accountdata.accountID][to][functionindex].focus =
+          msg.focus;
+        if (
+          (!msg.focus
+            ? getAllOnline(messagefunctions[accountdata.accountID][to])
+                .length <= 0
+            : true) &&
+          messagefunctions[to] &&
+          messagefunctions[to][accountdata.accountID]
+        ) {
+          for (const ws of messagefunctions[to][accountdata.accountID]) {
+            console.log("hello");
+            ws.ws.send(
+              JSON.stringify({
+                type: "online",
+                online: msg.focus,
+              })
+            );
+          }
+        }
       } else if (msg.type == "pong") {
         lastping = new Date().getTime();
         pingpong();
@@ -384,7 +446,7 @@ const messagefunctions = {};
           !(
             messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID] &&
-            messagefunctions[to][accountdata.accountID].length > 0
+            getAllOnline(messagefunctions[to][accountdata.accountID]).length > 0
           )
         ) {
           sendNotification(to, {
@@ -589,7 +651,6 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         }
       );
       if (!friendsaccountdata) {
-        console.log("lol");
         return res.send({ exists: false });
       } else {
         return res.send({
