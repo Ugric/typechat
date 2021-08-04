@@ -77,6 +77,7 @@ const messagefunctions = {};
       }
     }
     if (!(notificationsockets[to] && notificationsockets[to].length > 0)) {
+      console.log(to, new Date().getUTCDate())
       try {
       const { email } = await db.get(
         "SELECT email FROM accounts WHERE accountID=:to",
