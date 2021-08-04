@@ -31,6 +31,7 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import emoji from "../emojis";
 import useWindowFocus from "use-window-focus";
 import useWindowSize from "../hooks/usescreensize";
+import isElectron from "is-electron";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -320,7 +321,9 @@ function ChatPage() {
   const { id: chattingto } = useParams<{ id: string }>();
   const { setchattingto, notifications } = useData();
   const { error, loading, data } = useApi(
-    `/api/friendsuserdatafromid?${new URLSearchParams({
+    `${
+      isElectron() ? "http://freshcraft.play.ai:5050" : ""
+    }/api/friendsuserdatafromid?${new URLSearchParams({
       id: chattingto,
     }).toString()}`
   );
@@ -622,7 +625,7 @@ function ChatPage() {
           messages={loadingchatmessages ? localchats[chattingto] : chats}
           typingdata={typingdata}
           toscroll={toscroll}
-          canloadmore={canloadmore}
+          canloadmore={canloadmore && readyState === ReadyState.OPEN}
           loadingmore={loadingmore}
           loadmore={loadmore}
         />
