@@ -4,6 +4,7 @@ import useWebSocket from "react-use-websocket";
 import { useData } from "./hooks/datahook";
 import playSound from "./playsound";
 import useWindowFocus from "use-window-focus";
+import isElectron from "is-electron";
 
 function NotificationComponent() {
   const { loggedin, notifications } = useData();
@@ -12,7 +13,7 @@ function NotificationComponent() {
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(
     `ws://${
       !process.env.NODE_ENV || process.env.NODE_ENV === "development"
-        ? window.location.hostname + ":5050"
+        ? window.location.hostname + ":5000"
         : window.location.host
     }/notifications`,
     {
@@ -30,32 +31,52 @@ function NotificationComponent() {
       if (lastJsonMessage.type === "ping") {
         sendJsonMessage({ type: "pong" });
       } else {
-        if (lastJsonMessage.sound !== false) {
-          playSound(
-            lastJsonMessage.sound
-              ? lastJsonMessage.sound
-              : "/sounds/notification.mp3"
-          );
+        if (isElectron()) {
+          const { remote } = require("electron");
+          const notifier = remote.require("node-notifier");
+          notifier.notify({
+            title: "My awesome title",
+            message: "Hello from node, Mr. User!",
+            sound: true,
+            wait: true,
+          });
+
+          notifier.on("click", function () {
+            console.log("click");
+          });
+
+          notifier.on("timeout", function () {
+            console.log("timeout");
+          });
+          console.log("electron");
+        } else {
+          if (lastJsonMessage.sound !== false) {
+            playSound(
+              lastJsonMessage.sound
+                ? lastJsonMessage.sound
+                : "/sounds/notification.mp3"
+            );
+          }
+          notifications.addNotification({
+            title: lastJsonMessage.title,
+            message: lastJsonMessage.message,
+            type: "default",
+            onRemoval: (_: string, type: any) => {
+              if (type === "click") {
+                history.push(lastJsonMessage.to);
+              }
+            },
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animate__animated", "animate__fadeIn"],
+            animationOut: ["animate__animated", "animate__fadeOut"],
+            dismiss: {
+              pauseOnHover: true,
+              duration: 5000,
+              onScreen: true,
+            },
+          });
         }
-        notifications.addNotification({
-          title: lastJsonMessage.title,
-          message: lastJsonMessage.message,
-          type: "default",
-          onRemoval: (_: string, type: any) => {
-            if (type === "click") {
-              history.push(lastJsonMessage.to);
-            }
-          },
-          insert: "top",
-          container: "top-right",
-          animationIn: ["animate__animated", "animate__fadeIn"],
-          animationOut: ["animate__animated", "animate__fadeOut"],
-          dismiss: {
-            pauseOnHover: true,
-            duration: 5000,
-            onScreen: true,
-          },
-        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

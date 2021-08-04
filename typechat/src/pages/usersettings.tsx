@@ -45,7 +45,7 @@ function Changebutton({
     </div>
   );
 }
-Modal.setAppElement("#root");
+Modal.setAppElement("#app");
 function UserSettings() {
   const { loggedin, user, rechecklogged } = useData();
   const [error, seterror] = useState("");

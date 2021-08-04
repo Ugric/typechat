@@ -9,7 +9,7 @@ import {
   faSadCry,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
   Redirect,
@@ -30,7 +30,8 @@ import playSound from "../playsound";
 import useLocalStorage from "../hooks/useLocalStorage";
 import emoji from "../emojis";
 import useWindowFocus from "use-window-focus";
-import { useWindowDimensions } from "../hooks/useWiindowDimentions";
+import useWindowSize from "../hooks/usescreensize";
+import isElectron from "is-electron";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -72,6 +73,7 @@ function MessageMaker({
   scrollref,
   toscroll,
   canloadmore,
+  loadingmore,
   loadmore,
 }: {
   messages: Array<messageWithText | messageWithFile>;
@@ -83,17 +85,14 @@ function MessageMaker({
   scrollref: React.RefObject<any>;
   toscroll: any;
   canloadmore: boolean;
+  loadingmore: boolean;
   loadmore: Function;
 }) {
-  const [output, setoutput] = useState(<></>);
-  const { id: chattingto } = useParams<{ id: string }>();
-  const location = useLocation();
-  const [faketext, setfaketext] = useState("");
-  useEffect(() => {
+  const output = useMemo(() => {
     console.time("chatrender");
     const output = [];
-    if (canloadmore) {
-      output.push(<p style={{ textAlign: "center" }}>Loading...</p>);
+    if (canloadmore && loadingmore) {
+      output.push(<Loader key={"loader"}></Loader>);
     }
     let tempmessages: Array<any> = [];
     let lastmessagegrouptime;
@@ -109,7 +108,9 @@ function MessageMaker({
                 index % 2 === 0 ? (
                   <div key={index}>{value.trim()}</div>
                 ) : (
-                  <SyntaxHighlighter>{value.trim()}</SyntaxHighlighter>
+                  <SyntaxHighlighter key={index}>
+                    {value.trim()}
+                  </SyntaxHighlighter>
                 )
               )
           ) : (
@@ -173,11 +174,12 @@ function MessageMaker({
         tempmessages = [];
       }
     }
-    setoutput(<>{output}</>);
     console.timeEnd("chatrender");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
-  useEffect(() => {
+    return output;
+  }, [messages, canloadmore, loadingmore]);
+  const { id: chattingto } = useParams<{ id: string }>();
+  const location = useLocation();
+  const faketext = useMemo(() => {
     let output = [];
     for (let i = 0; i <= typingdata.length; i++) {
       output.push(
@@ -186,8 +188,9 @@ function MessageMaker({
           : numToSSColumn(random(i) * 26)
       );
     }
-    setfaketext(output.join("").toLowerCase());
+    return output.join("").toLowerCase();
   }, [typingdata]);
+  // const [isMessageMenuOpen, setIsMessageMenuOpen] = useState(false);
   window.onscroll = () => {
     if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
@@ -318,8 +321,11 @@ function ChatPage() {
   const { id: chattingto } = useParams<{ id: string }>();
   const { setchattingto, notifications } = useData();
   const { error, loading, data } = useApi(
-    "/api/friendsuserdatafromid?" +
-      new URLSearchParams({ id: chattingto }).toString()
+    `${
+      isElectron() ? "http://freshcraft.play.ai:5050" : ""
+    }/api/friendsuserdatafromid?${new URLSearchParams({
+      id: chattingto,
+    }).toString()}`
   );
   const [oldmetypingdata, setoldmetypingdata] = useState({
     type: "typing",
@@ -336,10 +342,11 @@ function ChatPage() {
   const [socketUrl] = useState(
     `ws://${
       !process.env.NODE_ENV || process.env.NODE_ENV === "development"
-        ? window.location.hostname + ":5050"
+        ? window.location.hostname + ":5000"
         : window.location.host
     }/chat`
   );
+  const size = useWindowSize();
   const [typingdata, settypingdata] = useState<{
     typing: Boolean;
     length: Number;
@@ -355,6 +362,7 @@ function ChatPage() {
   const toscroll = useRef(true);
   const [loadingchatmessages, setloadingchatmessages] = useState(true);
   const [canloadmore, setcanloadmore] = useState(true);
+  const [loadingmore, setloadingmore] = useState(false);
   const isLoadMore = useRef<boolean>(false);
   const [localchats, setlocalchats] = useLocalStorage<{
     [key: string]: Array<messageWithText | messageWithFile>;
@@ -373,6 +381,7 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messagesize]);
   const doneTypingInterval = 5000;
+  const StartMessagesLength = Math.ceil(size.height / 40 + 5);
   function doneTyping() {
     if (metypingref.current) {
       metypingref.current = false;
@@ -395,6 +404,7 @@ function ChatPage() {
         sendJsonMessage({
           type: "start",
           to: chattingto,
+          limit: StartMessagesLength,
           mobile:
             /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
               navigator.userAgent
@@ -426,7 +436,7 @@ function ChatPage() {
           specialchars: {},
         });
         if (toscroll.current) {
-          setchats((c) => c.slice(Math.max(c.length - 25, 0)));
+          setchats((c) => c.slice(Math.max(c.length - StartMessagesLength, 0)));
           setcanloadmore(true);
           setTimeout(scrolltobottom, 0);
         } else {
@@ -485,21 +495,28 @@ function ChatPage() {
       } else if (lastJsonMessage.type === "prependmessages") {
         setchats([...lastJsonMessage.messages, ...chats]);
         if (lastJsonMessage.messages.length > 0) {
-          const scrollingElement = document.scrollingElement || document.body;
           const lastheight = document.documentElement.offsetHeight;
           setTimeout(() => {
-            scrollingElement.scrollTop =
-              document.documentElement.offsetHeight - lastheight;
+            console.log(
+              document.documentElement.scrollHeight,
+              lastheight,
+              document.documentElement.scrollHeight - lastheight
+            );
+            document.documentElement.scrollTop =
+              document.documentElement.scrollHeight - lastheight;
+            console.log(document.documentElement.scrollTop);
+            isLoadMore.current = false;
+
+            setloadingmore(false);
           }, 0);
         }
         setcanloadmore(lastJsonMessage.messages.length > 0);
-        isLoadMore.current = false;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
   useEffect(() => {
-    sendJsonMessage({ type: "setOnline", online: isFocussed });
+    sendJsonMessage({ type: "setFocus", focus: isFocussed });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocussed]);
   useEffect(() => {
@@ -531,7 +548,7 @@ function ChatPage() {
   const loadmore = () => {
     if (!isLoadMore.current) {
       isLoadMore.current = true;
-      console.log(chats);
+      setloadingmore(true);
       sendJsonMessage({
         type: "getmessages",
         start: chats.length,
@@ -608,7 +625,8 @@ function ChatPage() {
           messages={loadingchatmessages ? localchats[chattingto] : chats}
           typingdata={typingdata}
           toscroll={toscroll}
-          canloadmore={canloadmore}
+          canloadmore={canloadmore && readyState === ReadyState.OPEN}
+          loadingmore={loadingmore}
           loadmore={loadmore}
         />
         <div ref={bottomref}></div>
@@ -703,7 +721,6 @@ function ChatPage() {
                       });
                     }
                   } else {
-                    console.log("hello");
                     notifications.addNotification({
                       title: "File too big!",
                       message: "file needs to be less the 10MB!",
@@ -717,7 +734,7 @@ function ChatPage() {
                 }
               }}
             />
-            ​
+
             <button
               style={{
                 width: "37px",
