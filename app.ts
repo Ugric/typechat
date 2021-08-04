@@ -1,5 +1,5 @@
 import { open } from "sqlite";
-const express = require("express");
+import * as express from "express";
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
 const { createHash } = require("crypto");
@@ -72,31 +72,28 @@ const messagefunctions = {};
     data: { title: string; message: string; to: string; sound?: string }
   ) => {
     if (notificationsockets[to]) {
-      for (const ws of notificationsockets[to]) {
-        ws.ws.send(JSON.stringify(data));
+      for (const ws of Object.keys(notificationsockets[to])) {
+        notificationsockets[to][ws].ws.send(JSON.stringify(data));
       }
     }
-<<<<<<< HEAD
     if (
       !(
         notificationsockets[to] &&
         getAllOnline(notificationsockets[to]).length > 0
       )
     ) {
-=======
-    if (!(notificationsockets[to] && notificationsockets[to].length > 0)) {
       try {
->>>>>>> 038fcc979221f80668e173a74f056b26e4dfc8e8
-      const { email } = await db.get(
-        "SELECT email FROM accounts WHERE accountID=:to",
-        {
-          ":to": to,
-        }
-      );
-      await NotificationEmail(email, data).catch();
-    }catch (e) {
-      console.error(e)
-    }}
+        const { email } = await db.get(
+          "SELECT email FROM accounts WHERE accountID=:to",
+          {
+            ":to": to,
+          }
+        );
+        await NotificationEmail(email, data).catch();
+      } catch (e) {
+        console.error(e);
+      }
+    }
   };
   const db = await open({
     filename: "./database.db",
@@ -149,12 +146,12 @@ const messagefunctions = {};
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const port = 5000;
-  const getAllOnline = (
-    sockets: Array<{ focus: boolean; [key: string]: any }>
-  ): { focus: boolean; [key: string]: any }[] => {
+  const getAllOnline = (sockets: {
+    [key: string]: { focus: boolean; [key: string]: any };
+  }): { focus: boolean; [key: string]: any }[] => {
     const online = [];
-    for (const socket of sockets) {
-      if (socket.focus) {
+    for (const socket of Object.keys(sockets)) {
+      if (sockets[socket].focus) {
         online.push(socket);
       }
     }
@@ -162,6 +159,7 @@ const messagefunctions = {};
   };
   app.ws("/notifications", async (ws, req) => {
     let lastping = 0;
+    const connectionID = generate(20);
     const pingpong = async () => {
       await snooze(10000);
       ws.send(JSON.stringify({ type: "ping" }));
@@ -186,30 +184,25 @@ const messagefunctions = {};
         lastping = new Date().getTime();
         pingpong();
       } else if (msg.type == "setFocus") {
-        notificationsockets[accountdata.accountID][functionindex].focus =
+        notificationsockets[accountdata.accountID][connectionID].focus =
           msg.focus;
-        console.log(
-          notificationsockets[accountdata.accountID][functionindex].focus
-        );
       }
     });
     ws.on("close", () => {
-      notificationsockets[accountdata.accountID].splice(functionindex, 1);
+      delete notificationsockets[accountdata.accountID][connectionID];
     });
     if (!notificationsockets[accountdata.accountID]) {
-      notificationsockets[accountdata.accountID] = [];
+      notificationsockets[accountdata.accountID] = {};
     }
-    const functionindex = notificationsockets[accountdata.accountID].length;
-    notificationsockets[accountdata.accountID].push({
+    notificationsockets[accountdata.accountID][connectionID] = {
       ws,
       focus: true,
-    });
+    };
 
     pingpong();
   });
   app.ws("/chat", async (ws, req) => {
     let to: string;
-    let functionindex: number | undefined;
     const connectionID = generate(20);
     let accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -231,15 +224,17 @@ const messagefunctions = {};
       }
     };
     ws.on("close", () => {
-      if (to && functionindex !== undefined) {
-        messagefunctions[accountdata.accountID][to].splice(functionindex, 1);
+      if (to) {
+        delete messagefunctions[accountdata.accountID][to][connectionID];
         if (
           messagefunctions[accountdata.accountID][to].length <= 0 &&
           messagefunctions[to] &&
           messagefunctions[to][accountdata.accountID]
         ) {
-          for (const ws of messagefunctions[to][accountdata.accountID]) {
-            ws.ws.send(
+          for (const ws of Object.keys(
+            messagefunctions[to][accountdata.accountID]
+          )) {
+            messagefunctions[to][accountdata.accountID][ws].ws.send(
               JSON.stringify({
                 type: "online",
                 online: false,
@@ -256,15 +251,17 @@ const messagefunctions = {};
           return ws.close();
         }
 
-        if (to && functionindex !== undefined) {
-          messagefunctions[accountdata.accountID][to].splice(functionindex, 1);
+        if (to) {
+          delete messagefunctions[accountdata.accountID][to][connectionID];
           if (
             messagefunctions[accountdata.accountID][to].length <= 0 &&
             messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID]
           ) {
-            for (const ws of messagefunctions[to][accountdata.accountID]) {
-              ws.ws.send(
+            for (const ws of Object.keys(
+              messagefunctions[to][accountdata.accountID]
+            )) {
+              messagefunctions[to][accountdata.accountID][ws].ws.send(
                 JSON.stringify({
                   type: "online",
                   online: false,
@@ -286,10 +283,11 @@ const messagefunctions = {};
               or (
                   accountID = :toUser
                   and toAccountID = :accountID
-              ) ORDER  BY time DESC) LIMIT 25`,
+              ) ORDER  BY time DESC) LIMIT :max`,
             {
               ":accountID": accountdata.accountID,
               ":toUser": msg.to,
+              ":max": msg.limit,
             }
           )
         ).reverse();
@@ -325,8 +323,10 @@ const messagefunctions = {};
           messagefunctions[to] &&
           messagefunctions[to][accountdata.accountID]
         ) {
-          for (const ws of messagefunctions[to][accountdata.accountID]) {
-            ws.ws.send(
+          for (const ws of Object.keys(
+            messagefunctions[to][accountdata.accountID]
+          )) {
+            messagefunctions[to][accountdata.accountID][ws].ws.send(
               JSON.stringify({
                 type: "online",
                 online: true,
@@ -339,15 +339,14 @@ const messagefunctions = {};
           messagefunctions[accountdata.accountID] = {};
         }
         if (!messagefunctions[accountdata.accountID][msg.to]) {
-          messagefunctions[accountdata.accountID][msg.to] = [];
+          messagefunctions[accountdata.accountID][msg.to] = {};
         }
-        functionindex = messagefunctions[accountdata.accountID][msg.to].length;
-        messagefunctions[accountdata.accountID][msg.to].push({
+        messagefunctions[accountdata.accountID][msg.to][connectionID] = {
           connectionID,
           ws,
           mobile: msg.mobile,
           focus: true,
-        });
+        };
       } else if (msg.type == "getmessages") {
         const messages = (
           await db.all(
@@ -381,9 +380,10 @@ const messagefunctions = {};
         );
       } else if (
         msg.type == "setFocus" &&
-        messagefunctions[accountdata.accountID][to][functionindex]
+        to &&
+        messagefunctions[accountdata.accountID][to][connectionID]
       ) {
-        messagefunctions[accountdata.accountID][to][functionindex].focus =
+        messagefunctions[accountdata.accountID][to][connectionID].focus =
           msg.focus;
         if (
           (!msg.focus
@@ -393,9 +393,10 @@ const messagefunctions = {};
           messagefunctions[to] &&
           messagefunctions[to][accountdata.accountID]
         ) {
-          for (const ws of messagefunctions[to][accountdata.accountID]) {
-            console.log("hello");
-            ws.ws.send(
+          for (const ws of Object.keys(
+            messagefunctions[to][accountdata.accountID]
+          )) {
+            messagefunctions[to][accountdata.accountID][ws].ws.send(
               JSON.stringify({
                 type: "online",
                 online: msg.focus,
@@ -413,8 +414,10 @@ const messagefunctions = {};
           messagefunctions[to] &&
           messagefunctions[to][accountdata.accountID]
         ) {
-          for (const ws of messagefunctions[to][accountdata.accountID]) {
-            ws.ws.send(
+          for (const ws of Object.keys(
+            messagefunctions[to][accountdata.accountID]
+          )) {
+            messagefunctions[to][accountdata.accountID][ws].ws.send(
               JSON.stringify({
                 type: "message",
                 message: {
@@ -432,9 +435,14 @@ const messagefunctions = {};
           messagefunctions[accountdata.accountID] &&
           messagefunctions[accountdata.accountID][to]
         ) {
-          for (const ws of messagefunctions[accountdata.accountID][to]) {
-            if (ws.connectionID !== connectionID) {
-              ws.ws.send(
+          for (const ws of Object.keys(
+            messagefunctions[accountdata.accountID][to]
+          )) {
+            if (
+              messagefunctions[accountdata.accountID][to][ws].connectionID !==
+              connectionID
+            ) {
+              messagefunctions[accountdata.accountID][to][ws].ws.send(
                 JSON.stringify({
                   type: "message",
                   message: {
@@ -480,8 +488,10 @@ const messagefunctions = {};
           messagefunctions[to] &&
           messagefunctions[to][accountdata.accountID]
         ) {
-          for (const ws of messagefunctions[to][accountdata.accountID]) {
-            ws.ws.send(
+          for (const ws of Object.keys(
+            messagefunctions[to][accountdata.accountID]
+          )) {
+            messagefunctions[to][accountdata.accountID][ws].ws.send(
               JSON.stringify({
                 type: "typing",
                 typing: msg.typing,
