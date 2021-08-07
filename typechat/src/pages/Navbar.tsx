@@ -18,6 +18,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import useComponentSize from "@rehooks/component-size";
 import playSound from "../playsound";
+import isElectron from "is-electron";
 const PageNav = () => {
   const { width } = useWindowSize();
   const Navbarref = useRef(null);
@@ -30,7 +31,13 @@ const PageNav = () => {
   const location = useLocation();
   return (
     <>
-      <Navbar ref={Navbarref} bg="darkpurple" variant="dark" fixed="top">
+      <Navbar
+        ref={Navbarref}
+        bg="darkpurple"
+        variant="dark"
+        fixed="top"
+        style={{ top: isElectron() ? "30px" : undefined }}
+      >
         <Navbar.Brand
           onPointerDown={() => {
             playSound("/sounds/click2.mp3");
@@ -47,7 +54,7 @@ const PageNav = () => {
             style={{
               height: "40px",
             }}
-          />{" "}
+          />
         </Navbar.Brand>
 
         <Nav className="mc-auto">
@@ -214,7 +221,9 @@ const PageNav = () => {
           )}
         </Nav>
       </Navbar>
-      <div style={{ height: navbarsize.height }}></div>
+      <div
+        style={{ height: navbarsize.height + (isElectron() ? 30 : 0) }}
+      ></div>
     </>
   );
 };
