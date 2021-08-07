@@ -256,7 +256,8 @@ const messagefunctions = {};
         if (to) {
           delete messagefunctions[accountdata.accountID][to][connectionID];
           if (
-            messagefunctions[accountdata.accountID][to].length <= 0 &&
+            getAllOnline(messagefunctions[accountdata.accountID][to]).length <=
+              0 &&
             messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID]
           ) {
@@ -507,6 +508,7 @@ const messagefunctions = {};
         }
       }
     });
+    ws.send(JSON.stringify({ type: "start" }));
     pingpong();
   });
   90;

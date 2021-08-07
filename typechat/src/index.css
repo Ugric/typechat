@@ -51,7 +51,7 @@ pre {
 .container-after-titlebar {
   inset: 0 !important;
   position: static !important;
-  overflow: auto !important;
+  overflow:inherit !important;
 }
 .window-title {
   opacity: 0;

@@ -33,6 +33,7 @@ import useWindowFocus from "use-window-focus";
 import useWindowSize from "../hooks/usescreensize";
 import isElectron from "is-electron";
 import notify from "../notifier";
+import e from "express";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -397,19 +398,6 @@ function ChatPage() {
     {
       shouldReconnect: () => true,
       reconnectInterval: 1,
-      onOpen() {
-        setcanloadmore(true);
-        isLoadMore.current = false;
-        sendJsonMessage({
-          type: "start",
-          to: chattingto,
-          limit: StartMessagesLength,
-          mobile:
-            /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-              navigator.userAgent
-            ),
-        });
-      },
     },
     data ? data.exists : false
   );
@@ -467,6 +455,18 @@ function ChatPage() {
             });
           }
         }
+      } else if (lastJsonMessage.type === "start") {
+        setcanloadmore(true);
+        isLoadMore.current = false;
+        sendJsonMessage({
+          type: "start",
+          to: chattingto,
+          limit: StartMessagesLength,
+          mobile:
+            /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+              navigator.userAgent
+            ),
+        });
       } else if (lastJsonMessage.type === "ping") {
         sendJsonMessage({ type: "pong" });
       } else if (lastJsonMessage.type === "online") {
