@@ -1,4 +1,5 @@
 body {
+  overflow: auto !important;
   margin: 0;
   font-family: helvetica !important;
   -webkit-font-smoothing: antialiased;
@@ -42,4 +43,16 @@ pre {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+.titlebar {
+  position: fixed !important;
+}
+.container-after-titlebar {
+  inset: 0 !important;
+  position: static !important;
+  overflow: auto !important;
+}
+.window-title {
+  opacity: 0;
 }

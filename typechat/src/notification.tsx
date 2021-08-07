@@ -5,6 +5,7 @@ import { useData } from "./hooks/datahook";
 import playSound from "./playsound";
 import useWindowFocus from "use-window-focus";
 import isElectron from "is-electron";
+import notify from "./notifier";
 
 function NotificationComponent() {
   const { loggedin, notifications } = useData();
@@ -31,32 +32,18 @@ function NotificationComponent() {
       if (lastJsonMessage.type === "ping") {
         sendJsonMessage({ type: "pong" });
       } else {
+        if (lastJsonMessage.sound !== false) {
+          playSound(
+            lastJsonMessage.sound
+              ? lastJsonMessage.sound
+              : "/sounds/notification.mp3"
+          );
+        }
         if (isElectron()) {
-          const { remote } = require("electron");
-          const notifier = remote.require("node-notifier");
-          notifier.notify({
-            title: "My awesome title",
-            message: "Hello from node, Mr. User!",
-            sound: true,
-            wait: true,
+          notify(lastJsonMessage.title, lastJsonMessage.message, () => {
+            history.push(lastJsonMessage.to);
           });
-
-          notifier.on("click", function () {
-            console.log("click");
-          });
-
-          notifier.on("timeout", function () {
-            console.log("timeout");
-          });
-          console.log("electron");
         } else {
-          if (lastJsonMessage.sound !== false) {
-            playSound(
-              lastJsonMessage.sound
-                ? lastJsonMessage.sound
-                : "/sounds/notification.mp3"
-            );
-          }
           notifications.addNotification({
             title: lastJsonMessage.title,
             message: lastJsonMessage.message,

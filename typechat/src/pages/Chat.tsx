@@ -32,6 +32,7 @@ import emoji from "../emojis";
 import useWindowFocus from "use-window-focus";
 import useWindowSize from "../hooks/usescreensize";
 import isElectron from "is-electron";
+import notify from "../notifier";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -321,9 +322,7 @@ function ChatPage() {
   const { id: chattingto } = useParams<{ id: string }>();
   const { setchattingto, notifications } = useData();
   const { error, loading, data } = useApi(
-    `${
-      isElectron() ? "http://freshcraft.play.ai:5050" : ""
-    }/api/friendsuserdatafromid?${new URLSearchParams({
+    `/api/friendsuserdatafromid?${new URLSearchParams({
       id: chattingto,
     }).toString()}`
   );
@@ -440,26 +439,33 @@ function ChatPage() {
           setcanloadmore(true);
           setTimeout(scrolltobottom, 0);
         } else {
-          notifications.addNotification({
-            title: `${data.username}`,
-            message: truncate(lastJsonMessage.message.message, 25),
-            type: "default",
-            onRemoval: (_: number, type: string) => {
-              if (type === "click") {
-                history.push(`/chat/${chattingto}`);
-                scrolltobottom();
-              }
-            },
-            insert: "top",
-            container: "top-right",
-            animationIn: ["animate__animated", "animate__fadeIn"],
-            animationOut: ["animate__animated", "animate__fadeOut"],
-            dismiss: {
-              pauseOnHover: true,
-              duration: 5000,
-              onScreen: true,
-            },
-          });
+          if (isElectron()) {
+            notify(`${data.username}`, lastJsonMessage.message.message, () => {
+              history.push(`/chat/${chattingto}`);
+              scrolltobottom();
+            });
+          } else {
+            notifications.addNotification({
+              title: `${data.username}`,
+              message: truncate(lastJsonMessage.message.message, 25),
+              type: "default",
+              onRemoval: (_: number, type: string) => {
+                if (type === "click") {
+                  history.push(`/chat/${chattingto}`);
+                  scrolltobottom();
+                }
+              },
+              insert: "top",
+              container: "top-right",
+              animationIn: ["animate__animated", "animate__fadeIn"],
+              animationOut: ["animate__animated", "animate__fadeOut"],
+              dismiss: {
+                pauseOnHover: true,
+                duration: 5000,
+                onScreen: true,
+              },
+            });
+          }
         }
       } else if (lastJsonMessage.type === "ping") {
         sendJsonMessage({ type: "pong" });
@@ -516,7 +522,13 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
   useEffect(() => {
-    sendJsonMessage({ type: "setFocus", focus: isFocussed });
+    if (
+      /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
+    ) {
+      sendJsonMessage({ type: "setFocus", focus: isFocussed });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocussed]);
   useEffect(() => {

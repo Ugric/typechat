@@ -152,7 +152,7 @@ const messagefunctions = {};
     const online = [];
     for (const socket of Object.keys(sockets)) {
       if (sockets[socket].focus) {
-        online.push(socket);
+        online.push(sockets[socket]);
       }
     }
     return online;
@@ -203,6 +203,7 @@ const messagefunctions = {};
   });
   app.ws("/chat", async (ws, req) => {
     let to: string;
+    let mobile: boolean = false;
     const connectionID = generate(20);
     let accountdata = await db.get(
       "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -227,7 +228,8 @@ const messagefunctions = {};
       if (to) {
         delete messagefunctions[accountdata.accountID][to][connectionID];
         if (
-          messagefunctions[accountdata.accountID][to].length <= 0 &&
+          getAllOnline(messagefunctions[accountdata.accountID][to]).length <=
+            0 &&
           messagefunctions[to] &&
           messagefunctions[to][accountdata.accountID]
         ) {
@@ -335,6 +337,7 @@ const messagefunctions = {};
             );
           }
         }
+        mobile = msg.mobile;
         if (!messagefunctions[accountdata.accountID]) {
           messagefunctions[accountdata.accountID] = {};
         }
@@ -400,6 +403,7 @@ const messagefunctions = {};
               JSON.stringify({
                 type: "online",
                 online: msg.focus,
+                mobile: msg.focus ? mobile : undefined,
               })
             );
           }
