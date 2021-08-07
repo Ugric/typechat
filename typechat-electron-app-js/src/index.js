@@ -45,12 +45,6 @@ const createWindow = async () => {
     notify.on("click", () => {
       callback({ data: "click" })
     })
-    notify.on("close", () => {
-      callback({ data: "close" })
-    })
-    notify.on("failed", () => {
-      callback({ data: "failed" })
-    })
   });
   const loadingWindow = new BrowserWindow({
     frame: false,
