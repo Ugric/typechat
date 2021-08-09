@@ -34,6 +34,9 @@ function Contact({
   const history = useHistory();
   const holdref = useRef<any>();
   const [UserModelIsOpen, setUserModelIsOpen] = useState(false);
+  useEffect(() => {
+    document.documentElement.scrollTop = 0;
+  }, []);
   return (
     <>
       <div

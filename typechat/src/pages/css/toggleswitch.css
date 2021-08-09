@@ -1,4 +1,5 @@
 .form-switch {
+  margin: 0;
   display: inline-block;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
