@@ -33,7 +33,7 @@ import useWindowFocus from "use-window-focus";
 import useWindowSize from "../hooks/usescreensize";
 import isElectron from "is-electron";
 import notify from "../notifier";
-import e from "express";
+import Linkify from "react-linkify";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -104,17 +104,30 @@ function MessageMaker({
       tempmessages.push(
         <div className="message" key={messages[i].id}>
           {message ? (
-            message
-              .split("```")
-              .map((value, index) =>
-                index % 2 === 0 ? (
-                  <div key={index}>{value.trim()}</div>
-                ) : (
-                  <SyntaxHighlighter key={index}>
+            message.split("```").map((value, index) =>
+              index % 2 === 0 ? (
+                <div key={index}>
+                  <Linkify
+                    componentDecorator={(decoratedHref, decoratedText, key) => (
+                      <a
+                        target="blank"
+                        style={{ color: "var(--secondary-text-colour)" }}
+                        href={decoratedHref}
+                        key={key}
+                      >
+                        {decoratedText}
+                      </a>
+                    )}
+                  >
                     {value.trim()}
-                  </SyntaxHighlighter>
-                )
+                  </Linkify>
+                </div>
+              ) : (
+                <SyntaxHighlighter key={index}>
+                  {value.trim()}
+                </SyntaxHighlighter>
               )
+            )
           ) : (
             <div>
               <div
@@ -364,6 +377,11 @@ function ChatPage() {
   const [canloadmore, setcanloadmore] = useState(true);
   const [loadingmore, setloadingmore] = useState(false);
   const isLoadMore = useRef<boolean>(false);
+
+  const [personaltyping] = useLocalStorage("Keyboard Typing Sound", true);
+  const [Recipienttyping] = useLocalStorage("Recipient Typing Sound", true);
+  const [SendSound] = useLocalStorage("Send Sound", true);
+  const [ReceiveSound] = useLocalStorage("Receive Sound", true);
   const [localchats, setlocalchats] = useLocalStorage<{
     [key: string]: Array<messageWithText | messageWithFile>;
   }>("chats", {});
@@ -408,11 +426,15 @@ function ChatPage() {
     }
   };
   const fileref = useRef<any>(null);
+  const submitref = useRef<any>(null);
+  const formref = useRef<any>(null);
+  const shiftkey = useRef(false);
+  const key = useRef(null);
 
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
-        if (!lastJsonMessage.message.mine) {
+        if (!lastJsonMessage.message.mine && ReceiveSound) {
           playSound("/sounds/newmessage.mp3");
         }
         setchats((c) => c.concat(lastJsonMessage.message));
@@ -485,10 +507,12 @@ function ChatPage() {
           lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
         );
       } else if (lastJsonMessage.type === "typing") {
-        if (lastJsonMessage.length > typingdata.length) {
-          playSound(`/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`);
-        } else if (lastJsonMessage.length < typingdata.length) {
-          playSound(`/sounds/click3.mp3`);
+        if (Recipienttyping) {
+          if (lastJsonMessage.length > typingdata.length) {
+            playSound(`/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`);
+          } else if (lastJsonMessage.length < typingdata.length) {
+            playSound(`/sounds/click3.mp3`);
+          }
         }
         if (toscroll.current) {
           setTimeout(scrolltobottom, 0);
@@ -509,14 +533,8 @@ function ChatPage() {
         if (lastJsonMessage.messages.length > 0) {
           const lastheight = document.documentElement.offsetHeight;
           setTimeout(() => {
-            console.log(
-              document.documentElement.scrollHeight,
-              lastheight,
-              document.documentElement.scrollHeight - lastheight
-            );
             document.documentElement.scrollTop =
               document.documentElement.scrollHeight - lastheight;
-            console.log(document.documentElement.scrollTop);
             isLoadMore.current = false;
 
             setloadingmore(false);
@@ -553,7 +571,9 @@ function ChatPage() {
       setTimeout(scrolltobottom, 0);
     }
     if (!loadingchatmessages) {
-      localchats[chattingto] = chats.slice(Math.max(chats.length - 25, 0));
+      localchats[chattingto] = chats.slice(
+        Math.max(chats.length - StartMessagesLength, 0)
+      );
       setlocalchats(localchats);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -777,7 +797,9 @@ function ChatPage() {
                 if (message !== "") {
                   e.target[0].value = "";
                   const time = new Date().getTime();
-                  playSound("/sounds/send.mp3");
+                  if (SendSound) {
+                    playSound("/sounds/send.mp3");
+                  }
                   sendJsonMessage({
                     type: "message",
                     message,
@@ -785,7 +807,7 @@ function ChatPage() {
                   setcanloadmore(true);
                   setchats(
                     chats
-                      .slice(Math.max(chats.length - 25, 0))
+                      .slice(Math.max(chats.length - StartMessagesLength, 0))
                       .concat({ mine: true, file: undefined, message, time })
                   );
                   setTimeout(scrolltobottom, 0);
@@ -798,6 +820,7 @@ function ChatPage() {
                   });
                 }
               }}
+              ref={formref}
               style={{
                 width: "100%",
                 display: "flex",
@@ -806,8 +829,16 @@ function ChatPage() {
               <TextareaAutosize
                 ref={inputref}
                 onInput={(e: any) => {
+                  if (key.current === 13 && !shiftkey.current) {
+                    submitref.current.click();
+                    inputref.current.value = "";
+                  }
                   const message = e.target.value.trim();
-                  if (message.length <= 2000) {
+                  if (
+                    message.length <= 2000 &&
+                    !(key.current === 13 && !shiftkey.current) &&
+                    personaltyping
+                  ) {
                     playSound(
                       `/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`
                     );
@@ -844,7 +875,9 @@ function ChatPage() {
                     e.target.value = e.target.value.substring(0, 2000);
                   }
                 }}
-                onKeyDown={() => {
+                onKeyDown={(e: any) => {
+                  key.current = e.keyCode;
+                  shiftkey.current = e.shiftKey;
                   clearTimeout(typingTimer.current);
                 }}
                 autoFocus
@@ -861,6 +894,7 @@ function ChatPage() {
                 placeholder="Type Something..."
               />
               <button
+                ref={submitref}
                 style={{
                   width: "60px",
                   marginLeft: "5px",
