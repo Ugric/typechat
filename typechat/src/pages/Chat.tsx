@@ -836,12 +836,13 @@ function ChatPage() {
                   const message = e.target.value.trim();
                   if (
                     message.length <= 2000 &&
-                    !(key.current === 13 && !shiftkey.current) &&
-                    personaltyping
+                    !(key.current === 13 && !shiftkey.current)
                   ) {
-                    playSound(
-                      `/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`
-                    );
+                    if (personaltyping) {
+                      playSound(
+                        `/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`
+                      );
+                    }
                     metypinglengthref.current = message.length;
                     if (metypinglengthref.current > 0) {
                       metypingref.current = true;
