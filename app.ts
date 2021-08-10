@@ -430,7 +430,7 @@ const messagefunctions = {};
                   time,
                   message: msg.message,
                   file: msg.file,
-                  id,
+                  ID: id,
                 },
               })
             );
@@ -455,7 +455,7 @@ const messagefunctions = {};
                     time,
                     message: msg.message,
                     file: msg.file,
-                    id,
+                    ID: id,
                   },
                 })
               );
@@ -688,6 +688,39 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
       }
     } else {
       return res.send({ exists: false });
+    }
+  });
+  app.get("/api/getallfriendrequests", async (req: any, res: any) => {
+    const accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+      {
+        ":token": req.cookies.token,
+      }
+    );
+    if (accountdata) {
+      const friendrequests = await db.all(
+        `WITH sentfriendrequestlist as (
+      SELECT toAccountID
+      FROM friends
+      WHERE accountID == :accountID
+  )
+  SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage
+  FROM friends 
+  JOIN accounts ON friends.accountID=accounts.accountID
+  WHERE friends.toAccountID == :accountID 
+      and accounts.accountID not in sentfriendrequestlist ORDER BY
+      username ASC`,
+        { ":accountID": accountdata.accountID }
+      );
+      res.send({
+        resp: true,
+        friendrequests,
+      });
+    } else {
+      res.send({
+        resp: false,
+        err: "invalid token!",
+      });
     }
   });
   app.get("/api/getallcontacts", async (req: any, res: any) => {
@@ -926,7 +959,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         req.files.profile.mv(profilePath);
       }
       const time = new Date().getTime();
-      const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text text us!`;
+      const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text us!`;
       await Promise.all([
         db.run(
           "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag)",

@@ -7,7 +7,7 @@ async function playSound(url: string) {
   const canPlay = localallowed ? JSON.parse(localallowed) : true;
   if (canPlay) {
     const localvol = localStorage.getItem("volume");
-    const vol = (localvol != undefined ? JSON.parse(localvol) : 75) / 20;
+    const vol = (localvol !== null ? JSON.parse(localvol) : 15) / 20;
     let hasplayed = false;
     const audio = new Howl({
       src: url,

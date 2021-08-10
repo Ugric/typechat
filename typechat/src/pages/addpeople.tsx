@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useState } from "react";
 import useApi from "../hooks/useapi";
 import ColorThief from "colorthief";
@@ -6,6 +6,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import Loader from "./loader";
 import { useHistory } from "react-router-dom";
+import { useData } from "../hooks/datahook";
+import QRCode from "qrcode.react";
+import QrReader from "react-qr-reader";
+
 const colorThief = new ColorThief();
 
 function UserListing({
@@ -59,7 +63,7 @@ function UserListing({
           borderRadius: "50%",
         }}
         onLoad={async (e: any) => {
-          const resp = await colorThief.getColor(e.target);
+          const resp = colorThief.getColor(e.target);
           setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
         }}
       />
@@ -118,16 +122,22 @@ function UserListing({
 
 function AddPeople() {
   const [search, setsearch] = useState("");
+  const { loggedin, user } = useData();
   const { data, setData } = useApi(
     search
       ? "/api/searchusers?" + new URLSearchParams({ q: search }).toString()
       : null
   );
+  const { data: friendrequests } = useApi("/api/getallfriendrequests");
+  const history = useHistory();
   const [loading, setloading] = useState(false);
   useEffect(() => {
     if (!search) setData(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
+  if (!loggedin) {
+    history.push("/");
+  }
   return loading ? (
     <Loader></Loader>
   ) : (
@@ -147,7 +157,92 @@ function AddPeople() {
         }}
       >
         <h1 style={{ textAlign: "center" }}>Add</h1>
-
+        <div
+          style={{
+            maxWidth: "250px",
+            textAlign: "center",
+            margin: "1rem auto",
+            border: "solid 1px var(--light-bg-colour)",
+            padding: "1rem",
+            borderRadius: "10px",
+          }}
+        >
+          {user ? (
+            <QRCode
+              value={user.id}
+              style={{ width: "100%", height: undefined }}
+            />
+          ) : (
+            <></>
+          )}
+          <p>add people with your QR Code</p>
+          <QrReader
+            delay={300}
+            onError={console.error}
+            onScan={async (scan) => {
+              if (scan) {
+                setloading(true);
+                const formdata = new FormData();
+                formdata.append("user", scan);
+                const resp = await (
+                  await fetch("/api/frienduserfromid", {
+                    method: "POST",
+                    body: formdata,
+                  })
+                ).json();
+                if (resp.friends) {
+                  history.push(`/chat/${scan}`);
+                } else {
+                  history.push(`/contacts`);
+                }
+                setloading(false);
+              }
+            }}
+            style={{ width: "100%" }}
+          />
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <h2>Friend Requests</h2>
+          <div>
+            {friendrequests ? (
+              friendrequests.resp ? (
+                friendrequests.friendrequests.length > 0 ? (
+                  <div>
+                    <p style={{ textAlign: "end" }}>
+                      {friendrequests.friendrequests.length} friend request
+                      {friendrequests.friendrequests.length === 1 ? "" : "s"}
+                    </p>
+                    {data.data.map(
+                      (
+                        value: {
+                          profilePic: string;
+                          username: string;
+                          id: string;
+                          tag: string;
+                          backgroundImage: string | null;
+                          [key: string]: any;
+                        },
+                        index: number
+                      ) => (
+                        <UserListing
+                          user={value}
+                          setloading={setloading}
+                          key={value.id}
+                        />
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <p>You have no friend requests!</p>
+                )
+              ) : (
+                <p style={{ color: "red", textAlign: "center" }}>{data.err}</p>
+              )
+            ) : (
+              <p style={{ textAlign: "center" }}>loading...</p>
+            )}
+          </div>
+        </div>
         <input
           type="text"
           style={{

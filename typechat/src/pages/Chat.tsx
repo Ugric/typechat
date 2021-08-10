@@ -313,6 +313,7 @@ function MessageMaker({
     }
     console.timeEnd("chatrender");
     return output;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, canloadmore, loadingmore, chatUpdateID]);
   const { id: chattingto } = useParams<{ id: string }>();
   const location = useLocation();
@@ -368,7 +369,7 @@ function MessageMaker({
         {typingdata.typing ? (
           <div className={`yours messages`}>
             <div
-              className="message"
+              className="message noselect"
               style={{
                 opacity: 0.5,
                 textShadow: "0 0 7px black",
@@ -851,11 +852,12 @@ function ChatPage() {
                       if (resp.resp) {
                         notifications.removeNotification(id);
                         const time = new Date().getTime();
+                        const tempid = Math.random();
                         sendJsonMessage({
                           type: "file",
                           file: resp.id,
+                          tempid,
                         });
-                        const tempid = Math.random();
                         setchats(
                           chats.concat({
                             mine: true,
