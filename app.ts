@@ -476,6 +476,7 @@ const messagefunctions = {};
           });
         }
         await db
+
           .run(
             `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time)`,
             {
