@@ -212,7 +212,7 @@ function AddPeople() {
                       {friendrequests.friendrequests.length} friend request
                       {friendrequests.friendrequests.length === 1 ? "" : "s"}
                     </p>
-                    {data.friendrequests.map(
+                    {friendrequests.friendrequests.map(
                       (
                         value: {
                           profilePic: string;
