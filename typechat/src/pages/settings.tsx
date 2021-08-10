@@ -1,4 +1,5 @@
 import useLocalStorage from "../hooks/useLocalStorage";
+import playSound from "../playsound";
 import ToggleSwitch from "./switch";
 
 function Setting({ children }: { children: any }) {
@@ -93,6 +94,9 @@ function Settings() {
                     value={volume}
                     onInput={(e: any) => {
                       setVolume(e.target.value);
+                    }}
+                    onClick={() => {
+                      playSound("/sounds/friends.mp3");
                     }}
                   ></input>
                 </label>

@@ -5,6 +5,7 @@
     "@types/express-ws": "^3.0.0",
     "bleach": "^0.3.0",
     "blob-to-hash": "^0.0.1",
+    "chalk": "^4.1.2",
     "connect-busboy": "^0.0.2",
     "connect-multiparty": "^2.2.0",
     "cookie-parser": "^1.4.5",
@@ -16,6 +17,7 @@
     "node-notifier": "^10.0.0",
     "nodemailer": "^6.6.2",
     "randomstring": "^1.2.1",
+    "selfsigned": "^1.10.11",
     "sqlite": "^4.0.23",
     "sqlite3": "^5.0.2"
   },

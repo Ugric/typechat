@@ -34,6 +34,7 @@ import useWindowSize from "../hooks/usescreensize";
 import isElectron from "is-electron";
 import notify from "../notifier";
 import Linkify from "react-linkify";
+import ReactPlayer from "react-player/lazy";
 
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
@@ -55,7 +56,8 @@ function numToSSColumn(num: number) {
 }
 
 interface messageTypes {
-  id?: string;
+  ID?: string;
+  tempid?: number;
   time: number;
   mine: boolean;
 }
@@ -69,6 +71,100 @@ interface messageWithFile extends messageTypes {
   message: undefined;
 }
 
+const videoSites = [
+  "youtube.com",
+  "www.youtube.com",
+  "twitch.tv",
+  "www.twitch.tv",
+  "youtu.be",
+  "soundcloud.com",
+  "www.soundcloud.com",
+  "dailymotion.com",
+  "www.dailymotion.com",
+  "facebook.com",
+  "www.facebook.com",
+  "vimeo.com",
+  "www.vimeo.com",
+];
+
+function MessageFaviconOrVideoRenderer({
+  links,
+  mine,
+}: {
+  links: {
+    decoratedHref: string;
+    decoratedText: string;
+    key: number;
+  }[];
+  mine: boolean;
+}) {
+  return (
+    <div>
+      {links.map(
+        ({
+          decoratedHref,
+          decoratedText,
+          key,
+        }: {
+          decoratedHref: string;
+          decoratedText: string;
+          key: number;
+        }) => {
+          const url = new URL(decoratedHref);
+          return (
+            <div
+              key={key}
+              style={{
+                padding: "1rem",
+                border: `solid 1px ${
+                  mine ? "var(--main-bg-colour)" : "#d0d0d0"
+                }`,
+                backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
+                borderRadius: "10px",
+                margin: "5px",
+              }}
+            >
+              {videoSites.includes(url.hostname) ? (
+                <ReactPlayer
+                  url={decoratedHref}
+                  width="100%"
+                  height="100%"
+                  controls={true}
+                  style={{ aspectRatio: "16/9" }}
+                />
+              ) : (
+                <a
+                  href={decoratedHref}
+                  target="blank"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    margin: 0,
+                  }}
+                >
+                  <img
+                    alt={url.hostname}
+                    style={{
+                      marginRight: "5px",
+                      aspectRatio: "1/1",
+                      height: "100%",
+                      minHeight: "24px",
+                    }}
+                    src={`https://www.google.com/s2/favicons?${new URLSearchParams(
+                      { size: "24", domain: url.hostname }
+                    )}`}
+                  />
+                  <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
+                </a>
+              )}
+            </div>
+          );
+        }
+      )}
+    </div>
+  );
+}
+
 function MessageMaker({
   messages,
   typingdata,
@@ -77,6 +173,7 @@ function MessageMaker({
   canloadmore,
   loadingmore,
   loadmore,
+  chatUpdateID,
 }: {
   messages: Array<messageWithText | messageWithFile>;
   typingdata: {
@@ -89,6 +186,7 @@ function MessageMaker({
   canloadmore: boolean;
   loadingmore: boolean;
   loadmore: Function;
+  chatUpdateID: number | null;
 }) {
   const output = useMemo(() => {
     console.time("chatrender");
@@ -101,33 +199,54 @@ function MessageMaker({
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i].message;
       const file = messages[i].file;
+      const links: {
+        decoratedHref: string;
+        decoratedText: string;
+        key: number;
+      }[] = [];
+      const donekeys: number[] = [];
       tempmessages.push(
-        <div className="message" key={messages[i].id}>
+        <div
+          className="message"
+          key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+          style={{ opacity: !messages[i].ID ? 0.5 : undefined }}
+        >
           {message ? (
-            message.split("```").map((value, index) =>
-              index % 2 === 0 ? (
-                <div key={index}>
-                  <Linkify
-                    componentDecorator={(decoratedHref, decoratedText, key) => (
-                      <a
-                        target="blank"
-                        style={{ color: "var(--secondary-text-colour)" }}
-                        href={decoratedHref}
-                        key={key}
-                      >
-                        {decoratedText}
-                      </a>
-                    )}
-                  >
+            <>
+              {message.split("```").map((value, index) =>
+                index % 2 === 0 ? (
+                  <div key={index}>
+                    <Linkify
+                      componentDecorator={(
+                        decoratedHref,
+                        decoratedText,
+                        key
+                      ) => {
+                        if (!donekeys.includes(key)) {
+                          links.push({ decoratedHref, decoratedText, key });
+                          donekeys.push(key);
+                        }
+                        return (
+                          <a target="blank" href={decoratedHref} key={key}>
+                            {decoratedText}
+                          </a>
+                        );
+                      }}
+                    >
+                      {value.trim()}
+                    </Linkify>
+                  </div>
+                ) : (
+                  <SyntaxHighlighter key={index}>
                     {value.trim()}
-                  </Linkify>
-                </div>
-              ) : (
-                <SyntaxHighlighter key={index}>
-                  {value.trim()}
-                </SyntaxHighlighter>
-              )
-            )
+                  </SyntaxHighlighter>
+                )
+              )}
+              <MessageFaviconOrVideoRenderer
+                links={links}
+                mine={messages[i].mine}
+              ></MessageFaviconOrVideoRenderer>
+            </>
           ) : (
             <div>
               <div
@@ -147,7 +266,10 @@ function MessageMaker({
       );
       if (!messages[i + 1] || messages[i + 1].mine !== messages[i].mine) {
         output.push(
-          <div className="messagegroup" key={messages[i].id}>
+          <div
+            className="messagegroup"
+            key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+          >
             {lastmessagegrouptime &&
             messages[i].time - lastmessagegrouptime > 300000 ? (
               <p
@@ -191,7 +313,8 @@ function MessageMaker({
     }
     console.timeEnd("chatrender");
     return output;
-  }, [messages, canloadmore, loadingmore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, canloadmore, loadingmore, chatUpdateID]);
   const { id: chattingto } = useParams<{ id: string }>();
   const location = useLocation();
   const faketext = useMemo(() => {
@@ -246,7 +369,7 @@ function MessageMaker({
         {typingdata.typing ? (
           <div className={`yours messages`}>
             <div
-              className="message"
+              className="message noselect"
               style={{
                 opacity: 0.5,
                 textShadow: "0 0 7px black",
@@ -377,7 +500,7 @@ function ChatPage() {
   const [canloadmore, setcanloadmore] = useState(true);
   const [loadingmore, setloadingmore] = useState(false);
   const isLoadMore = useRef<boolean>(false);
-
+  const [chatUpdateID, setChatUpdateID] = useState<number | null>(null);
   const [personaltyping] = useLocalStorage("Keyboard Typing Sound", true);
   const [Recipienttyping] = useLocalStorage("Recipient Typing Sound", true);
   const [SendSound] = useLocalStorage("Send Sound", true);
@@ -497,6 +620,15 @@ function ChatPage() {
         });
       } else if (lastJsonMessage.type === "ping") {
         sendJsonMessage({ type: "pong" });
+      } else if (lastJsonMessage.type === "sent") {
+        for (const message of chats) {
+          if (message.tempid === lastJsonMessage.tempid) {
+            delete message.tempid;
+            message.ID = lastJsonMessage.id;
+          }
+        }
+        setChatUpdateID(Math.random());
+        setchats(chats);
       } else if (lastJsonMessage.type === "online") {
         if (!lastJsonMessage.online && (isonline === "M" || isonline === "1")) {
           playSound("/sounds/leave.mp3");
@@ -567,6 +699,7 @@ function ChatPage() {
     setTimeout(scrolltobottom, 0);
   }, [loading, data, readyState]);
   useEffect(() => {
+    console.log(chats);
     if (toscroll.current) {
       setTimeout(scrolltobottom, 0);
     }
@@ -577,7 +710,7 @@ function ChatPage() {
       setlocalchats(localchats);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chats]);
+  }, [chats, chatUpdateID]);
   useEffect(() => {
     if (data && !data.exists) {
       setloadingchatmessages(false);
@@ -666,6 +799,7 @@ function ChatPage() {
           canloadmore={canloadmore && readyState === ReadyState.OPEN}
           loadingmore={loadingmore}
           loadmore={loadmore}
+          chatUpdateID={chatUpdateID}
         />
         <div ref={bottomref}></div>
         <div
@@ -718,9 +852,11 @@ function ChatPage() {
                       if (resp.resp) {
                         notifications.removeNotification(id);
                         const time = new Date().getTime();
+                        const tempid = Math.random();
                         sendJsonMessage({
                           type: "file",
                           file: resp.id,
+                          tempid,
                         });
                         setchats(
                           chats.concat({
@@ -728,6 +864,7 @@ function ChatPage() {
                             message: undefined,
                             file: resp.id,
                             time,
+                            tempid,
                           })
                         );
                         notifications.removeNotification(id);
@@ -800,15 +937,23 @@ function ChatPage() {
                   if (SendSound) {
                     playSound("/sounds/send.mp3");
                   }
+                  const tempid = Math.random();
                   sendJsonMessage({
                     type: "message",
                     message,
+                    tempid,
                   });
                   setcanloadmore(true);
                   setchats(
                     chats
                       .slice(Math.max(chats.length - StartMessagesLength, 0))
-                      .concat({ mine: true, file: undefined, message, time })
+                      .concat({
+                        mine: true,
+                        file: undefined,
+                        message,
+                        time,
+                        tempid,
+                      })
                   );
                   setTimeout(scrolltobottom, 0);
                   metypingref.current = false;
