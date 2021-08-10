@@ -476,7 +476,6 @@ const messagefunctions = {};
           });
         }
         await db
-
           .run(
             `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time)`,
             {
@@ -489,6 +488,7 @@ const messagefunctions = {};
             }
           )
           .catch(console.error);
+        ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
       } else if (msg.type === "typing") {
         if (
           messagefunctions[to] &&
