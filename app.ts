@@ -106,7 +106,7 @@ const messagefunctions = {};
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file)"
+      "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file, mimetype)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS chats (chatID)"),
     db.run("CREATE TABLE IF NOT EXISTS chatUsers (chatID, accountID)"),
@@ -117,6 +117,8 @@ const messagefunctions = {};
       "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID)"
     ),
   ]);
+
+  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => {});
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
@@ -277,7 +279,7 @@ const messagefunctions = {};
           await db.all(
             `SELECT * 
           FROM (SELECT
-          ID,(accountID=:accountID) as mine, message, time, file
+          ID,(accountID=:accountID) as mine, message, time, file, mimetype
           FROM friendsChatMessages
           WHERE (
                   accountID = :accountID
@@ -355,7 +357,7 @@ const messagefunctions = {};
         const messages = (
           await db.all(
             `SELECT * FROM (SELECT
-          ID,(accountID=:accountID) as mine, message, time, file
+          ID,(accountID=:accountID) as mine, message, time, file, mimetype
           FROM friendsChatMessages
           WHERE (
                   accountID = :accountID
@@ -430,6 +432,7 @@ const messagefunctions = {};
                   time,
                   message: msg.message,
                   file: msg.file,
+                  mimetype: msg.mimetype,
                   ID: id,
                 },
               })
@@ -455,6 +458,7 @@ const messagefunctions = {};
                     time,
                     message: msg.message,
                     file: msg.file,
+                    mimetype: msg.mimetype,
                     ID: id,
                   },
                 })
@@ -477,13 +481,14 @@ const messagefunctions = {};
         }
         await db
           .run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time)`,
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype)`,
             {
               ":ID": id,
               ":accountID": accountdata.accountID,
               ":toAccountID": to,
               ":message": msg.message,
               ":file": msg.file,
+              ":mimetype": msg.mimetype,
               ":time": time,
             }
           )
@@ -827,6 +832,19 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     );
     if (imagedata) {
       res.sendFile(path.join(__dirname, "files", imagedata.filename));
+    } else {
+      res.status(404).send("image not found in the database!");
+    }
+  });
+  app.get("/filecontenttype/:id", async (req: any, res: any) => {
+    const imagedata = await db.get(
+      `SELECT filename FROM images WHERE imageID=:id`,
+      {
+        ":id": req.params.id,
+      }
+    );
+    if (imagedata) {
+      res.send(mime.lookup(imagedata.filename));
     } else {
       res.status(404).send("image not found in the database!");
     }

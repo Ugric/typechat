@@ -1,4 +1,5 @@
 const { app, BrowserWindow, protocol, Notification, Tray, Menu } = require("electron");
+const open = require('open');
 const AutoLaunch = require('auto-launch');
 const path = require("path")
 const snooze = (timeout) =>
@@ -137,6 +138,10 @@ const createWindow = async () => {
     loadingWindow.hide();
   });
   mainWindow.loadURL(`http://freshcraft.play.ai:5000/`);
+  mainWindow.webContents.on('new-window', function (event, url) {
+    event.preventDefault();
+    open(url);
+  });
 };
 app.on("ready", createWindow);
 

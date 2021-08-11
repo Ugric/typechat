@@ -16,6 +16,10 @@
   flex-direction: column;
 }
 
+.emojimessage {
+  text-align: end;
+}
+
 .message {
   border-radius: 20px;
   padding: 8px 15px;
