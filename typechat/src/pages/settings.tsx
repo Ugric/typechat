@@ -95,9 +95,6 @@ function Settings() {
                     onInput={(e: any) => {
                       setVolume(e.target.value);
                     }}
-                    onClick={() => {
-                      playSound("/sounds/friends.mp3");
-                    }}
                   ></input>
                 </label>
               </Setting>

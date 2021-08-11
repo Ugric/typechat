@@ -36,6 +36,15 @@ import notify from "../notifier";
 import Linkify from "react-linkify";
 import ReactPlayer from "react-player/lazy";
 
+function onlyContainsEmojis(str: string) {
+  const ranges = emoji.join("|");
+
+  const removeEmoji = (str: string) =>
+    str.replace(new RegExp("[" + ranges + "]", "g"), "");
+
+  return !removeEmoji(str).length;
+}
+
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
 
@@ -65,27 +74,13 @@ interface messageTypes {
 interface messageWithText extends messageTypes {
   message: string;
   file: undefined;
+  mimetype: undefined;
 }
 interface messageWithFile extends messageTypes {
   file: string;
   message: undefined;
+  mimetype: string;
 }
-
-const videoSites = [
-  "youtube.com",
-  "www.youtube.com",
-  "twitch.tv",
-  "www.twitch.tv",
-  "youtu.be",
-  "soundcloud.com",
-  "www.soundcloud.com",
-  "dailymotion.com",
-  "www.dailymotion.com",
-  "facebook.com",
-  "www.facebook.com",
-  "vimeo.com",
-  "www.vimeo.com",
-];
 
 function MessageFaviconOrVideoRenderer({
   links,
@@ -124,39 +119,31 @@ function MessageFaviconOrVideoRenderer({
                 margin: "5px",
               }}
             >
-              {videoSites.includes(url.hostname) ? (
-                <ReactPlayer
-                  url={decoratedHref}
-                  width="100%"
-                  height="100%"
-                  controls={true}
-                  style={{ aspectRatio: "16/9" }}
-                />
-              ) : (
-                <a
-                  href={decoratedHref}
-                  target="blank"
+              <a
+                href={decoratedHref}
+                target="blank"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  margin: 0,
+                }}
+              >
+                <img
+                  alt={url.hostname}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    margin: 0,
+                    marginRight: "5px",
+                    aspectRatio: "1/1",
+                    height: "100%",
+                    minHeight: "24px",
                   }}
-                >
-                  <img
-                    alt={url.hostname}
-                    style={{
-                      marginRight: "5px",
-                      aspectRatio: "1/1",
-                      height: "100%",
-                      minHeight: "24px",
-                    }}
-                    src={`https://www.google.com/s2/favicons?${new URLSearchParams(
-                      { size: "24", domain: url.hostname }
-                    )}`}
-                  />
-                  <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
-                </a>
-              )}
+                  src={`https://www.google.com/s2/favicons?${new URLSearchParams(
+                    { size: "24", domain: url.hostname }
+                  )}`}
+                />
+                <p style={{ maxWidth: "90%", textAlign: "end" }}>
+                  {decoratedText}
+                </p>
+              </a>
             </div>
           );
         }
@@ -174,6 +161,7 @@ function MessageMaker({
   loadingmore,
   loadmore,
   chatUpdateID,
+  scrolltobottom,
 }: {
   messages: Array<messageWithText | messageWithFile>;
   typingdata: {
@@ -187,6 +175,7 @@ function MessageMaker({
   loadingmore: boolean;
   loadmore: Function;
   chatUpdateID: number | null;
+  scrolltobottom: Function;
 }) {
   const output = useMemo(() => {
     console.time("chatrender");
@@ -199,6 +188,7 @@ function MessageMaker({
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i].message;
       const file = messages[i].file;
+      const mimetype = messages[i].mimetype;
       const links: {
         decoratedHref: string;
         decoratedText: string;
@@ -207,60 +197,129 @@ function MessageMaker({
       const donekeys: number[] = [];
       tempmessages.push(
         <div
-          className="message"
+          className={
+            (message &&
+              (Array.from(message).length > 3 ||
+                !onlyContainsEmojis(message))) ||
+            !message
+              ? "message"
+              : undefined
+          }
           key={messages[i].ID ? messages[i].ID : messages[i].tempid}
           style={{ opacity: !messages[i].ID ? 0.5 : undefined }}
         >
           {message ? (
             <>
-              {message.split("```").map((value, index) =>
-                index % 2 === 0 ? (
-                  <div key={index}>
-                    <Linkify
-                      componentDecorator={(
-                        decoratedHref,
-                        decoratedText,
-                        key
-                      ) => {
-                        if (!donekeys.includes(key)) {
-                          links.push({ decoratedHref, decoratedText, key });
-                          donekeys.push(key);
-                        }
-                        return (
-                          <a target="blank" href={decoratedHref} key={key}>
-                            {decoratedText}
-                          </a>
-                        );
-                      }}
-                    >
+              {Array.from(message).length > 3 ||
+              !onlyContainsEmojis(message) ? (
+                message.split("```").map((value, index) =>
+                  index % 2 === 0 ? (
+                    <div key={index}>
+                      <Linkify
+                        componentDecorator={(
+                          decoratedHref,
+                          decoratedText,
+                          key
+                        ) => {
+                          if (!donekeys.includes(key)) {
+                            links.push({ decoratedHref, decoratedText, key });
+                            donekeys.push(key);
+                          }
+                          return (
+                            <a target="blank" href={decoratedHref} key={key}>
+                              {decoratedText}
+                            </a>
+                          );
+                        }}
+                      >
+                        {value.trim()}
+                      </Linkify>
+                    </div>
+                  ) : (
+                    <SyntaxHighlighter key={index}>
                       {value.trim()}
-                    </Linkify>
-                  </div>
-                ) : (
-                  <SyntaxHighlighter key={index}>
-                    {value.trim()}
-                  </SyntaxHighlighter>
+                    </SyntaxHighlighter>
+                  )
                 )
+              ) : (
+                <h1 className="emojimessage">{message}</h1>
               )}
               <MessageFaviconOrVideoRenderer
                 links={links}
                 mine={messages[i].mine}
               ></MessageFaviconOrVideoRenderer>
             </>
-          ) : (
+          ) : file ? (
             <div>
-              <div
-                onClick={() => {
-                  window.open(`/files/${file}`, file, "width=600,height=400");
-                }}
-                style={{
-                  color: "var(--secondary-text-colour)",
-                  cursor: "pointer",
-                }}
-              >
-                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
-              </div>
+              {mimetype ? (
+                mimetype.split("/")[0] === "image" ? (
+                  <img
+                    src={`/files/${file}`}
+                    style={{ width: "100%" }}
+                    loading="lazy"
+                    onLoad={() => {
+                      if (toscroll.current) {
+                        scrolltobottom();
+                      }
+                    }}
+                  ></img>
+                ) : mimetype.split("/")[0] === "video" ? (
+                  <video
+                    src={`/files/${file}`}
+                    style={{ width: "100%" }}
+                    controls
+                    playsInline
+                    onLoad={() => {
+                      if (toscroll.current) {
+                        scrolltobottom();
+                      }
+                    }}
+                  ></video>
+                ) : mimetype.split("/")[0] === "audio" ? (
+                  <audio
+                    src={`/files/${file}`}
+                    style={{ width: "100%" }}
+                    controls
+                    playsInline
+                    onLoad={() => {
+                      if (toscroll.current) {
+                        scrolltobottom();
+                      }
+                    }}
+                  ></audio>
+                ) : (
+                  <div
+                    onClick={() => {
+                      window.open(
+                        `/files/${file}`,
+                        file,
+                        "width=600,height=400"
+                      );
+                    }}
+                    style={{
+                      color: "var(--secondary-text-colour)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+                  </div>
+                )
+              ) : (
+                <div
+                  onClick={() => {
+                    window.open(`/files/${file}`, file, "width=600,height=400");
+                  }}
+                  style={{
+                    color: "var(--secondary-text-colour)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+                </div>
+              )}
             </div>
+          ) : (
+            <></>
           )}
         </div>
       );
@@ -353,7 +412,7 @@ function MessageMaker({
       ref={scrollref}
     >
       <div
-        className="chat"
+        className="chat noselect"
         style={{
           margin: `90px auto 3rem auto`,
           maxWidth: "900px",
@@ -369,7 +428,7 @@ function MessageMaker({
         {typingdata.typing ? (
           <div className={`yours messages`}>
             <div
-              className="message noselect"
+              className="message"
               style={{
                 opacity: 0.5,
                 textShadow: "0 0 7px black",
@@ -545,7 +604,7 @@ function ChatPage() {
   const scrolltobottom = () => {
     const scrollingElement = document.scrollingElement || document.body;
     if (window.innerHeight + window.scrollY < document.body.offsetHeight) {
-      scrollingElement.scrollTop = scrollingElement.scrollHeight;
+      scrollingElement.scrollTo(0, scrollingElement.scrollHeight);
     }
   };
   const fileref = useRef<any>(null);
@@ -586,7 +645,9 @@ function ChatPage() {
           } else {
             notifications.addNotification({
               title: `${data.username}`,
-              message: truncate(lastJsonMessage.message.message, 25),
+              message: lastJsonMessage.message.message
+                ? truncate(lastJsonMessage.message.message, 25)
+                : "file",
               type: "default",
               onRemoval: (_: number, type: string) => {
                 if (type === "click") {
@@ -699,7 +760,6 @@ function ChatPage() {
     setTimeout(scrolltobottom, 0);
   }, [loading, data, readyState]);
   useEffect(() => {
-    console.log(chats);
     if (toscroll.current) {
       setTimeout(scrolltobottom, 0);
     }
@@ -792,6 +852,7 @@ function ChatPage() {
           }}
         />
         <MessageMaker
+          scrolltobottom={scrolltobottom}
           scrollref={scrollerref}
           messages={loadingchatmessages ? localchats[chattingto] : chats}
           typingdata={typingdata}
@@ -826,9 +887,9 @@ function ChatPage() {
               style={{ display: "none" }}
               ref={fileref}
               onInput={async (e: any) => {
-                if (e.target.files) {
+                if (e.target.files.length > 0) {
                   const file = e.target.files[0];
-                  if (file.size <= 10000000) {
+                  if (file.size <= 20000000) {
                     const id = Math.random();
                     notifications.addNotification({
                       title: "File",
@@ -856,12 +917,14 @@ function ChatPage() {
                         sendJsonMessage({
                           type: "file",
                           file: resp.id,
+                          mimetype: file.type,
                           tempid,
                         });
                         setchats(
                           chats.concat({
                             mine: true,
                             message: undefined,
+                            mimetype: file.type,
                             file: resp.id,
                             time,
                             tempid,
@@ -950,6 +1013,7 @@ function ChatPage() {
                       .concat({
                         mine: true,
                         file: undefined,
+                        mimetype: undefined,
                         message,
                         time,
                         tempid,
