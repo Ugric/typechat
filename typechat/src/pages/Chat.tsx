@@ -630,7 +630,7 @@ function ChatPage() {
           setchats((c) => c.slice(Math.max(c.length - StartMessagesLength, 0)));
           setcanloadmore(true);
           setTimeout(scrolltobottom, 0);
-          if (!isFocussed && isElectron()) {
+          if (!lastJsonMessage.message.mine && !isFocussed && isElectron()) {
             notify(`${data.username}`, lastJsonMessage.message.message, () => {
               history.push(`/chat/${chattingto}`);
               scrolltobottom();
