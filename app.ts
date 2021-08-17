@@ -108,10 +108,10 @@ const messagefunctions = {};
     db.run(
       "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file, mimetype)"
     ),
-    db.run("CREATE TABLE IF NOT EXISTS chats (chatID)"),
+    db.run("CREATE TABLE IF NOT EXISTS chats (chatID, name, picture)"),
     db.run("CREATE TABLE IF NOT EXISTS chatUsers (chatID, accountID)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS chatMessages (chatID, accountID, message, time)"
+      "CREATE TABLE IF NOT EXISTS chatMessages (ID,accountID, chatID, message, time, file, mimetype)"
     ),
     db.run(
       "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID)"

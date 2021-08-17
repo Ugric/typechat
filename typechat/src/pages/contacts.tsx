@@ -40,19 +40,26 @@ function Contact({
   return (
     <>
       <div
-        onPointerDown={() => {
+        onPointerDown={(e: any) => {
           holdref.current = setTimeout(() => {
             holdref.current = undefined;
+            playSound("/sounds/click1.mp3");
             setUserModelIsOpen(true);
           }, 500);
-          playSound("/sounds/click2.mp3");
+          playSound("/sounds/click3.mp3");
         }}
-        onPointerUp={() => {
+        onTouchMove={() => {
           if (holdref.current) {
             clearInterval(holdref.current);
+            holdref.current = undefined;
+          }
+        }}
+        onClick={() => {
+          if (holdref.current) {
+            clearInterval(holdref.current);
+            playSound("/sounds/click1.mp3");
             history.push(`/chat/${user.id}`);
           }
-          playSound("/sounds/click1.mp3");
         }}
         style={{
           backgroundImage: user.backgroundImage
@@ -85,8 +92,8 @@ function Contact({
             width: "auto",
             borderRadius: "50%",
           }}
-          onLoad={async (e: any) => {
-            const resp = await colorThief.getColor(e.target);
+          onLoad={(e: any) => {
+            const resp = colorThief.getColor(e.target);
             setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
           }}
         />
@@ -122,7 +129,10 @@ function Contact({
           setUserModelIsOpen(false);
         }}
         style={{
-          overlay: { backgroundColor: "rgb(18 18 18 / 50%)", zIndex: 10 },
+          overlay: {
+            backgroundColor: "rgb(18 18 18 / 50%)",
+            zIndex: 10,
+          },
           content: {
             backgroundColor: "transparent",
             zIndex: 11,
@@ -132,7 +142,13 @@ function Contact({
             right: "auto",
             bottom: "auto",
             marginRight: "-50%",
+            padding: undefined,
             transform: "translate(-50%, -50%)",
+            width: "75%",
+            height: "50%",
+            maxWidth: "750px",
+
+            maxHeight: "500px",
           },
         }}
         contentLabel="Username Change"

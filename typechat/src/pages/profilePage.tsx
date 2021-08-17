@@ -32,7 +32,8 @@ function ProfilePage({
         backgroundSize: user.backgroundImage ? "cover" : "",
         borderRadius: "10px",
         border: "solid 1px var(--light-bg-colour)",
-        margin: "1rem",
+        width: "100%",
+        height: "100%",
         backgroundPosition: user.backgroundImage ? "center" : "",
       }}
     >
@@ -51,9 +52,9 @@ function ProfilePage({
             width: "auto",
             borderRadius: "50%",
           }}
-          onLoad={async (e: any) => {
+          onLoad={(e: any) => {
             const colorThief = new ColorThief();
-            const resp = await colorThief.getColor(e.target);
+            const resp = colorThief.getColor(e.target);
             setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
           }}
         />
