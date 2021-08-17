@@ -479,7 +479,7 @@ function ChatNotFound() {
   );
 }
 
-function ChatPage() {
+function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
   const bypassChars: string[] = [
     ...emoji,
     " ",
@@ -516,7 +516,7 @@ function ChatPage() {
   const isFocussed = useWindowFocus();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
-  const { setchattingto, notifications } = useData();
+  const { notifications } = useData();
   const { error, loading, data } = useApi(
     `/api/friendsuserdatafromid?${new URLSearchParams({
       id: chattingto,
@@ -568,7 +568,7 @@ function ChatPage() {
     [key: string]: Array<messageWithText | messageWithFile>;
   }>("chats", {});
   useEffect(() => {
-    setchattingto(chattingto);
+    localStorage.setItem("chattingto", JSON.stringify(chattingto));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [oldmessagsize, setoldmessagesize] = useState(chats.length > 0);
@@ -619,7 +619,8 @@ function ChatPage() {
         if (!lastJsonMessage.message.mine && ReceiveSound) {
           playSound("/sounds/newmessage.mp3");
         }
-        setchats((c) => c.concat(lastJsonMessage.message));
+        chats.push(lastJsonMessage.message);
+        setchats(chats);
 
         settypingdata({
           typing: false,
@@ -627,8 +628,12 @@ function ChatPage() {
           specialchars: {},
         });
         if (toscroll.current) {
-          setchats((c) => c.slice(Math.max(c.length - StartMessagesLength, 0)));
           setcanloadmore(true);
+          isLoadMore.current = false;
+          setloadingchatmessages(false);
+          setchats(
+            chats.slice(Math.max(chats.length - StartMessagesLength, 0))
+          );
           setTimeout(scrolltobottom, 0);
           if (!lastJsonMessage.message.mine && !isFocussed && isElectron()) {
             notify(`${data.username}`, lastJsonMessage.message.message, () => {
@@ -670,6 +675,7 @@ function ChatPage() {
       } else if (lastJsonMessage.type === "start") {
         setcanloadmore(true);
         isLoadMore.current = false;
+        setloadingchatmessages(false);
         sendJsonMessage({
           type: "start",
           to: chattingto,
@@ -1007,6 +1013,8 @@ function ChatPage() {
                     tempid,
                   });
                   setcanloadmore(true);
+                  isLoadMore.current = false;
+                  setloadingchatmessages(false);
                   setchats(
                     chats
                       .slice(Math.max(chats.length - StartMessagesLength, 0))
@@ -1130,13 +1138,13 @@ function ChatPage() {
   );
 }
 
-function Chat() {
+function Chat({ isGroupChat }: { isGroupChat: boolean }) {
   const { loggedin, user } = useData();
   const { id: chattingto } = useParams<{ id: string }>();
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
   } else if (chattingto && chattingto !== user.id) {
-    return <ChatPage />;
+    return <ChatPage isGroupChat={isGroupChat} />;
   }
   return <ChatNotFound></ChatNotFound>;
 }

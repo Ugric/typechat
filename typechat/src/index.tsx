@@ -94,11 +94,13 @@ function App() {
                   <Home />
                 </Route>
                 <Route path="/chat" exact>
-                  <Redirect to={`/chat/${chattingto}`} />
+                  <Redirect to={chattingto ? `/chat/${chattingto}` : "/"} />
                 </Route>
                 <Route
                   path="/chat/:id"
-                  render={(props: any) => <Chat key={props.match.params.id} />}
+                  render={({ match }) => (
+                    <Chat key={match.params.id} isGroupChat={false} />
+                  )}
                   exact
                 ></Route>
                 <Route path="/contacts" exact>
