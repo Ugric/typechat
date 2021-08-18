@@ -263,7 +263,15 @@ function MessageMaker({
               ></MessageFaviconOrVideoRenderer>
             </>
           ) : file ? (
-            <div style={{ height: "500px" }}>
+            <div
+              style={{
+                height:
+                  mimetype &&
+                  ["image", "video", "audio"].includes(mimetype.split("/")[0])
+                    ? "500px"
+                    : undefined,
+              }}
+            >
               {mimetype ? (
                 mimetype.split("/")[0] === "image" ? (
                   <img
