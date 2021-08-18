@@ -108,10 +108,10 @@ const messagefunctions = {};
     db.run(
       "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file, mimetype)"
     ),
-    db.run("CREATE TABLE IF NOT EXISTS chats (chatID, name, picture)"),
-    db.run("CREATE TABLE IF NOT EXISTS chatUsers (chatID, accountID)"),
+    db.run("CREATE TABLE IF NOT EXISTS groupchats (chatID, name, picture)"),
+    db.run("CREATE TABLE IF NOT EXISTS groupchatUsers (chatID, accountID)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS chatMessages (ID,accountID, chatID, message, time, file, mimetype)"
+      "CREATE TABLE IF NOT EXISTS groupchatMessages (ID,accountID, chatID, message, time, file, mimetype)"
     ),
     db.run(
       "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID)"
@@ -203,6 +203,30 @@ const messagefunctions = {};
 
     pingpong();
   });
+  app.ws("/groupchat", async (ws, req) => {
+    let to: string;
+    let mobile: boolean = false;
+    const connectionID = generate(20);
+    let accountdata = await db.get(
+      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+      {
+        ":token": req.cookies.token,
+      }
+    );
+    if (!accountdata) {
+      return ws.close();
+    }
+    let lastping = 0;
+    const pingpong = async () => {
+      await snooze(10000);
+      ws.send(JSON.stringify({ type: "ping" }));
+      await snooze(2500);
+      const time = new Date().getTime();
+      if (time - lastping > 5000) {
+        ws.close();
+      }
+    };
+  });
   app.ws("/chat", async (ws, req) => {
     let to: string;
     let mobile: boolean = false;
@@ -279,7 +303,7 @@ const messagefunctions = {};
           await db.all(
             `SELECT * 
           FROM (SELECT
-          ID,(accountID=:accountID) as mine, message, time, file, mimetype
+          ID, accountID as "from", message, time, file, mimetype
           FROM friendsChatMessages
           WHERE (
                   accountID = :accountID
@@ -296,13 +320,35 @@ const messagefunctions = {};
             }
           )
         ).reverse();
-        for (const message of messages) {
-          message.mine = message.mine === 1;
-        }
+        const users = await db.get(
+          `WITH friendrequestlist as (
+          SELECT accountID
+          FROM friends
+          WHERE toAccountID == :accountID
+      )
+      SELECT *
+      FROM friends 
+      JOIN accounts ON friends.toAccountID=accounts.accountID
+      WHERE friends.accountID == :accountID and friends.toAccountID==:ID
+          and toAccountID in friendrequestlist`,
+          {
+            ":accountID": accountdata.accountID,
+            ":ID": msg.to,
+          }
+        );
         ws.send(
           JSON.stringify({
             type: "setmessages",
             messages,
+            users: {
+              [msg.to]: {
+                username: users.username,
+                id: users.accountID,
+                profilePic: users.profilePic,
+                tag: users.tag,
+                backgroundImage: users.backgroundImage,
+              },
+            },
           })
         );
         to = String(msg.to);
@@ -357,7 +403,7 @@ const messagefunctions = {};
         const messages = (
           await db.all(
             `SELECT * FROM (SELECT
-          ID,(accountID=:accountID) as mine, message, time, file, mimetype
+          ID, accountID as "from", message, time, file, mimetype
           FROM friendsChatMessages
           WHERE (
                   accountID = :accountID
@@ -428,7 +474,7 @@ const messagefunctions = {};
               JSON.stringify({
                 type: "message",
                 message: {
-                  mine: false,
+                  from: accountdata.accountID,
                   time,
                   message: msg.message,
                   file: msg.file,
@@ -454,7 +500,7 @@ const messagefunctions = {};
                 JSON.stringify({
                   type: "message",
                   message: {
-                    mine: true,
+                    from: accountdata.accountID,
                     time,
                     message: msg.message,
                     file: msg.file,
@@ -828,6 +874,19 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
       `SELECT filename FROM images WHERE imageID=:id`,
       {
         ":id": req.params.id,
+      }
+    );
+    if (imagedata) {
+      res.sendFile(path.join(__dirname, "files", imagedata.filename));
+    } else {
+      res.status(404).send("image not found in the database!");
+    }
+  });
+  app.get("/getprofilepicfromid", async (req: any, res: any) => {
+    const imagedata = await db.get(
+      `SELECT filename FROM images WHERE imageID=(SELECT profilePic FROM accounts WHERE accountID==:accountID)`,
+      {
+        ":accountID": req.query.id,
       }
     );
     if (imagedata) {

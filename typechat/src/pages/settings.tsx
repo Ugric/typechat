@@ -1,5 +1,4 @@
 import useLocalStorage from "../hooks/useLocalStorage";
-import playSound from "../playsound";
 import ToggleSwitch from "./switch";
 
 function Setting({ children }: { children: any }) {
