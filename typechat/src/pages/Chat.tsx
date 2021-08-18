@@ -664,7 +664,7 @@ function ChatPage() {
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
-        if (!lastJsonMessage.message.mine && ReceiveSound) {
+        if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
           playSound("/sounds/newmessage.mp3");
         }
         chats.push(lastJsonMessage.message);
@@ -675,7 +675,7 @@ function ChatPage() {
           length: 0,
           specialchars: {},
         });
-        if (lastJsonMessage.message.from !== user.id && usersdata) {
+        if (usersdata) {
           if (toscroll.current) {
             setcanloadmore(true);
             isLoadMore.current = false;
@@ -684,7 +684,11 @@ function ChatPage() {
               chats.slice(Math.max(chats.length - StartMessagesLength, 0))
             );
             setTimeout(scrolltobottom, 0);
-            if (!isFocussed && isElectron()) {
+            if (
+              lastJsonMessage.message.from !== user.id &&
+              !isFocussed &&
+              isElectron()
+            ) {
               notify(
                 `${usersdata.users[lastJsonMessage.message.from].username}`,
                 lastJsonMessage.message.message,
@@ -694,7 +698,7 @@ function ChatPage() {
                 }
               );
             }
-          } else {
+          } else if (lastJsonMessage.message.from !== user.id) {
             if (isElectron()) {
               notify(
                 `${usersdata.users[lastJsonMessage.message.from].username}`,
