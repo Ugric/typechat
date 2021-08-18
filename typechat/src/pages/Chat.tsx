@@ -263,13 +263,13 @@ function MessageMaker({
               ></MessageFaviconOrVideoRenderer>
             </>
           ) : file ? (
-            <div>
+            <div style={{ height: "500px" }}>
               {mimetype ? (
                 mimetype.split("/")[0] === "image" ? (
                   <img
                     alt={file}
                     src={`/files/${file}`}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", height: "100%" }}
                     loading="lazy"
                     onLoad={() => {
                       if (toscroll.current) {
@@ -280,7 +280,7 @@ function MessageMaker({
                 ) : mimetype.split("/")[0] === "video" ? (
                   <video
                     src={`/files/${file}`}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", height: "100%" }}
                     controls
                     playsInline
                     onLoad={() => {
@@ -292,7 +292,7 @@ function MessageMaker({
                 ) : mimetype.split("/")[0] === "audio" ? (
                   <audio
                     src={`/files/${file}`}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", height: "100%" }}
                     controls
                     playsInline
                     onLoad={() => {
