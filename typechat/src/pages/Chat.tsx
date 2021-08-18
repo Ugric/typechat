@@ -9,7 +9,15 @@ import {
   faSadCry,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  createContext,
+  useContext,
+  Fragment,
+} from "react";
 import {
   Link,
   Redirect,
@@ -19,8 +27,6 @@ import {
 } from "react-router-dom";
 import "./css/message.css";
 import { useData } from "../hooks/datahook";
-import useApi from "../hooks/useapi";
-import LoadError from "./error";
 import Loader from "./loader";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import KeyboardEventHandler from "react-keyboard-event-handler";
@@ -34,7 +40,12 @@ import useWindowSize from "../hooks/usescreensize";
 import isElectron from "is-electron";
 import notify from "../notifier";
 import Linkify from "react-linkify";
-import ReactPlayer from "react-player/lazy";
+
+const chatSettings = createContext({ isGroupChat: false, time: 0 });
+const usersContext = createContext<{
+  exists: boolean;
+  users: { [key: string]: any };
+}>({ exists: false, users: {} });
 
 function onlyContainsEmojis(str: string) {
   const ranges = emoji.join("|");
@@ -68,7 +79,7 @@ interface messageTypes {
   ID?: string;
   tempid?: number;
   time: number;
-  mine: boolean;
+  from: string;
 }
 
 interface messageWithText extends messageTypes {
@@ -177,6 +188,8 @@ function MessageMaker({
   chatUpdateID: number | null;
   scrolltobottom: Function;
 }) {
+  const { user } = useData();
+  const { users } = useContext(usersContext);
   const output = useMemo(() => {
     console.time("chatrender");
     const output = [];
@@ -246,7 +259,7 @@ function MessageMaker({
               )}
               <MessageFaviconOrVideoRenderer
                 links={links}
-                mine={messages[i].mine}
+                mine={messages[i].from === user.id}
               ></MessageFaviconOrVideoRenderer>
             </>
           ) : file ? (
@@ -254,6 +267,7 @@ function MessageMaker({
               {mimetype ? (
                 mimetype.split("/")[0] === "image" ? (
                   <img
+                    alt={file}
                     src={`/files/${file}`}
                     style={{ width: "100%" }}
                     loading="lazy"
@@ -323,12 +337,9 @@ function MessageMaker({
           )}
         </div>
       );
-      if (!messages[i + 1] || messages[i + 1].mine !== messages[i].mine) {
+      if (!messages[i + 1] || messages[i + 1].from !== messages[i].from) {
         output.push(
-          <div
-            className="messagegroup"
-            key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-          >
+          <Fragment key={messages[i].ID ? messages[i].ID : messages[i].tempid}>
             {lastmessagegrouptime &&
             messages[i].time - lastmessagegrouptime > 300000 ? (
               <p
@@ -345,9 +356,43 @@ function MessageMaker({
               <></>
             )}
             <div
-              className={`${messages[i].mine ? "mine" : "yours"} messages`}
+              className={`${
+                messages[i].from === user.id ? "mine" : "yours"
+              } messages`}
               key={i}
             >
+              {messages[i].from === user.id || users[messages[i].from] ? (
+                <div>
+                  {messages[i].from === user.id ? (
+                    <span style={{ marginRight: "5px" }}>{user.username}</span>
+                  ) : (
+                    <></>
+                  )}
+                  <img
+                    src={`/files/${
+                      messages[i].from === user.id
+                        ? user.profilePic
+                        : users[messages[i].from].profilePic
+                    }`}
+                    style={{
+                      width: "25px",
+                      height: "25px",
+                      margin: "3px",
+                      borderRadius: "50%",
+                    }}
+                    alt=""
+                  />
+                  {users[messages[i].from] ? (
+                    <span style={{ marginLeft: "5px" }}>
+                      {users[messages[i].from].username}
+                    </span>
+                  ) : (
+                    <></>
+                  )}
+                </div>
+              ) : (
+                <></>
+              )}
               {tempmessages}
             </div>
             {!messages[i + 1] ? (
@@ -364,7 +409,7 @@ function MessageMaker({
             ) : (
               <></>
             )}
-          </div>
+          </Fragment>
         );
         lastmessagegrouptime = messages[i].time;
         tempmessages = [];
@@ -479,7 +524,7 @@ function ChatNotFound() {
   );
 }
 
-function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
+function ChatPage() {
   const bypassChars: string[] = [
     ...emoji,
     " ",
@@ -516,12 +561,16 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
   const isFocussed = useWindowFocus();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
-  const { notifications } = useData();
-  const { error, loading, data } = useApi(
-    `/api/friendsuserdatafromid?${new URLSearchParams({
-      id: chattingto,
-    }).toString()}`
-  );
+  const { notifications, user } = useData();
+
+  const { isGroupChat } = useContext(chatSettings);
+  const [usersdata, setusersdata] = useState<
+    undefined | { exists: boolean; users: { [key: string]: any } }
+  >();
+  const [groupchatdata /*setgroupchatdata*/] = useState({
+    picture: "",
+    name: "",
+  });
   const [oldmetypingdata, setoldmetypingdata] = useState({
     type: "typing",
     typing: false,
@@ -598,8 +647,7 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
     {
       shouldReconnect: () => true,
       reconnectInterval: 1,
-    },
-    data ? data.exists : false
+    }
   );
   const scrolltobottom = () => {
     const scrollingElement = document.scrollingElement || document.body;
@@ -627,55 +675,67 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
           length: 0,
           specialchars: {},
         });
-        if (toscroll.current) {
-          setcanloadmore(true);
-          isLoadMore.current = false;
-          setloadingchatmessages(false);
-          setchats(
-            chats.slice(Math.max(chats.length - StartMessagesLength, 0))
-          );
-          setTimeout(scrolltobottom, 0);
-          if (!lastJsonMessage.message.mine && !isFocussed && isElectron()) {
-            notify(`${data.username}`, lastJsonMessage.message.message, () => {
-              history.push(`/chat/${chattingto}`);
-              scrolltobottom();
-            });
-          }
-        } else {
-          if (isElectron()) {
-            notify(`${data.username}`, lastJsonMessage.message.message, () => {
-              history.push(`/chat/${chattingto}`);
-              scrolltobottom();
-            });
-          } else {
-            notifications.addNotification({
-              title: `${data.username}`,
-              message: lastJsonMessage.message.message
-                ? truncate(lastJsonMessage.message.message, 25)
-                : "file",
-              type: "default",
-              onRemoval: (_: number, type: string) => {
-                if (type === "click") {
+        if (lastJsonMessage.message.from !== user.id && usersdata) {
+          if (toscroll.current) {
+            setcanloadmore(true);
+            isLoadMore.current = false;
+            setloadingchatmessages(false);
+            setchats(
+              chats.slice(Math.max(chats.length - StartMessagesLength, 0))
+            );
+            setTimeout(scrolltobottom, 0);
+            if (!isFocussed && isElectron()) {
+              notify(
+                `${usersdata.users[lastJsonMessage.message.from].username}`,
+                lastJsonMessage.message.message,
+                () => {
                   history.push(`/chat/${chattingto}`);
                   scrolltobottom();
                 }
-              },
-              insert: "top",
-              container: "top-right",
-              animationIn: ["animate__animated", "animate__fadeIn"],
-              animationOut: ["animate__animated", "animate__fadeOut"],
-              dismiss: {
-                pauseOnHover: true,
-                duration: 5000,
-                onScreen: true,
-              },
-            });
+              );
+            }
+          } else {
+            if (isElectron()) {
+              notify(
+                `${usersdata.users[lastJsonMessage.message.from].username}`,
+                lastJsonMessage.message.message,
+                () => {
+                  history.push(`/chat/${chattingto}`);
+                  scrolltobottom();
+                }
+              );
+            } else {
+              notifications.addNotification({
+                title: `${
+                  usersdata.users[lastJsonMessage.message.from].username
+                }`,
+                message: lastJsonMessage.message.message
+                  ? truncate(lastJsonMessage.message.message, 25)
+                  : "file",
+                type: "default",
+                onRemoval: (_: number, type: string) => {
+                  if (type === "click") {
+                    history.push(`/chat/${chattingto}`);
+                    scrolltobottom();
+                  }
+                },
+                insert: "top",
+                container: "top-right",
+                animationIn: ["animate__animated", "animate__fadeIn"],
+                animationOut: ["animate__animated", "animate__fadeOut"],
+                dismiss: {
+                  pauseOnHover: true,
+                  duration: 5000,
+                  onScreen: true,
+                },
+              });
+            }
           }
         }
       } else if (lastJsonMessage.type === "start") {
-        setcanloadmore(true);
-        isLoadMore.current = false;
-        setloadingchatmessages(false);
+        setcanloadmore(false);
+        isLoadMore.current = true;
+        setloadingchatmessages(true);
         sendJsonMessage({
           type: "start",
           to: chattingto,
@@ -723,9 +783,9 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
         });
       } else if (lastJsonMessage.type === "setmessages") {
         setchats(lastJsonMessage.messages);
-        if (lastJsonMessage.messages < 25) {
-          setcanloadmore(false);
-        }
+        setusersdata({ exists: true, users: lastJsonMessage.users });
+        setcanloadmore(true);
+        isLoadMore.current = false;
         setloadingchatmessages(false);
       } else if (lastJsonMessage.type === "prependmessages") {
         setchats([...lastJsonMessage.messages, ...chats]);
@@ -764,7 +824,7 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
   window.onload = () => setTimeout(scrolltobottom, 0);
   useEffect(() => {
     setTimeout(scrolltobottom, 0);
-  }, [loading, data, readyState]);
+  }, [usersdata, readyState]);
   useEffect(() => {
     if (toscroll.current) {
       setTimeout(scrolltobottom, 0);
@@ -778,10 +838,10 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chats, chatUpdateID]);
   useEffect(() => {
-    if (data && !data.exists) {
+    if (usersdata && !usersdata.exists) {
       setloadingchatmessages(false);
     }
-  }, [data]);
+  }, [usersdata]);
   const loadmore = () => {
     if (!isLoadMore.current) {
       isLoadMore.current = true;
@@ -794,154 +854,184 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
     }
   };
   if (
-    (error ||
-      loading ||
+    (!usersdata ||
       (readyState !== ReadyState.OPEN &&
         readyState !== ReadyState.UNINSTANTIATED) ||
       loadingchatmessages) &&
     !localchats[chattingto]
   ) {
-    return error ? <LoadError error={String(error)} /> : <Loader />;
-  } else if (!localchats[chattingto] || (data && !data.exists)) {
+    return <Loader />;
+  } else if (!localchats[chattingto] || (usersdata && !usersdata.exists)) {
     return <ChatNotFound></ChatNotFound>;
   }
   return (
-    <div>
+    <usersContext.Provider
+      value={usersdata ? usersdata : { exists: false, users: {} }}
+    >
       <div>
-        <div
-          style={{
-            position: "fixed",
-            width: "100%",
-            height: "90px",
-            padding: "10px",
-            zIndex: 10,
-            background: "linear-gradient(0deg, transparent, var(--dark-mode))",
-          }}
-        >
-          {data && readyState === ReadyState.OPEN ? (
-            <>
-              {" "}
-              <img
-                src={"/files/" + String(data.profilePic)}
-                style={{
-                  display: "block",
-                  height: "65%",
-                  margin: "auto",
-                  borderRadius: "100%",
-                }}
-                alt={data.username}
-              />
-              <p style={{ textAlign: "center" }}>
-                {data.username}{" "}
-                <FontAwesomeIcon
-                  style={{ color: isonline === "0" ? "#5c5c5c" : "lightgreen" }}
-                  icon={
-                    isonline === "1"
-                      ? faDesktop
-                      : isonline === "M"
-                      ? faMobileAlt
-                      : faEyeSlash
-                  }
-                ></FontAwesomeIcon>
-              </p>
-            </>
-          ) : (
-            <p style={{ margin: "1rem", textAlign: "center" }}>
-              {ReadyState[readyState]}
-            </p>
-          )}
-        </div>
-        <KeyboardEventHandler
-          handleKeys={["alphanumeric", "space", "shift", "cap"]}
-          onKeyEvent={() => {
-            inputref.current.focus();
-          }}
-        />
-        <MessageMaker
-          scrolltobottom={scrolltobottom}
-          scrollref={scrollerref}
-          messages={loadingchatmessages ? localchats[chattingto] : chats}
-          typingdata={typingdata}
-          toscroll={toscroll}
-          canloadmore={canloadmore && readyState === ReadyState.OPEN}
-          loadingmore={loadingmore}
-          loadmore={loadmore}
-          chatUpdateID={chatUpdateID}
-        />
-        <div ref={bottomref}></div>
-        <div
-          style={{
-            position: "fixed",
-            padding: "1rem",
-            width: "100%",
-            bottom: "0px",
-            background:
-              "linear-gradient(180deg, transparent, var(--dark-mode))",
-            display: "flex",
-          }}
-        >
+        <div>
           <div
             style={{
-              margin: "auto",
+              position: "fixed",
               width: "100%",
-              maxWidth: "800px",
+              height: "90px",
+              padding: "10px",
+              zIndex: 10,
+              background:
+                "linear-gradient(0deg, transparent, var(--dark-mode))",
+            }}
+          >
+            {usersdata && readyState === ReadyState.OPEN ? (
+              <>
+                {" "}
+                <img
+                  src={
+                    "/files/" +
+                    String(
+                      isGroupChat
+                        ? groupchatdata.picture
+                        : usersdata.users[chattingto].profilePic
+                    )
+                  }
+                  style={{
+                    display: "block",
+                    height: "65%",
+                    margin: "auto",
+                    borderRadius: "100%",
+                  }}
+                  alt={usersdata.users[chattingto].username}
+                />
+                <p style={{ textAlign: "center" }}>
+                  {usersdata.users[chattingto].username}{" "}
+                  <FontAwesomeIcon
+                    style={{
+                      color: isonline === "0" ? "#5c5c5c" : "lightgreen",
+                    }}
+                    icon={
+                      isonline === "1"
+                        ? faDesktop
+                        : isonline === "M"
+                        ? faMobileAlt
+                        : faEyeSlash
+                    }
+                  ></FontAwesomeIcon>
+                </p>
+              </>
+            ) : (
+              <p style={{ margin: "1rem", textAlign: "center" }}>
+                {ReadyState[readyState]}
+              </p>
+            )}
+          </div>
+          <KeyboardEventHandler
+            handleKeys={["alphanumeric", "space", "shift", "cap"]}
+            onKeyEvent={() => {
+              inputref.current.focus();
+            }}
+          />
+          <MessageMaker
+            scrolltobottom={scrolltobottom}
+            scrollref={scrollerref}
+            messages={loadingchatmessages ? localchats[chattingto] : chats}
+            typingdata={typingdata}
+            toscroll={toscroll}
+            canloadmore={canloadmore && readyState === ReadyState.OPEN}
+            loadingmore={loadingmore}
+            loadmore={loadmore}
+            chatUpdateID={chatUpdateID}
+          />
+          <div ref={bottomref}></div>
+          <div
+            style={{
+              position: "fixed",
+              padding: "1rem",
+              width: "100%",
+              bottom: "0px",
+              background:
+                "linear-gradient(180deg, transparent, var(--dark-mode))",
               display: "flex",
             }}
           >
-            <input
-              type="file"
-              style={{ display: "none" }}
-              ref={fileref}
-              onInput={async (e: any) => {
-                if (e.target.files.length > 0) {
-                  const file = e.target.files[0];
-                  if (file.size <= 20000000) {
-                    const id = Math.random();
-                    notifications.addNotification({
-                      title: "File",
-                      message: "Uploading...",
-                      type: "warning",
-                      insert: "top",
-                      id,
-                      container: "top-right",
-                      animationIn: ["animate__animated", "animate__fadeIn"],
-                      animationOut: ["animate__animated", "animate__fadeOut"],
-                    });
-                    try {
-                      const formdata = new FormData();
-                      formdata.append("file", file);
-                      const resp = await (
-                        await fetch("/api/uploadfile", {
-                          method: "POST",
-                          body: formdata,
-                        })
-                      ).json();
-                      if (resp.resp) {
-                        notifications.removeNotification(id);
-                        const time = new Date().getTime();
-                        const tempid = Math.random();
-                        sendJsonMessage({
-                          type: "file",
-                          file: resp.id,
-                          mimetype: file.type,
-                          tempid,
-                        });
-                        setchats(
-                          chats.concat({
-                            mine: true,
-                            message: undefined,
-                            mimetype: file.type,
-                            file: resp.id,
-                            time,
-                            tempid,
+            <div
+              style={{
+                margin: "auto",
+                width: "100%",
+                maxWidth: "800px",
+                display: "flex",
+              }}
+            >
+              <input
+                type="file"
+                style={{ display: "none" }}
+                ref={fileref}
+                onInput={async (e: any) => {
+                  if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    if (file.size <= 20000000) {
+                      const id = Math.random();
+                      notifications.addNotification({
+                        title: "File",
+                        message: "Uploading...",
+                        type: "warning",
+                        insert: "top",
+                        id,
+                        container: "top-right",
+                        animationIn: ["animate__animated", "animate__fadeIn"],
+                        animationOut: ["animate__animated", "animate__fadeOut"],
+                      });
+                      try {
+                        const formdata = new FormData();
+                        formdata.append("file", file);
+                        const resp = await (
+                          await fetch("/api/uploadfile", {
+                            method: "POST",
+                            body: formdata,
                           })
-                        );
-                        notifications.removeNotification(id);
-                      } else {
+                        ).json();
+                        if (resp.resp) {
+                          notifications.removeNotification(id);
+                          const time = new Date().getTime();
+                          const tempid = Math.random();
+                          sendJsonMessage({
+                            type: "file",
+                            file: resp.id,
+                            mimetype: file.type,
+                            tempid,
+                          });
+                          setchats(
+                            chats.concat({
+                              from: user.id,
+                              message: undefined,
+                              mimetype: file.type,
+                              file: resp.id,
+                              time,
+                              tempid,
+                            })
+                          );
+                          notifications.removeNotification(id);
+                        } else {
+                          notifications.removeNotification(id);
+                          notifications.addNotification({
+                            title: "Upload Error",
+                            message: resp.err,
+                            type: "danger",
+                            insert: "top",
+                            container: "top-right",
+                            animationIn: [
+                              "animate__animated",
+                              "animate__fadeIn",
+                            ],
+                            animationOut: [
+                              "animate__animated",
+                              "animate__fadeOut",
+                            ],
+                          });
+                        }
+                      } catch (e) {
                         notifications.removeNotification(id);
                         notifications.addNotification({
                           title: "Upload Error",
-                          message: resp.err,
+                          message: String(e),
                           type: "danger",
                           insert: "top",
                           container: "top-right",
@@ -952,11 +1042,10 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
                           ],
                         });
                       }
-                    } catch (e) {
-                      notifications.removeNotification(id);
+                    } else {
                       notifications.addNotification({
-                        title: "Upload Error",
-                        message: String(e),
+                        title: "File too big!",
+                        message: "file needs to be less the 10MB!",
                         type: "danger",
                         insert: "top",
                         container: "top-right",
@@ -964,158 +1053,14 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
                         animationOut: ["animate__animated", "animate__fadeOut"],
                       });
                     }
-                  } else {
-                    notifications.addNotification({
-                      title: "File too big!",
-                      message: "file needs to be less the 10MB!",
-                      type: "danger",
-                      insert: "top",
-                      container: "top-right",
-                      animationIn: ["animate__animated", "animate__fadeIn"],
-                      animationOut: ["animate__animated", "animate__fadeOut"],
-                    });
-                  }
-                }
-              }}
-            />
-
-            <button
-              style={{
-                width: "37px",
-                marginRight: "5px",
-                backgroundColor: "var(--dark-bg-colour)",
-                padding: "5px",
-                borderRadius: "20px",
-                border: "solid 1px var(--light-bg-colour)",
-                color: "white",
-                textAlign: "center",
-              }}
-              onClick={() => {
-                fileref.current.click();
-              }}
-            >
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-            <form
-              onSubmit={(e: any) => {
-                e.preventDefault();
-                const message = e.target[0].value.trim();
-                if (message !== "") {
-                  e.target[0].value = "";
-                  const time = new Date().getTime();
-                  if (SendSound) {
-                    playSound("/sounds/send.mp3");
-                  }
-                  const tempid = Math.random();
-                  sendJsonMessage({
-                    type: "message",
-                    message,
-                    tempid,
-                  });
-                  setcanloadmore(true);
-                  isLoadMore.current = false;
-                  setloadingchatmessages(false);
-                  setchats(
-                    chats
-                      .slice(Math.max(chats.length - StartMessagesLength, 0))
-                      .concat({
-                        mine: true,
-                        file: undefined,
-                        mimetype: undefined,
-                        message,
-                        time,
-                        tempid,
-                      })
-                  );
-                  setTimeout(scrolltobottom, 0);
-                  metypingref.current = false;
-                  setmetypingdata({
-                    type: "typing",
-                    typing: metypingref.current,
-                    length: 0,
-                    specialchars: {},
-                  });
-                }
-              }}
-              ref={formref}
-              style={{
-                width: "100%",
-                display: "flex",
-              }}
-            >
-              <TextareaAutosize
-                ref={inputref}
-                onInput={(e: any) => {
-                  if (key.current === 13 && !shiftkey.current) {
-                    submitref.current.click();
-                    inputref.current.value = "";
-                  }
-                  const message = e.target.value.trim();
-                  if (
-                    message.length <= 2000 &&
-                    !(key.current === 13 && !shiftkey.current)
-                  ) {
-                    if (personaltyping) {
-                      playSound(
-                        `/sounds/click${Math.floor(Math.random() * 3 + 1)}.mp3`
-                      );
-                    }
-                    metypinglengthref.current = message.length;
-                    if (metypinglengthref.current > 0) {
-                      metypingref.current = true;
-                      const specialchars: { [key: string]: any } = {};
-                      for (let i = 0; i < message.length; i++) {
-                        if (bypassChars.includes(message[i])) {
-                          specialchars[i.toString()] = message[i];
-                        }
-                      }
-                      setmetypingdata({
-                        type: "typing",
-                        typing: metypingref.current,
-                        length: metypinglengthref.current,
-                        specialchars,
-                      });
-                      clearTimeout(typingTimer.current);
-                      typingTimer.current = setTimeout(
-                        doneTyping,
-                        doneTypingInterval
-                      );
-                    } else {
-                      metypingref.current = false;
-                      setmetypingdata({
-                        type: "typing",
-                        typing: false,
-                        length: 0,
-                        specialchars: {},
-                      });
-                    }
-                  } else {
-                    e.target.value = e.target.value.substring(0, 2000);
                   }
                 }}
-                onKeyDown={(e: any) => {
-                  key.current = e.keyCode;
-                  shiftkey.current = e.shiftKey;
-                  clearTimeout(typingTimer.current);
-                }}
-                autoFocus
-                style={{
-                  backgroundColor: "var(--dark-bg-colour)",
-                  padding: "5px",
-                  borderRadius: "20px",
-                  width: "calc(100% - 65px)",
-                  border: "solid 1px var(--light-bg-colour)",
-                  color: "white",
-                  resize: "none",
-                }}
-                maxRows={10}
-                placeholder="Type Something..."
               />
+
               <button
-                ref={submitref}
                 style={{
-                  width: "60px",
-                  marginLeft: "5px",
+                  width: "37px",
+                  marginRight: "5px",
                   backgroundColor: "var(--dark-bg-colour)",
                   padding: "5px",
                   borderRadius: "20px",
@@ -1123,28 +1068,172 @@ function ChatPage({ isGroupChat }: { isGroupChat: boolean }) {
                   color: "white",
                   textAlign: "center",
                 }}
-                type="submit"
-                onClick={(e: any) => {
-                  inputref.current.focus();
+                onClick={() => {
+                  fileref.current.click();
                 }}
               >
-                <FontAwesomeIcon icon={faPaperPlane} />
+                <FontAwesomeIcon icon={faPlus} />
               </button>
-            </form>
+              <form
+                onSubmit={(e: any) => {
+                  e.preventDefault();
+                  const message = e.target[0].value.trim();
+                  if (message !== "") {
+                    e.target[0].value = "";
+                    const time = new Date().getTime();
+                    if (SendSound) {
+                      playSound("/sounds/send.mp3");
+                    }
+                    const tempid = Math.random();
+                    sendJsonMessage({
+                      type: "message",
+                      message,
+                      tempid,
+                    });
+                    setcanloadmore(true);
+                    isLoadMore.current = false;
+                    setloadingchatmessages(false);
+                    setchats(
+                      chats
+                        .slice(Math.max(chats.length - StartMessagesLength, 0))
+                        .concat({
+                          from: user.id,
+                          file: undefined,
+                          mimetype: undefined,
+                          message,
+                          time,
+                          tempid,
+                        })
+                    );
+                    setTimeout(scrolltobottom, 0);
+                    metypingref.current = false;
+                    setmetypingdata({
+                      type: "typing",
+                      typing: metypingref.current,
+                      length: 0,
+                      specialchars: {},
+                    });
+                  }
+                }}
+                ref={formref}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                }}
+              >
+                <TextareaAutosize
+                  ref={inputref}
+                  onInput={(e: any) => {
+                    if (key.current === 13 && !shiftkey.current) {
+                      submitref.current.click();
+                      inputref.current.value = "";
+                    }
+                    const message = e.target.value.trim();
+                    const messagetoarray: string[] = Array.from(message);
+                    if (
+                      messagetoarray.length <= 3000 &&
+                      !(key.current === 13 && !shiftkey.current)
+                    ) {
+                      if (personaltyping) {
+                        playSound(
+                          `/sounds/click${Math.floor(
+                            Math.random() * 3 + 1
+                          )}.mp3`
+                        );
+                      }
+                      metypinglengthref.current = messagetoarray.length;
+                      if (metypinglengthref.current > 0) {
+                        metypingref.current = true;
+                        const specialchars: { [key: string]: any } = {};
+                        for (let i = 0; i < messagetoarray.length; i++) {
+                          if (bypassChars.includes(messagetoarray[i])) {
+                            specialchars[i] = messagetoarray[i];
+                          }
+                        }
+                        setmetypingdata({
+                          type: "typing",
+                          typing: metypingref.current,
+                          length: metypinglengthref.current,
+                          specialchars,
+                        });
+                        clearTimeout(typingTimer.current);
+                        typingTimer.current = setTimeout(
+                          doneTyping,
+                          doneTypingInterval
+                        );
+                      } else {
+                        metypingref.current = false;
+                        setmetypingdata({
+                          type: "typing",
+                          typing: false,
+                          length: 0,
+                          specialchars: {},
+                        });
+                      }
+                    } else {
+                      e.target.value = Array.from(e.target.value)
+                        .slice(0, 3000)
+                        .join("");
+                    }
+                  }}
+                  onKeyDown={(e: any) => {
+                    key.current = e.keyCode;
+                    shiftkey.current = e.shiftKey;
+                    clearTimeout(typingTimer.current);
+                  }}
+                  autoFocus
+                  style={{
+                    backgroundColor: "var(--dark-bg-colour)",
+                    padding: "5px",
+                    borderRadius: "20px",
+                    width: "calc(100% - 65px)",
+                    border: "solid 1px var(--light-bg-colour)",
+                    color: "white",
+                    resize: "none",
+                  }}
+                  maxRows={10}
+                  placeholder="Type Something..."
+                />
+                <button
+                  ref={submitref}
+                  style={{
+                    width: "60px",
+                    marginLeft: "5px",
+                    backgroundColor: "var(--dark-bg-colour)",
+                    padding: "5px",
+                    borderRadius: "20px",
+                    border: "solid 1px var(--light-bg-colour)",
+                    color: "white",
+                    textAlign: "center",
+                  }}
+                  type="submit"
+                  onClick={(e: any) => {
+                    inputref.current.focus();
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPaperPlane} />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </usersContext.Provider>
   );
 }
 
 function Chat({ isGroupChat }: { isGroupChat: boolean }) {
   const { loggedin, user } = useData();
   const { id: chattingto } = useParams<{ id: string }>();
+  const time = useMemo(() => new Date().getTime(), []);
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
   } else if (chattingto && chattingto !== user.id) {
-    return <ChatPage isGroupChat={isGroupChat} />;
+    return (
+      <chatSettings.Provider value={{ isGroupChat, time }}>
+        <ChatPage />
+      </chatSettings.Provider>
+    );
   }
   return <ChatNotFound></ChatNotFound>;
 }
