@@ -147,7 +147,7 @@ const messagefunctions = {};
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
-  const port = 5000;
+  const port = 80;
   const getAllOnline = (sockets: {
     [key: string]: { focus: boolean; [key: string]: any };
   }): { focus: boolean; [key: string]: any }[] => {

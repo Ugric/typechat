@@ -66,7 +66,7 @@ async function NotificationEmail(
     text: `TypeChat\n\nNEW NOTIFICATION ✨\n\n${data.title}\n${
       data.message
     }\n\nopen: ${
-      new URL(data.to, "http://freshcraft.play.ai:5000/").href
+      new URL(data.to, "http://typechat.uk.to/").href
     }\n© TypeChat`,
     html: `<div style="background-color: #5656ff; color: white"><center><h1 style="color: #ffaa56"><span style="color: #ffff00">Type</span>Chat</h1><div><hr/><div>
     <h3>NEW NOTIFICATION ✨</h3>
@@ -84,7 +84,7 @@ async function NotificationEmail(
               <tr>
                   <td style="border-radius: 2px;" bgcolor="#ffff00">
                       <a href=${JSON.stringify(
-                        new URL(data.to, "http://freshcraft.play.ai:5000/").href
+                        new URL(data.to, "http://typechat.uk.to/").href
                       )} target="_blank" style="padding: 8px 12px; border: 1px solid #ffff00;border-radius: 2px;font-family: Helvetica, Arial, sans-serif;font-size: 14px; color: #ffaa56;text-decoration: none;font-weight:bold;display: inline-block;">
                           Open
                       </a>
