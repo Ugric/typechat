@@ -147,21 +147,7 @@ const messagefunctions = {};
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
-  require("greenlock-express")
-    .init({
-        packageRoot: __dirname,
-        configDir: "./greenlock.d",
- 
-        // contact for security and critical bug notices
-        maintainerEmail: "epicugric@gmail.com",
- 
-        // whether or not to run at cloudscale
-        cluster: false
-    })
-    // Serves on 80 and 443
-    // Get's SSL certificates magically!
-    .serve(app);
-  const port = 5000;
+  const port = 443;
   const getAllOnline = (sockets: {
     [key: string]: { focus: boolean; [key: string]: any };
   }): { focus: boolean; [key: string]: any }[] => {
@@ -1106,9 +1092,22 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
   app.use((_: any, res: any) => {
     res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
   });
-  `
   app.listen(port, () => {
     console.timeEnd("express boot");
-    console.log(\`server started at http://localhost:${port}\`);
-  });`
+    console.log(`server started at http://localhost:${port}`);
+  });
+  require("greenlock-express")
+    .init({
+        packageRoot: __dirname,
+        configDir: "./greenlock.d",
+ 
+        // contact for security and critical bug notices
+        maintainerEmail: "epicugric@gmail.com",
+ 
+        // whether or not to run at cloudscale
+        cluster: false
+    })
+    // Serves on 80 and 443
+    // Get's SSL certificates magically!
+    .serve(app);
 })();

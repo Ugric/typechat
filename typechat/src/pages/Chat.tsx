@@ -122,9 +122,8 @@ function MessageFaviconOrVideoRenderer({
               key={key}
               style={{
                 padding: "1rem",
-                border: `solid 1px ${
-                  mine ? "var(--main-bg-colour)" : "#d0d0d0"
-                }`,
+                border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"
+                  }`,
                 backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
                 borderRadius: "10px",
                 margin: "5px",
@@ -214,7 +213,7 @@ function MessageMaker({
             (message &&
               (Array.from(message).length > 3 ||
                 !onlyContainsEmojis(message))) ||
-            !message
+              !message
               ? "message"
               : undefined
           }
@@ -224,7 +223,7 @@ function MessageMaker({
           {message ? (
             <>
               {Array.from(message).length > 3 ||
-              !onlyContainsEmojis(message) ? (
+                !onlyContainsEmojis(message) ? (
                 message.split("```").map((value, index) =>
                   index % 2 === 0 ? (
                     <div key={index}>
@@ -267,7 +266,7 @@ function MessageMaker({
               style={{
                 height:
                   mimetype &&
-                  ["image", "video", "audio"].includes(mimetype.split("/")[0])
+                    ["image", "video", "audio"].includes(mimetype.split("/")[0])
                     ? "500px"
                     : undefined,
               }}
@@ -349,7 +348,7 @@ function MessageMaker({
         output.push(
           <Fragment key={messages[i].ID ? messages[i].ID : messages[i].tempid}>
             {lastmessagegrouptime &&
-            messages[i].time - lastmessagegrouptime > 300000 ? (
+              messages[i].time - lastmessagegrouptime > 300000 ? (
               <p
                 style={{
                   margin: "0",
@@ -364,9 +363,8 @@ function MessageMaker({
               <></>
             )}
             <div
-              className={`${
-                messages[i].from === user.id ? "mine" : "yours"
-              } messages`}
+              className={`${messages[i].from === user.id ? "mine" : "yours"
+                } messages`}
               key={i}
             >
               {messages[i].from === user.id || users[messages[i].from] ? (
@@ -377,11 +375,10 @@ function MessageMaker({
                     <></>
                   )}
                   <img
-                    src={`/files/${
-                      messages[i].from === user.id
-                        ? user.profilePic
-                        : users[messages[i].from].profilePic
-                    }`}
+                    src={`/files/${messages[i].from === user.id
+                      ? user.profilePic
+                      : users[messages[i].from].profilePic
+                      }`}
                     style={{
                       width: "25px",
                       height: "25px",
@@ -445,8 +442,8 @@ function MessageMaker({
     if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
         document.documentElement.scrollHeight -
-          document.documentElement.scrollTop -
-          document.documentElement.clientHeight <=
+        document.documentElement.scrollTop -
+        document.documentElement.clientHeight <=
         200;
       if (canloadmore) {
         if (document.documentElement.scrollTop < 10) {
@@ -592,10 +589,9 @@ function ChatPage() {
     specialchars: {},
   });
   const [socketUrl] = useState(
-    `ws://${
-      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
-        ? window.location.hostname + ":5000"
-        : window.location.host
+    `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
+      ? window.location.hostname + ":443"
+      : window.location.host
     }/chat`
   );
   const size = useWindowSize();
@@ -718,9 +714,8 @@ function ChatPage() {
               );
             } else {
               notifications.addNotification({
-                title: `${
-                  usersdata.users[lastJsonMessage.message.from].username
-                }`,
+                title: `${usersdata.users[lastJsonMessage.message.from].username
+                  }`,
                 message: lastJsonMessage.message.message
                   ? truncate(lastJsonMessage.message.message, 25)
                   : "file",
@@ -923,8 +918,8 @@ function ChatPage() {
                       isonline === "1"
                         ? faDesktop
                         : isonline === "M"
-                        ? faMobileAlt
-                        : faEyeSlash
+                          ? faMobileAlt
+                          : faEyeSlash
                     }
                   ></FontAwesomeIcon>
                 </p>
