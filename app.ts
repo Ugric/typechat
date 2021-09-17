@@ -160,7 +160,8 @@ const messagefunctions = {};
   }
   const app = express()
   app.use(forceDomain({
-    hostname: 'typechat.us.to'
+    hostname: 'typechat.us.to',
+    protocol: "https"
   }));
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
