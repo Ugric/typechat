@@ -158,8 +158,12 @@ const messagefunctions = {};
     });
   }
   const app = express()
-  app.use((req, res) => {
-    console.log(req.url)
+  app.use((req, res, next) => {
+    const domainused = req.get('host')
+    if (domainused != "typechat.us.to") {
+      return res.redirect(200, (req.protocol + '://typechat.us.to' + req.originalUrl))
+    }
+    next()
   });
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
