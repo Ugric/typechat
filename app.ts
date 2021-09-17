@@ -188,7 +188,7 @@ const messagefunctions = {};
         console.info("Listening on ", httpServer.address());
       });
       const ws = new WebSocket.Server({
-        server: httpServer
+        server: httpsServer
       });
       ws.on('connection', function (ws) {
         console.log("Hello")
