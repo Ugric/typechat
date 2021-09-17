@@ -190,7 +190,7 @@ const messagefunctions = {};
       const ws = new WebSocket.Server({
         server: httpsServer
       });
-      ws.on('connection', function (ws, req) {
+      ws.on('connection', async (ws, req) => {
         if (req.url == "/notification") {
           let lastping = 0;
           const connectionID = generate(20);
