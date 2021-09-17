@@ -16,6 +16,7 @@
     "express-ws": "^5.0.2",
     "file-metadata": "^2.0.0",
     "follow-redirects": "^1.14.1",
+    "greenlock": "^4.0.4",
     "greenlock-express": "^4.0.3",
     "newsapi": "^2.4.1",
     "node-notifier": "^10.0.0",

@@ -1,5 +1,6 @@
 import { open } from "sqlite";
 import * as express from "express";
+const Greenlock = require("greenlock")
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
 const { createHash } = require("crypto");
@@ -162,8 +163,7 @@ const messagefunctions = {};
     }
     return online;
   };
-  const  greenlock = require("greenlock-express")
-    .init({
+  const greenlock = Greenlock.create({
       packageRoot: __dirname,
         configDir: "./greenlock.d",
  
@@ -173,12 +173,10 @@ const messagefunctions = {};
         // whether or not to run at cloudscale
         cluster: false,
   approveDomains: ['typechat.us.to', 'www.typechat.us.to', 'typechat.uk.to', 'www.typechat.uk.to' ]
-    })// Serves on 80 and 443
-    // Get's SSL certificates magically!
-  greenlock.serve(app);
+    })
 
-//// HTTPS SERVER + WEBSOCKETS
-  const server = https.createServer(greenlock.tlsOptions)
+  //// HTTPS SERVER + WEBSOCKETS
+  const server = https.createServer(greenlock.tlsOptions, app)
   const ws = new WebSocket.Server({
     server
   });
