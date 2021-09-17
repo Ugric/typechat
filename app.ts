@@ -188,7 +188,7 @@ const messagefunctions = {};
         console.info("Listening on ", httpServer.address());
       });
       const ws = new WebSocket.Server({
-        port: 443
+        server: httpServer
       });
       ws.on('connection', function (ws) {
         console.log("Hello")
