@@ -11,7 +11,6 @@ const snooze = (milliseconds: number) =>
 const { generate } = require("randomstring");
 const { NotificationEmail } = require("./emailer");
 const autoaccountdetails = require("./autoaccountdetails.json");
-const forceDomain = require('node-force-domain');
 
 const WebSocket = require('ws');
 console.time("express boot");
