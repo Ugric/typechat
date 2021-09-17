@@ -3,7 +3,6 @@ import * as express from "express";
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
 const { createHash } = require("crypto");
-const expressWs = require("express-ws");
 const path = require("path");
 const mime = require("mime-types");
 const snooze = (milliseconds: number) =>
@@ -11,6 +10,9 @@ const snooze = (milliseconds: number) =>
 const { generate } = require("randomstring");
 const { NotificationEmail } = require("./emailer");
 const autoaccountdetails = require("./autoaccountdetails.json");
+const http = require('http');
+const https = require('https');
+const WebSocket = require('ws');
 console.time("express boot");
 
 const truncate = (input: string, limit: number) =>
@@ -143,7 +145,7 @@ const messagefunctions = {};
       ":email": autoaccountdetails.email,
     });
   }
-  const { app, getWss, applyTo } = expressWs(express());
+  const app = express()
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
@@ -159,131 +161,124 @@ const messagefunctions = {};
     }
     return online;
   };
-  app.ws("/notifications", async (ws, req) => {
-    let lastping = 0;
-    const connectionID = generate(20);
-    const pingpong = async () => {
-      await snooze(10000);
-      ws.send(JSON.stringify({ type: "ping" }));
-      await snooze(2500);
-      const time = new Date().getTime();
-      if (time - lastping > 5000) {
-        ws.close();
-      }
-    };
-    let accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-      {
-        ":token": req.cookies.token,
-      }
-    );
-    if (!accountdata) {
-      return ws.close();
-    }
-    ws.on("message", (data) => {
-      const msg = JSON.parse(data);
-      if (msg.type == "pong") {
-        lastping = new Date().getTime();
-        pingpong();
-      } else if (msg.type == "setFocus") {
-        notificationsockets[accountdata.accountID][connectionID].focus =
-          msg.focus;
-      }
-    });
-    ws.on("close", () => {
-      delete notificationsockets[accountdata.accountID][connectionID];
-    });
-    if (!notificationsockets[accountdata.accountID]) {
-      notificationsockets[accountdata.accountID] = {};
-    }
-    notificationsockets[accountdata.accountID][connectionID] = {
-      ws,
-      focus: true,
-    };
+  const  greenlock = require("greenlock-express")
+    .init({
+      packageRoot: __dirname,
+        configDir: "./greenlock.d",
+ 
+        // contact for security and critical bug notices
+        maintainerEmail: "epicugric@gmail.com",
+ 
+        // whether or not to run at cloudscale
+        cluster: false,
+  approveDomains: ['typechat.us.to', 'www.typechat.us.to', 'typechat.uk.to', 'www.typechat.uk.to' ]
+    })// Serves on 80 and 443
+    // Get's SSL certificates magically!
+  greenlock.serve(app);
 
-    pingpong();
+//// HTTPS SERVER + WEBSOCKETS
+  const server = https.createServer(greenlock.tlsOptions)
+  const ws = new WebSocket.Server({
+    server
   });
-  app.ws("/groupchat", async (ws, req) => {
-    let to: string;
-    let mobile: boolean = false;
-    const connectionID = generate(20);
-    let accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-      {
-        ":token": req.cookies.token,
-      }
-    );
-    if (!accountdata) {
-      return ws.close();
-    }
-    let lastping = 0;
-    const pingpong = async () => {
-      await snooze(10000);
-      ws.send(JSON.stringify({ type: "ping" }));
-      await snooze(2500);
-      const time = new Date().getTime();
-      if (time - lastping > 5000) {
-        ws.close();
-      }
-    };
-  });
-  app.ws("/chat", async (ws, req) => {
-    let to: string;
-    let mobile: boolean = false;
-    const connectionID = generate(20);
-    let accountdata = await db.get(
-      "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-      {
-        ":token": req.cookies.token,
-      }
-    );
-    if (!accountdata) {
-      return ws.close();
-    }
-    let lastping = 0;
-    const pingpong = async () => {
-      await snooze(10000);
-      ws.send(JSON.stringify({ type: "ping" }));
-      await snooze(2500);
-      const time = new Date().getTime();
-      if (time - lastping > 5000) {
-        ws.close();
-      }
-    };
-    ws.on("close", () => {
-      if (to) {
-        delete messagefunctions[accountdata.accountID][to][connectionID];
-        if (
-          getAllOnline(messagefunctions[accountdata.accountID][to]).length <=
-            0 &&
-          messagefunctions[to] &&
-          messagefunctions[to][accountdata.accountID]
-        ) {
-          for (const ws of Object.keys(
-            messagefunctions[to][accountdata.accountID]
-          )) {
-            messagefunctions[to][accountdata.accountID][ws].ws.send(
-              JSON.stringify({
-                type: "online",
-                online: false,
-              })
-            );
-          }
+  ws.on('connection', function (ws) {
+    ws.on("/notifications", async (ws, req) => {
+      let lastping = 0;
+      const connectionID = generate(20);
+      const pingpong = async () => {
+        await snooze(10000);
+        ws.send(JSON.stringify({ type: "ping" }));
+        await snooze(2500);
+        const time = new Date().getTime();
+        if (time - lastping > 5000) {
+          ws.close();
         }
-      }
-    });
-    ws.on("message", async (data: string) => {
-      const msg = JSON.parse(data);
-      if (msg.type === "start") {
-        if (msg.to === accountdata.accountID) {
-          return ws.close();
+      };
+      let accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
         }
+      );
+      if (!accountdata) {
+        return ws.close();
+      }
+      ws.on("message", (data) => {
+        const msg = JSON.parse(data);
+        if (msg.type == "pong") {
+          lastping = new Date().getTime();
+          pingpong();
+        } else if (msg.type == "setFocus") {
+          notificationsockets[accountdata.accountID][connectionID].focus =
+            msg.focus;
+        }
+      });
+      ws.on("close", () => {
+        delete notificationsockets[accountdata.accountID][connectionID];
+      });
+      if (!notificationsockets[accountdata.accountID]) {
+        notificationsockets[accountdata.accountID] = {};
+      }
+      notificationsockets[accountdata.accountID][connectionID] = {
+        ws,
+        focus: true,
+      };
 
+      pingpong();
+    });
+    ws.on("/groupchat", async (ws, req) => {
+      let to: string;
+      let mobile: boolean = false;
+      const connectionID = generate(20);
+      let accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (!accountdata) {
+        return ws.close();
+      }
+      let lastping = 0;
+      const pingpong = async () => {
+        await snooze(10000);
+        ws.send(JSON.stringify({ type: "ping" }));
+        await snooze(2500);
+        const time = new Date().getTime();
+        if (time - lastping > 5000) {
+          ws.close();
+        }
+      };
+    });
+    ws.on("/chat", async (ws, req) => {
+      let to: string;
+      let mobile: boolean = false;
+      const connectionID = generate(20);
+      let accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (!accountdata) {
+        return ws.close();
+      }
+      let lastping = 0;
+      const pingpong = async () => {
+        await snooze(10000);
+        ws.send(JSON.stringify({ type: "ping" }));
+        await snooze(2500);
+        const time = new Date().getTime();
+        if (time - lastping > 5000) {
+          ws.close();
+        }
+      };
+      ws.on("close", () => {
         if (to) {
           delete messagefunctions[accountdata.accountID][to][connectionID];
           if (
             getAllOnline(messagefunctions[accountdata.accountID][to]).length <=
-              0 &&
+            0 &&
             messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID]
           ) {
@@ -299,9 +294,37 @@ const messagefunctions = {};
             }
           }
         }
-        const messages = (
-          await db.all(
-            `SELECT * 
+      });
+      ws.on("message", async (data: string) => {
+        const msg = JSON.parse(data);
+        if (msg.type === "start") {
+          if (msg.to === accountdata.accountID) {
+            return ws.close();
+          }
+
+          if (to) {
+            delete messagefunctions[accountdata.accountID][to][connectionID];
+            if (
+              getAllOnline(messagefunctions[accountdata.accountID][to]).length <=
+              0 &&
+              messagefunctions[to] &&
+              messagefunctions[to][accountdata.accountID]
+            ) {
+              for (const ws of Object.keys(
+                messagefunctions[to][accountdata.accountID]
+              )) {
+                messagefunctions[to][accountdata.accountID][ws].ws.send(
+                  JSON.stringify({
+                    type: "online",
+                    online: false,
+                  })
+                );
+              }
+            }
+          }
+          const messages = (
+            await db.all(
+              `SELECT * 
           FROM (SELECT
           ID, accountID as "from", message, time, file, mimetype
           FROM friendsChatMessages
@@ -313,15 +336,15 @@ const messagefunctions = {};
                   accountID = :toUser
                   and toAccountID = :accountID
               ) ORDER  BY time DESC) LIMIT :max`,
-            {
-              ":accountID": accountdata.accountID,
-              ":toUser": msg.to,
-              ":max": msg.limit,
-            }
-          )
-        ).reverse();
-        const users = await db.get(
-          `WITH friendrequestlist as (
+              {
+                ":accountID": accountdata.accountID,
+                ":toUser": msg.to,
+                ":max": msg.limit,
+              }
+            )
+          ).reverse();
+          const users = await db.get(
+            `WITH friendrequestlist as (
           SELECT accountID
           FROM friends
           WHERE toAccountID == :accountID
@@ -331,78 +354,78 @@ const messagefunctions = {};
       JOIN accounts ON friends.toAccountID=accounts.accountID
       WHERE friends.accountID == :accountID and friends.toAccountID==:ID
           and toAccountID in friendrequestlist`,
-          {
-            ":accountID": accountdata.accountID,
-            ":ID": msg.to,
-          }
-        );
-        ws.send(
-          JSON.stringify({
-            type: "setmessages",
-            messages,
-            users: {
-              [msg.to]: {
-                username: users.username,
-                id: users.accountID,
-                profilePic: users.profilePic,
-                tag: users.tag,
-                backgroundImage: users.backgroundImage,
+            {
+              ":accountID": accountdata.accountID,
+              ":ID": msg.to,
+            }
+          );
+          ws.send(
+            JSON.stringify({
+              type: "setmessages",
+              messages,
+              users: {
+                [msg.to]: {
+                  username: users.username,
+                  id: users.accountID,
+                  profilePic: users.profilePic,
+                  tag: users.tag,
+                  backgroundImage: users.backgroundImage,
+                },
               },
-            },
-          })
-        );
-        to = String(msg.to);
-        const allonline = getAllOnline(
-          messagefunctions[to] && messagefunctions[to][accountdata.accountID]
-            ? messagefunctions[to][accountdata.accountID]
-            : []
-        );
-        ws.send(
-          JSON.stringify({
-            type: "online",
-            online:
-              (messagefunctions[to] &&
-                messagefunctions[to][accountdata.accountID] &&
-                allonline.length > 0) === true,
-            mobile:
-              allonline.length > 0
-                ? allonline[allonline.length - 1].mobile
-                : undefined,
-          })
-        );
-        if (
-          messagefunctions[to] &&
-          messagefunctions[to][accountdata.accountID]
-        ) {
-          for (const ws of Object.keys(
+            })
+          );
+          to = String(msg.to);
+          const allonline = getAllOnline(
+            messagefunctions[to] && messagefunctions[to][accountdata.accountID]
+              ? messagefunctions[to][accountdata.accountID]
+              : []
+          );
+          ws.send(
+            JSON.stringify({
+              type: "online",
+              online:
+                (messagefunctions[to] &&
+                  messagefunctions[to][accountdata.accountID] &&
+                  allonline.length > 0) === true,
+              mobile:
+                allonline.length > 0
+                  ? allonline[allonline.length - 1].mobile
+                  : undefined,
+            })
+          );
+          if (
+            messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID]
-          )) {
-            messagefunctions[to][accountdata.accountID][ws].ws.send(
-              JSON.stringify({
-                type: "online",
-                online: true,
-                mobile: msg.mobile,
-              })
-            );
+          ) {
+            for (const ws of Object.keys(
+              messagefunctions[to][accountdata.accountID]
+            )) {
+              messagefunctions[to][accountdata.accountID][ws].ws.send(
+                JSON.stringify({
+                  type: "online",
+                  online: true,
+                  mobile: msg.mobile,
+                })
+              );
+            }
           }
-        }
-        mobile = msg.mobile;
-        if (!messagefunctions[accountdata.accountID]) {
-          messagefunctions[accountdata.accountID] = {};
-        }
-        if (!messagefunctions[accountdata.accountID][msg.to]) {
-          messagefunctions[accountdata.accountID][msg.to] = {};
-        }
-        messagefunctions[accountdata.accountID][msg.to][connectionID] = {
-          connectionID,
-          ws,
-          mobile: msg.mobile,
-          focus: true,
-        };
-      } else if (msg.type == "getmessages") {
-        const messages = (
-          await db.all(
-            `SELECT * FROM (SELECT
+          mobile = msg.mobile;
+          if (!messagefunctions[accountdata.accountID]) {
+            messagefunctions[accountdata.accountID] = {};
+          }
+          if (!messagefunctions[accountdata.accountID][msg.to]) {
+            messagefunctions[accountdata.accountID][msg.to] = {};
+          }
+          messagefunctions[accountdata.accountID][msg.to][connectionID] = {
+            connectionID,
+            ws,
+            mobile: msg.mobile,
+            focus: true,
+          };
+        } else if (msg.type == "getmessages") {
+          const messages = (
+            await db.all(
+              `SELECT * FROM (SELECT
           ID, accountID as "from", message, time, file, mimetype
           FROM friendsChatMessages
           WHERE (
@@ -413,90 +436,64 @@ const messagefunctions = {};
                   accountID = :toUser
                   and toAccountID = :accountID
               ) ORDER  BY time DESC) LIMIT :start, :max`,
-            {
-              ":accountID": accountdata.accountID,
-              ":toUser": to,
-              ":start": msg.start,
-              ":max": msg.max,
-            }
-          )
-        ).reverse();
-        for (const message of messages) {
-          message.mine = message.mine === 1;
-        }
-        ws.send(
-          JSON.stringify({
-            type: "prependmessages",
-            messages,
-          })
-        );
-      } else if (
-        msg.type == "setFocus" &&
-        to &&
-        messagefunctions[accountdata.accountID][to][connectionID]
-      ) {
-        messagefunctions[accountdata.accountID][to][connectionID].focus =
-          msg.focus;
-        if (
-          (!msg.focus
-            ? getAllOnline(messagefunctions[accountdata.accountID][to])
+              {
+                ":accountID": accountdata.accountID,
+                ":toUser": to,
+                ":start": msg.start,
+                ":max": msg.max,
+              }
+            )
+          ).reverse();
+          for (const message of messages) {
+            message.mine = message.mine === 1;
+          }
+          ws.send(
+            JSON.stringify({
+              type: "prependmessages",
+              messages,
+            })
+          );
+        } else if (
+          msg.type == "setFocus" &&
+          to &&
+          messagefunctions[accountdata.accountID][to][connectionID]
+        ) {
+          messagefunctions[accountdata.accountID][to][connectionID].focus =
+            msg.focus;
+          if (
+            (!msg.focus
+              ? getAllOnline(messagefunctions[accountdata.accountID][to])
                 .length <= 0
-            : true) &&
-          messagefunctions[to] &&
-          messagefunctions[to][accountdata.accountID]
-        ) {
-          for (const ws of Object.keys(
+              : true) &&
+            messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID]
-          )) {
-            messagefunctions[to][accountdata.accountID][ws].ws.send(
-              JSON.stringify({
-                type: "online",
-                online: msg.focus,
-                mobile: msg.focus ? mobile : undefined,
-              })
-            );
+          ) {
+            for (const ws of Object.keys(
+              messagefunctions[to][accountdata.accountID]
+            )) {
+              messagefunctions[to][accountdata.accountID][ws].ws.send(
+                JSON.stringify({
+                  type: "online",
+                  online: msg.focus,
+                  mobile: msg.focus ? mobile : undefined,
+                })
+              );
+            }
           }
-        }
-      } else if (msg.type == "pong") {
-        lastping = new Date().getTime();
-        pingpong();
-      } else if (msg.type === "message" || msg.type === "file") {
-        const time = new Date().getTime();
-        const id = generate(100);
-        if (
-          messagefunctions[to] &&
-          messagefunctions[to][accountdata.accountID]
-        ) {
-          for (const ws of Object.keys(
+        } else if (msg.type == "pong") {
+          lastping = new Date().getTime();
+          pingpong();
+        } else if (msg.type === "message" || msg.type === "file") {
+          const time = new Date().getTime();
+          const id = generate(100);
+          if (
+            messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID]
-          )) {
-            messagefunctions[to][accountdata.accountID][ws].ws.send(
-              JSON.stringify({
-                type: "message",
-                message: {
-                  from: accountdata.accountID,
-                  time,
-                  message: msg.message,
-                  file: msg.file,
-                  mimetype: msg.mimetype,
-                  ID: id,
-                },
-              })
-            );
-          }
-        }
-        if (
-          messagefunctions[accountdata.accountID] &&
-          messagefunctions[accountdata.accountID][to]
-        ) {
-          for (const ws of Object.keys(
-            messagefunctions[accountdata.accountID][to]
-          )) {
-            if (
-              messagefunctions[accountdata.accountID][to][ws].connectionID !==
-              connectionID
-            ) {
-              messagefunctions[accountdata.accountID][to][ws].ws.send(
+          ) {
+            for (const ws of Object.keys(
+              messagefunctions[to][accountdata.accountID]
+            )) {
+              messagefunctions[to][accountdata.accountID][ws].ws.send(
                 JSON.stringify({
                   type: "message",
                   message: {
@@ -511,58 +508,85 @@ const messagefunctions = {};
               );
             }
           }
-        }
-        if (
-          !(
-            messagefunctions[to] &&
-            messagefunctions[to][accountdata.accountID] &&
-            getAllOnline(messagefunctions[to][accountdata.accountID]).length > 0
-          )
-        ) {
-          sendNotification(to, {
-            title: accountdata.username,
-            message: msg.message ? truncate(msg.message, 25) : "file",
-            to: `/chat/${accountdata.accountID}`,
-          });
-        }
-        await db
-          .run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype)`,
-            {
-              ":ID": id,
-              ":accountID": accountdata.accountID,
-              ":toAccountID": to,
-              ":message": msg.message,
-              ":file": msg.file,
-              ":mimetype": msg.mimetype,
-              ":time": time,
+          if (
+            messagefunctions[accountdata.accountID] &&
+            messagefunctions[accountdata.accountID][to]
+          ) {
+            for (const ws of Object.keys(
+              messagefunctions[accountdata.accountID][to]
+            )) {
+              if (
+                messagefunctions[accountdata.accountID][to][ws].connectionID !==
+                connectionID
+              ) {
+                messagefunctions[accountdata.accountID][to][ws].ws.send(
+                  JSON.stringify({
+                    type: "message",
+                    message: {
+                      from: accountdata.accountID,
+                      time,
+                      message: msg.message,
+                      file: msg.file,
+                      mimetype: msg.mimetype,
+                      ID: id,
+                    },
+                  })
+                );
+              }
             }
-          )
-          .catch(console.error);
-        ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
-      } else if (msg.type === "typing") {
-        if (
-          messagefunctions[to] &&
-          messagefunctions[to][accountdata.accountID]
-        ) {
-          for (const ws of Object.keys(
+          }
+          if (
+            !(
+              messagefunctions[to] &&
+              messagefunctions[to][accountdata.accountID] &&
+              getAllOnline(messagefunctions[to][accountdata.accountID]).length > 0
+            )
+          ) {
+            sendNotification(to, {
+              title: accountdata.username,
+              message: msg.message ? truncate(msg.message, 25) : "file",
+              to: `/chat/${accountdata.accountID}`,
+            });
+          }
+          await db
+            .run(
+              `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype)`,
+              {
+                ":ID": id,
+                ":accountID": accountdata.accountID,
+                ":toAccountID": to,
+                ":message": msg.message,
+                ":file": msg.file,
+                ":mimetype": msg.mimetype,
+                ":time": time,
+              }
+            )
+            .catch(console.error);
+          ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
+        } else if (msg.type === "typing") {
+          if (
+            messagefunctions[to] &&
             messagefunctions[to][accountdata.accountID]
-          )) {
-            messagefunctions[to][accountdata.accountID][ws].ws.send(
-              JSON.stringify({
-                type: "typing",
-                typing: msg.typing,
-                length: msg.length,
-                specialchars: msg.specialchars,
-              })
-            );
+          ) {
+            for (const ws of Object.keys(
+              messagefunctions[to][accountdata.accountID]
+            )) {
+              messagefunctions[to][accountdata.accountID][ws].ws.send(
+                JSON.stringify({
+                  type: "typing",
+                  typing: msg.typing,
+                  length: msg.length,
+                  specialchars: msg.specialchars,
+                })
+              );
+            }
           }
         }
-      }
+      });
+      ws.send(JSON.stringify({ type: "start" }));
+      pingpong();
     });
-    ws.send(JSON.stringify({ type: "start" }));
-    pingpong();
-  });
+  })
   90;
   app.post("/api/uploadfile", async (req: any, res: any) => {
     const accountdata = await db.get(
@@ -1092,22 +1116,8 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
   app.use((_: any, res: any) => {
     res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
   });
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.timeEnd("express boot");
     console.log(`server started at http://localhost:${port}`);
   });
-  require("greenlock-express")
-    .init({
-        packageRoot: __dirname,
-        configDir: "./greenlock.d",
- 
-        // contact for security and critical bug notices
-        maintainerEmail: "epicugric@gmail.com",
- 
-        // whether or not to run at cloudscale
-        cluster: false
-    })
-    // Serves on 80 and 443
-    // Get's SSL certificates magically!
-    .serve(app);
 })();

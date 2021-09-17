@@ -12,6 +12,7 @@
     "exif-parser": "^0.1.12",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
+    "express-force-domain": "^0.0.6",
     "express-ws": "^5.0.2",
     "file-metadata": "^2.0.0",
     "follow-redirects": "^1.14.1",
