@@ -146,6 +146,7 @@ const messagefunctions = {};
     });
   }
   const app = express()
+  app.use( require('express-force-domain')('http://typechat.us.to/') );
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
