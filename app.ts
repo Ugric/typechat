@@ -1,6 +1,6 @@
 import { open } from "sqlite";
 import * as express from "express";
-import { forcedomain } from 'forcedomain';
+import { forceDomain } from 'forcedomain';
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
 const { createHash } = require("crypto");
@@ -11,7 +11,6 @@ const snooze = (milliseconds: number) =>
 const { generate } = require("randomstring");
 const { NotificationEmail } = require("./emailer");
 const autoaccountdetails = require("./autoaccountdetails.json");
-const forceDomain = require('node-force-domain');
 
 const WebSocket = require('ws');
 console.time("express boot");
@@ -159,7 +158,7 @@ const messagefunctions = {};
     });
   }
   const app = express()
-  app.use(forcedomain({ hostname: "typechat.us.to" }));
+  app.use(forceDomain({ hostname: "typechat.us.to" }));
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
