@@ -162,8 +162,8 @@ const messagefunctions = {};
     }
     return online;
   };
-  const  greenlock = require("greenlock-express")
-    .init({
+  const  greenlock = require("greenlock")
+    .create({
       packageRoot: __dirname,
         configDir: "./greenlock.d",
  
