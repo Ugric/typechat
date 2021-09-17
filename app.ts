@@ -159,10 +159,7 @@ const messagefunctions = {};
     });
   }
   const app = express()
-  app.use(forceDomain({
-    hostname: 'typechat.us.to',
-    protocol: "https"
-  }));
+  app.use(require('force-domain')({ host: "typechat.us.to" }));
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
