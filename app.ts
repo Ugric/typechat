@@ -15,11 +15,16 @@ const autoaccountdetails = require("./autoaccountdetails.json");
 const WebSocket = require('ws');
 console.time("express boot");
 
-function getSidFromCookies(cookies) {
-  var filtered = cookies.filter(function (obj) {
-    return obj.name == 'connect.sid';
+function parseCookies(request): any {
+  var list = {},
+    rc = request.headers.cookie;
+
+  rc && rc.split(';').forEach(function (cookie) {
+    var parts = cookie.split('=');
+    list[parts.shift().trim()] = decodeURI(parts.join('='));
   });
-  return filtered.length > 0 ? filtered[0].value : null;
+
+  return list;
 }
 
 const truncate = (input: string, limit: number) =>
@@ -201,7 +206,7 @@ const messagefunctions = {};
         let accountdata = await db.get(
           "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
           {
-            ":token": getSidFromCookies(req.cookies).token,
+            ":token": parseCookies(req).token,
           }
         );
         if (req.url == "/notification") {
