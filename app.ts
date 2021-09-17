@@ -146,7 +146,7 @@ const messagefunctions = {};
     });
   }
   const app = express()
-  app.use( require('express-force-domain')('http://typechat.us.to/') );
+  app.use( require('express-force-domain')('http://typechat.us.to') );
   app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
@@ -183,6 +183,7 @@ const messagefunctions = {};
     server
   });
   ws.on('connection', function (ws) {
+    console.log("Hello")
     ws.on("/notifications", async (ws, req) => {
       let lastping = 0;
       const connectionID = generate(20);
