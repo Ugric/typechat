@@ -1,6 +1,6 @@
 import { open } from "sqlite";
 import * as express from "express";
-const Greenlock = require("greenlock")
+import * as https from 'https';
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
 const { createHash } = require("crypto");
@@ -11,8 +11,7 @@ const snooze = (milliseconds: number) =>
 const { generate } = require("randomstring");
 const { NotificationEmail } = require("./emailer");
 const autoaccountdetails = require("./autoaccountdetails.json");
-const http = require('http');
-const https = require('https');
+
 const WebSocket = require('ws');
 console.time("express boot");
 
@@ -163,7 +162,8 @@ const messagefunctions = {};
     }
     return online;
   };
-  const greenlock = Greenlock.create({
+  const  greenlock = require("greenlock-express")
+    .init({
       packageRoot: __dirname,
         configDir: "./greenlock.d",
  
@@ -173,10 +173,12 @@ const messagefunctions = {};
         // whether or not to run at cloudscale
         cluster: false,
   approveDomains: ['typechat.us.to', 'www.typechat.us.to', 'typechat.uk.to', 'www.typechat.uk.to' ]
-    })
-
+    })// Serves on 80 and 443
+    // Get's SSL certificates magically!
+  greenlock.serve(app);
   //// HTTPS SERVER + WEBSOCKETS
-  const server = https.createServer(greenlock.tlsOptions, app)
+  const server = https.createServer(greenlock.tlsOptions)
+  server.listen(443)
   const ws = new WebSocket.Server({
     server
   });
@@ -1115,9 +1117,5 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
   });
   app.use((_: any, res: any) => {
     res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
-  });
-  server.listen(port, () => {
-    console.timeEnd("express boot");
-    console.log(`server started at http://localhost:${port}`);
   });
 })();
