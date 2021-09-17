@@ -191,7 +191,7 @@ const messagefunctions = {};
         server: httpsServer
       });
       ws.on('connection', function (ws) {
-        console.log("Hello")
+        console.log(ws)
         ws.on("/notifications", async (ws, req) => {
           let lastping = 0;
           const connectionID = generate(20);
