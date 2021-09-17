@@ -175,9 +175,7 @@ const messagefunctions = {};
       approveDomains: ['typechat.us.to', 'www.typechat.us.to', 'typechat.uk.to', 'www.typechat.uk.to']
     }).ready((glx) => {
       console.log(glx)
-      const httpsServer = glx.httpsServer(null, function (req, res) {
-        res.end("Hello, Encrypted World!");
-      });
+      const httpsServer = glx.httpsServer(null, app);
 
       httpsServer.listen(443, "0.0.0.0", function () {
         console.info("Listening on ", httpsServer.address());
