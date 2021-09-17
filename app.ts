@@ -176,7 +176,7 @@ const messagefunctions = {};
     })// Serves on 80 and 443
     // Get's SSL certificates magically!
   //// HTTPS SERVER + WEBSOCKETS
-  console.log(greenlock)
+  console.log(greenlock.tlsOptions)
   const server = http.createServer()
   server.listen(443)
   const ws = new WebSocket.Server({
