@@ -15,6 +15,7 @@
     "express-ws": "^5.0.2",
     "file-metadata": "^2.0.0",
     "follow-redirects": "^1.14.1",
+    "greenlock-express": "^4.0.3",
     "newsapi": "^2.4.1",
     "node-notifier": "^10.0.0",
     "nodemailer": "^6.6.2",
@@ -32,5 +33,19 @@
   },
   "scripts": {
     "start": "node app.ts"
-  }
+  },
+  "name": "typechat",
+  "description": "![TypeChat info](https://opengraph.githubassets.com/4a135b7bc41f08d2b41d0b550f5135b3ece34526bf69f44066368742ce4a95a2/Ugric/typechat)\r # TypeChat",
+  "version": "1.0.0",
+  "main": "app.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ugric/typechat.git"
+  },
+  "author": "Ugric",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ugric/typechat/issues"
+  },
+  "homepage": "https://github.com/Ugric/typechat#readme"
 }
