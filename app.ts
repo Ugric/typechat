@@ -15,6 +15,13 @@ const autoaccountdetails = require("./autoaccountdetails.json");
 const WebSocket = require('ws');
 console.time("express boot");
 
+function getSidFromCookies(cookies) {
+  var filtered = cookies.filter(function (obj) {
+    return obj.name == 'connect.sid';
+  });
+  return filtered.length > 0 ? filtered[0].value : null;
+}
+
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
 
@@ -191,6 +198,12 @@ const messagefunctions = {};
         server: httpsServer
       });
       ws.on('connection', async (ws, req) => {
+        let accountdata = await db.get(
+          "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+          {
+            ":token": getSidFromCookies(req.cookies).token,
+          }
+        );
         if (req.url == "/notification") {
           let lastping = 0;
           const connectionID = generate(20);
@@ -203,12 +216,6 @@ const messagefunctions = {};
               ws.close();
             }
           };
-          let accountdata = await db.get(
-            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-            {
-              ":token": req.cookies.token,
-            }
-          );
           if (!accountdata) {
             return ws.close();
           }
@@ -238,12 +245,6 @@ const messagefunctions = {};
           let to: string;
           let mobile: boolean = false;
           const connectionID = generate(20);
-          let accountdata = await db.get(
-            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-            {
-              ":token": req.cookies.token,
-            }
-          );
           if (!accountdata) {
             return ws.close();
           }
@@ -261,12 +262,6 @@ const messagefunctions = {};
           let to: string;
           let mobile: boolean = false;
           const connectionID = generate(20);
-          let accountdata = await db.get(
-            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-            {
-              ":token": req.cookies.token,
-            }
-          );
           if (!accountdata) {
             return ws.close();
           }
