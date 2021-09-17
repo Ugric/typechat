@@ -207,7 +207,7 @@ const messagefunctions = {};
             ":token": parseCookies(req).token,
           }
         );
-        if (req.url == "/notification") {
+        if (req.url == "/notifications") {
           let lastping = 0;
           const connectionID = generate(20);
           const pingpong = async () => {
