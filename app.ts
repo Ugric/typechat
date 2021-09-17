@@ -190,7 +190,7 @@ const messagefunctions = {};
       const ws = new WebSocket.Server({
         server: httpsServer
       });
-      ws.on('connection', function (ws) {
+      ws.on('connection', function (ws, req) {
         console.log(ws)
         ws.on("/notifications", async (ws, req) => {
           let lastping = 0;
