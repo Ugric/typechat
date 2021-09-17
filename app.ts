@@ -1,6 +1,6 @@
 import { open } from "sqlite";
 import * as express from "express";
-import * as https from 'https';
+import * as http from 'http';
 const sqlite3 = require("sqlite3");
 const cookieParser = require("cookie-parser");
 const { createHash } = require("crypto");
@@ -176,7 +176,8 @@ const messagefunctions = {};
     })// Serves on 80 and 443
     // Get's SSL certificates magically!
   //// HTTPS SERVER + WEBSOCKETS
-  const server = https.createServer(greenlock.tlsOptions)
+  console.log(greenlock.tlsOptions)
+  const server = http.createServer()
   server.listen(443)
   const ws = new WebSocket.Server({
     server
