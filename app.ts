@@ -175,7 +175,6 @@ const messagefunctions = {};
   approveDomains: ['typechat.us.to', 'www.typechat.us.to', 'typechat.uk.to', 'www.typechat.uk.to' ]
     })// Serves on 80 and 443
     // Get's SSL certificates magically!
-  greenlock.serve(app);
   //// HTTPS SERVER + WEBSOCKETS
   const server = https.createServer(greenlock.tlsOptions)
   server.listen(443)
