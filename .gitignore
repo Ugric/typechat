@@ -26,3 +26,5 @@ emailconfig.json
 autoaccountdetails.json
 typechat-electron-app
 ssl
+.greenlockrc
+greenlock.d
