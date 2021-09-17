@@ -191,8 +191,7 @@ const messagefunctions = {};
         server: httpsServer
       });
       ws.on('connection', function (ws, req) {
-        console.log(req.url)
-        ws.on("/notifications", async (ws, req) => {
+        if (req.url == "/notification") {
           let lastping = 0;
           const connectionID = generate(20);
           const pingpong = async () => {
@@ -235,8 +234,7 @@ const messagefunctions = {};
           };
 
           pingpong();
-        });
-        ws.on("/groupchat", async (ws, req) => {
+        } else if (req.url == "/groupchat") {
           let to: string;
           let mobile: boolean = false;
           const connectionID = generate(20);
@@ -259,8 +257,7 @@ const messagefunctions = {};
               ws.close();
             }
           };
-        });
-        ws.on("/chat", async (ws, req) => {
+        } else if (req.url == "/chat") {
           let to: string;
           let mobile: boolean = false;
           const connectionID = generate(20);
@@ -595,7 +592,7 @@ const messagefunctions = {};
           });
           ws.send(JSON.stringify({ type: "start" }));
           pingpong();
-        });
+        }
       })
       90;
       app.post("/api/uploadfile", async (req: any, res: any) => {
