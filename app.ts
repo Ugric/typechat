@@ -158,7 +158,6 @@ const messagefunctions = {};
     });
   }
   const app = express()
-  app.use(express.static(path.join(__dirname, "typechat", "build")));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const port = 443;
@@ -1120,6 +1119,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         }
       });
       app.use(forceDomain({ hostname: "typechat.us.to", protocol: "https" }));
+      app.use(express.static(path.join(__dirname, "typechat", "build")));
       app.use((_: any, res: any) => {
         res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
       });
