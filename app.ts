@@ -153,7 +153,7 @@ const messagefunctions = {};
         configDir: "./greenlock.d",
  
         // contact for security and critical bug notices
-        maintainerEmail: "jon@example.com",
+        maintainerEmail: "epicugric@gmail.com",
  
         // whether or not to run at cloudscale
         cluster: false
