@@ -13,7 +13,7 @@ function NotificationComponent() {
   const history = useHistory();
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(
     `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
-      ? window.location.hostname + ":443"
+      ? window.location.hostname + ":5000"
       : window.location.host
     }/notifications`,
     {
