@@ -13,6 +13,7 @@ import {
   faPlus,
   faSignOutAlt,
   faCog,
+  faRocket,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
@@ -116,6 +117,19 @@ const PageNav = () => {
           )}
         </Nav>
         <Nav>
+          <Nav.Link
+            onPointerDown={() => {
+              playSound("/sounds/click2.mp3");
+            }}
+            onPointerUp={() => {
+              playSound("/sounds/click1.mp3");
+            }}
+            as={Link}
+            to="/blast"
+            style={{ color: location.pathname === "/blast" ? "white" : "" }}
+          >
+            <FontAwesomeIcon icon={faRocket} />
+          </Nav.Link>
           <Nav.Link
             onPointerDown={() => {
               playSound("/sounds/click2.mp3");

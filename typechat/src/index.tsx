@@ -31,6 +31,7 @@ import AddPeople from "./pages/addpeople";
 import NotificationComponent from "./notification";
 import LoadError from "./pages/error";
 import Settings from "./pages/settings";
+import Blast from "./pages/blast";
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
@@ -105,6 +106,9 @@ function App() {
                 ></Route>
                 <Route path="/contacts" exact>
                   <Contacts />
+                </Route>
+                <Route path="/blast" exact>
+                  <Blast />
                 </Route>
                 <Route path="/settings" exact>
                   <Settings />

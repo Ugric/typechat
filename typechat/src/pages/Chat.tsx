@@ -263,20 +263,13 @@ function MessageMaker({
             </>
           ) : file ? (
             <div
-              style={{
-                height:
-                  mimetype &&
-                    ["image", "video", "audio"].includes(mimetype.split("/")[0])
-                    ? "500px"
-                    : undefined,
-              }}
             >
               {mimetype ? (
                 mimetype.split("/")[0] === "image" ? (
                   <img
                     alt={file}
                     src={`/files/${file}`}
-                    style={{ height: "100%" }}
+                    style={{ width: "100%" }}
                     loading="lazy"
                     onLoad={() => {
                       if (toscroll.current) {
@@ -287,7 +280,7 @@ function MessageMaker({
                 ) : mimetype.split("/")[0] === "video" ? (
                   <video
                     src={`/files/${file}`}
-                    style={{ height: "100%" }}
+                    style={{ width: "100%" }}
                     controls
                     playsInline
                     onLoad={() => {
@@ -299,7 +292,7 @@ function MessageMaker({
                 ) : mimetype.split("/")[0] === "audio" ? (
                   <audio
                     src={`/files/${file}`}
-                    style={{ height: "100%" }}
+                    style={{ width: "100%" }}
                     controls
                     playsInline
                     onLoad={() => {
@@ -590,7 +583,7 @@ function ChatPage() {
   });
   const [socketUrl] = useState(
     `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
-      ? window.location.hostname + ":443"
+      ? window.location.hostname + ":5000"
       : window.location.host
     }/chat`
   );
@@ -856,7 +849,7 @@ function ChatPage() {
       sendJsonMessage({
         type: "getmessages",
         start: chats.length,
-        max: 10,
+        max: 50,
       });
     }
   };
@@ -912,7 +905,7 @@ function ChatPage() {
                   {usersdata.users[chattingto].username}{" "}
                   <FontAwesomeIcon
                     style={{
-                      color: isonline === "0" ? "#5c5c5c" : "lightgreen",
+                      color: isonline === "0" ? "var(--offline)" : "var(--online)",
                     }}
                     icon={
                       isonline === "1"
