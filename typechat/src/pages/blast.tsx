@@ -40,7 +40,7 @@ function Blast() {
                     margin: "auto",
                     border: "solid 1px var(--light-bg-colour)",
                     borderRadius: "10px",
-                    backgroundColor: "var(--dark-bg-colour)",
+                    backgroundColor: "var(--dark-glass-bg-colour)",
                     padding: "1rem",
                     maxWidth: "700px",
                 }}

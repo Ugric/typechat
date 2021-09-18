@@ -2,6 +2,9 @@
   --light-bg-colour: #6f6fff;
   --main-bg-colour: #5656ff;
   --dark-bg-colour: #3b3bd3;
+  --light-glass-bg-colour: #6f6fff80;
+  --main-glass-bg-colour: #5656ff80;
+  --dark-glass-bg-colour: #3c3cd380;
   --primary-text-colour: #ffff00;
   --secondary-text-colour: #ffaa56;
   --dark-mode: #121212;
