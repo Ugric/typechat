@@ -9,6 +9,10 @@ import plant1 from "./images/planet1.svg"
 import plant2 from "./images/planet2.svg"
 import solarsystem from "./images/solar-system.svg"
 
+import satellite from "./images/satellite.svg"
+import satellite1 from "./images/satellite1.svg"
+import satellite2 from "./images/satellite2.svg"
+
 
 function range(size: number, startAt = 0) {
     return [...Array(size).keys()].map(i => i + startAt);
@@ -29,8 +33,13 @@ function Planet({ file }: { file: string }) {
     return <div className="Planet" style={{ top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s`, backgroundImage: `url(${file})` }}></div>
 }
 
+function Satellite({ file }: { file: string }) {
+    const [{ x, y, delay }] = useState({ x: Math.random() * 100, y: Math.random() * 100, delay: Math.random() * 10 })
+    return <div className="Satellite" style={{ top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s`, backgroundImage: `url(${file})` }}></div>
+}
+
 function Blast() {
-    const { price, sale } = { price: 100, sale: 0.10 }
+    const { price, sale } = { price: 100, sale: 0.75 }
     const { width, height } = useWindowSize()
     const [{ xalien, yalien }] = useState({ xalien: 15 + (Math.random() * 30) + "vw", yalien: 15 + (Math.random() * 30) + "vh" })
     return <div>
@@ -38,15 +47,15 @@ function Blast() {
             {range(Math.round((width * height) / 10000)).map((value) => <Star key={value}></Star>)}
         </div>
             <Galaxy></Galaxy>
-            <Galaxy></Galaxy>
-            <Galaxy></Galaxy>
-            <Galaxy></Galaxy>
-            <Galaxy></Galaxy>
 
             <Planet file={plant} />
             <Planet file={plant1} />
             <Planet file={plant2} />
             <Planet file={solarsystem} />
+
+            <Satellite file={satellite} />
+            <Satellite file={satellite1} />
+            <Satellite file={satellite2} />
 
             <div className="Alien" style={{ top: yalien, left: xalien }}></div>
         </div>
