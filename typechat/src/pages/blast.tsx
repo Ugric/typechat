@@ -4,6 +4,12 @@ import "./css/blast.css"
 import { useState } from "react";
 import useWindowSize from "../hooks/usescreensize";
 
+import plant from "./images/planet.svg"
+import plant1 from "./images/planet1.svg"
+import plant2 from "./images/planet2.svg"
+import solarsystem from "./images/solar-system.svg"
+
+
 function range(size: number, startAt = 0) {
     return [...Array(size).keys()].map(i => i + startAt);
 }
@@ -16,6 +22,11 @@ function Star() {
 function Galaxy() {
     const [{ x, y, delay }] = useState({ x: Math.random() * 100, y: Math.random() * 100, delay: Math.random() * 10 })
     return <div className="Galaxy" style={{ top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s` }}></div>
+}
+
+function Planet({ file }: { file: string }) {
+    const [{ x, y, delay }] = useState({ x: Math.random() * 100, y: Math.random() * 100, delay: Math.random() * 10 })
+    return <div className="Planet" style={{ top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s`, backgroundImage: `url(${file})` }}></div>
 }
 
 function Blast() {
@@ -31,9 +42,16 @@ function Blast() {
             <Galaxy></Galaxy>
             <Galaxy></Galaxy>
             <Galaxy></Galaxy>
+
+            <Planet file={plant} />
+            <Planet file={plant1} />
+            <Planet file={plant2} />
+            <Planet file={solarsystem} />
+
             <div className="Alien" style={{ top: yalien, left: xalien }}></div>
-            <div className="BlastRocket"></div>
         </div>
+        <div className="BlastRocket"></div>
+        <div className="meteorites"></div>
         <div className="BlastMenu">
             <div
                 style={{
