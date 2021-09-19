@@ -23,6 +23,32 @@
     animation-fill-mode: forwards;
 }
 
+@keyframes meteoritesanimation {
+    0% {
+        transform: translate(-15vw, -15vw);
+    }
+    10% {
+        transform: translate(100vw, 100vw);
+    }
+    100% {
+        transform: translate(100vw, 100vw);
+    }
+}
+
+.meteorites {
+    position: fixed;
+    background-image: url(../images/meteorites.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 15vh;
+    height: 15vh;
+    z-index: 1;
+    animation: meteoritesanimation 20s ease-in-out infinite;
+    animation-delay: -27.5s;
+    animation-fill-mode: forwards;
+}
+
 @keyframes staranimation {
     0% {
         transform: rotate(-10deg);
@@ -104,6 +130,54 @@
     animation-fill-mode: forwards;
     z-index: 3;
     padding: 1rem;
+}
+
+@keyframes planetanimation {
+    0% {
+        transform: translateY(10px);
+    }
+    50% {
+        transform: translateY(0px);
+    }
+    100% {
+        transform: translateY(10px);
+    }
+}
+
+.Planet {
+    position: fixed;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 15vh;
+    height: 15vh;
+    top: 25vh;
+    left: 25vh;
+    animation: planetanimation 5s ease-in-out infinite;
+}
+
+@keyframes satelliteanimation {
+    0% {
+        transform: translateY(10px) rotate(-10deg);
+    }
+    50% {
+        transform: translateY(0px) rotate(10deg);
+    }
+    100% {
+        transform: translateY(10px) rotate(-10deg);
+    }
+}
+
+.Satellite {
+    position: fixed;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 15vh;
+    height: 15vh;
+    top: 25vh;
+    left: 25vh;
+    animation: satelliteanimation 5s ease-in-out infinite;
 }
 
 .subbutton {
