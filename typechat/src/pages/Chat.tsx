@@ -652,7 +652,7 @@ function ChatPage() {
       scrollingElement.scrollTo(0, scrollingElement.scrollHeight);
     }
   };
-  const fileref = useRef<any>(null);
+  const fileref = useRef<HTMLInputElement>(null);
   const submitref = useRef<any>(null);
   const formref = useRef<any>(null);
   const shiftkey = useRef(false);
@@ -1069,7 +1069,7 @@ function ChatPage() {
                   textAlign: "center",
                 }}
                 onClick={() => {
-                  fileref.current.click();
+                  if (fileref.current) fileref.current.click();
                 }}
               >
                 <FontAwesomeIcon icon={faPlus} />

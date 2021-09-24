@@ -11,7 +11,7 @@ const mime = require("mime-types");
 const snooze = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
 const { generate } = require("randomstring");
-const { NotificationEmail } = require("./emailer");
+const { NotificationEmail, VerificationEmail } = require("./emailer");
 const autoaccountdetails = require("./autoaccountdetails.json");
 
 const WebSocket = require('ws');
@@ -43,6 +43,20 @@ const truncate = (input: string, limit: number) =>
 const notificationsockets = {};
 
 const messagefunctions = {};
+
+const toVerify: { [key: string]: string } = {}
+
+const updateFunctions: { [key: string]: { [key: string]: Function } } = {};
+
+function updateFromAccountID(accountID: string) {
+  try {
+    if (updateFunctions[accountID]) {
+      for (const connectionID in updateFunctions[accountID]) {
+        updateFunctions[accountID][connectionID]()
+      }
+    }
+  } catch { }
+}
 
 (async () => {
   const tagGenerator = (): string => {
@@ -365,21 +379,23 @@ const messagefunctions = {};
                 ":ID": msg.to,
               }
             );
-            ws.send(
-              JSON.stringify({
-                type: "setmessages",
-                messages,
-                users: {
-                  [msg.to]: {
-                    username: users.username,
-                    id: users.accountID,
-                    profilePic: users.profilePic,
-                    tag: users.tag,
-                    backgroundImage: users.backgroundImage,
+            if (users) {
+              ws.send(
+                JSON.stringify({
+                  type: "setmessages",
+                  messages,
+                  users: {
+                    [msg.to]: {
+                      username: users.username,
+                      id: users.accountID,
+                      profilePic: users.profilePic,
+                      tag: users.tag,
+                      backgroundImage: users.backgroundImage,
+                    },
                   },
-                },
-              })
-            );
+                })
+              );
+            }
             to = String(msg.to);
             const allonline = getAllOnline(
               messagefunctions[to] && messagefunctions[to][accountdata.accountID]
@@ -664,27 +680,28 @@ const messagefunctions = {};
             ":id": req.body.user,
           }
         );
-        const alreadyfriendrequest = await db.get(
-          "SELECT * FROM friends WHERE accountID=:accountID and toAccountID=:toAccountID",
-          {
-            ":accountID": accountdata.accountID,
-            ":toAccountID": toFriendUserData.accountID,
-          }
-        );
-        if (!alreadyfriendrequest) {
-          const time = new Date().getTime();
-          await db.run(
-            `INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)`,
+        if (toFriendUserData) {
+          const alreadyfriendrequest = await db.get(
+            "SELECT * FROM friends WHERE accountID=:accountID and toAccountID=:toAccountID",
             {
               ":accountID": accountdata.accountID,
               ":toAccountID": toFriendUserData.accountID,
-              ":time": time,
             }
           );
-        }
-        const isfriends =
-          (await db.get(
-            `WITH friendrequestlist as (
+          if (!alreadyfriendrequest) {
+            const time = new Date().getTime();
+            await db.run(
+              `INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)`,
+              {
+                ":accountID": accountdata.accountID,
+                ":toAccountID": toFriendUserData.accountID,
+                ":time": time,
+              }
+            );
+          }
+          const isfriends =
+            (await db.get(
+              `WITH friendrequestlist as (
   SELECT accountID
   FROM friends
   WHERE toAccountID == :accountID
@@ -693,31 +710,34 @@ SELECT *
 FROM friends
 WHERE accountID == :accountID and toAccountID==:toAccountID
   and toAccountID in friendrequestlist`,
-            {
-              ":accountID": accountdata.accountID,
-              ":toAccountID": toFriendUserData.accountID,
+              {
+                ":accountID": accountdata.accountID,
+                ":toAccountID": toFriendUserData.accountID,
+              }
+            )) != null;
+          if (!alreadyfriendrequest) {
+            if (isfriends) {
+              sendNotification(toFriendUserData.accountID, {
+                title: "New Contact!",
+                message: `${accountdata.username}#${accountdata.tag} added you back!`,
+                to: `/chat/${accountdata.accountID}`,
+                sound: "/sounds/friends.mp3",
+              });
+            } else {
+              sendNotification(toFriendUserData.accountID, {
+                title: "Friend Request!",
+                message: `${accountdata.username}#${accountdata.tag} sent a friend request!`,
+                to: `/add`,
+                sound: "/sounds/friendrequest.mp3",
+              });
             }
-          )) != null;
-        if (!alreadyfriendrequest) {
-          if (isfriends) {
-            sendNotification(toFriendUserData.accountID, {
-              title: "New Contact!",
-              message: `${accountdata.username}#${accountdata.tag} added you back!`,
-              to: `/chat/${accountdata.accountID}`,
-              sound: "/sounds/friends.mp3",
-            });
-          } else {
-            sendNotification(toFriendUserData.accountID, {
-              title: "Friend Request!",
-              message: `${accountdata.username}#${accountdata.tag} sent a friend request!`,
-              to: `/add`,
-              sound: "/sounds/friendrequest.mp3",
-            });
           }
+          res.send({
+            friends: isfriends,
+          });
+        } else {
+          res.send({ friends: false });
         }
-        res.send({
-          friends: isfriends,
-        });
       } else {
         res.send({ friends: false });
       }
@@ -725,6 +745,32 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     app.get("/sounds/:filename", async (req: any, res: any) => {
       res.sendFile(path.join(__dirname, "sounds", req.params.filename));
     });
+    app.get("/api/verify/:verificationID", async (req: any, res: any) => {
+      if (toVerify[req.params.verificationID]) {
+        const accountdata = await db.get(
+          "SELECT * FROM accounts WHERE accountID=:accountID",
+          {
+            ":accountID": toVerify[req.params.verificationID],
+          }
+        )
+        delete toVerify[req.params.verificationID]
+        if (accountdata) {
+          return res.send({
+            verified: true,
+            user: {
+              username: accountdata.username,
+              id: accountdata.accountID,
+              profilePic: accountdata.profilePic,
+              tag: accountdata.tag,
+              backgroundImage: accountdata.backgroundImage,
+            },
+          })
+        }
+      }
+      return res.send({
+        verified: false,
+      })
+    })
     app.get("/api/logout", async (req: any, res: any) => {
       await db.get("DELETE FROM tokens WHERE token=:token", {
         ":token": req.cookies.token,
@@ -838,34 +884,40 @@ WHERE friends.accountID == :accountID
       }
     });
     app.get("/api/getuserdataonupdate", async (req: any, res: any) => {
-      let open = true;
-      const currentaccountdata = JSON.stringify(
-        await db.get(
-          "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-          {
-            ":token": req.cookies.token,
-          }
-        )
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
       );
-      for (let index = 0; index < 30; index++) {
-        await snooze(1000);
-        const nowaccountdata = await db.get(
-          "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-          {
-            ":token": req.cookies.token,
-          }
-        );
-        const stringed = JSON.stringify(nowaccountdata);
-        if (currentaccountdata !== stringed) {
-          if (nowaccountdata) {
+      const connectionID = generate(16)
+      async function update() {
+        if (updateFunctions[accountdata.accountID][connectionID]) { delete updateFunctions[accountdata.accountID][connectionID] }
+        try {
+          const newaccountdata = await db.get(
+            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+            {
+              ":token": req.cookies.token,
+            }
+          );
+
+          if (newaccountdata) {
+            const blast = Boolean(await db.get(
+              "SELECT * FROM blast WHERE accountID=:accountID and expires>=:time",
+              {
+                ":accountID": newaccountdata.accountID,
+                ":time": new Date().getTime(),
+              }
+            ));
             return res.send({
               loggedin: true,
               user: {
-                username: nowaccountdata.username,
-                id: nowaccountdata.accountID,
-                profilePic: nowaccountdata.profilePic,
-                tag: nowaccountdata.tag,
-                backgroundImage: nowaccountdata.backgroundImage,
+                username: newaccountdata.username,
+                id: newaccountdata.accountID,
+                profilePic: newaccountdata.profilePic,
+                tag: newaccountdata.tag,
+                backgroundImage: newaccountdata.backgroundImage,
+                blast
               },
             });
           } else {
@@ -873,9 +925,19 @@ WHERE friends.accountID == :accountID
               loggedin: false,
             });
           }
+        } catch { }
+      }
+      if (accountdata) {
+        if (!updateFunctions[accountdata.accountID]) {
+          updateFunctions[accountdata.accountID] = {}
+        }
+        updateFunctions[accountdata.accountID][connectionID] = update
+        await snooze(30000)
+        if (updateFunctions[accountdata.accountID][connectionID]) {
+          delete updateFunctions[accountdata.accountID][connectionID]
+          return res.send({ reconnect: true });
         }
       }
-      return res.send({ reconnect: true });
     });
     app.get("/api/userdata", async (req: any, res: any) => {
       const accountdata = await db.get(
@@ -887,6 +949,13 @@ WHERE friends.accountID == :accountID
       if (!accountdata) {
         return res.send({ loggedin: false });
       } else {
+        const blast = Boolean(await db.get(
+          "SELECT * FROM blast WHERE accountID=:accountID and expires>=:time",
+          {
+            ":accountID": accountdata.accountID,
+            ":time": new Date().getTime(),
+          }
+        ));
         return res.send({
           loggedin: true,
           user: {
@@ -895,6 +964,7 @@ WHERE friends.accountID == :accountID
             profilePic: accountdata.profilePic,
             tag: accountdata.tag,
             backgroundImage: accountdata.backgroundImage,
+            blast
           },
         });
       }
@@ -906,12 +976,14 @@ WHERE friends.accountID == :accountID
           ":id": req.params.id,
         }
       );
-      const filepath = path.join(__dirname, "files", imagedata.filename)
-      if (imagedata && await checkFileExists(filepath)) {
-        res.sendFile(filepath);
-      } else {
-        res.status(404).sendFile(path.join(__dirname, "unknown.png"));
+      if (imagedata) {
+        const filepath = path.join(__dirname, "files", imagedata.filename)
+        if (imagedata && await checkFileExists(filepath)) {
+          return res.sendFile(filepath);
+        }
       }
+      return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
+
     });
     app.get("/getprofilepicfromid", async (req: any, res: any) => {
       const imagedata = await db.get(
@@ -957,6 +1029,7 @@ WHERE friends.accountID == :accountID
               ":accountID": accountdata.accountID,
             }
           );
+          updateFromAccountID(accountdata.accountID)
           res.send({ resp: true });
         } else {
           res.send({
@@ -990,6 +1063,7 @@ WHERE friends.accountID == :accountID
           "UPDATE accounts SET backgroundImage=:backgroundImage WHERE accountID=:accountID",
           { ":backgroundImage": id, ":accountID": accountdata.accountID }
         );
+        updateFromAccountID(accountdata.accountID)
         res.send(true);
       } else {
         res.send(false);
@@ -1013,6 +1087,7 @@ WHERE friends.accountID == :accountID
             "UPDATE accounts SET profilePic=:profilePic WHERE accountID=:accountID",
             { ":profilePic": id, ":accountID": accountdata.accountID }
           );
+          updateFromAccountID(accountdata.accountID)
           res.send({ resp: true });
         } else {
           res.send({ resp: false, err: "no image!" });
@@ -1108,16 +1183,72 @@ WHERE friends.accountID == :accountID
               ":accountID": defaultaccount.accountID,
               ":toAccountID": accountID,
               ":message": firstMessage,
-              ":time": time,
+              ":time": time - 2000,
             }
           ),
+          db.run(
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+            {
+              ":ID": generate(100),
+              ":accountID": defaultaccount.accountID,
+              ":toAccountID": accountID,
+              ":message": "A verification email has been sent to your email, you have 1 hour to verify your account before your account is disabled. If your account is disabled before you verify, you can create a new one under the same email. 📨✔",
+              ":time": time - 1000,
+            }
+          ),
+          db.run(
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+            {
+              ":ID": generate(100),
+              ":accountID": defaultaccount.accountID,
+              ":toAccountID": accountID,
+              ":message": "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://typechat.us.to/blast",
+              ":time": time,
+            }
+          )
         ]);
         sendNotification(accountID, {
           title: "TypeChat",
           message: truncate(firstMessage, 25),
           to: `/chat/${defaultaccount.accountID}`,
         });
-        return res.send({ resp: true, token });
+        res.send({ resp: true, token });
+        const verificationID = generate(100)
+        toVerify[verificationID] = accountID
+        VerificationEmail(req.body.email, verificationID)
+        await snooze(3600000)
+        if (toVerify[verificationID]) {
+          const newemail = generate(15) + "@typechat.us.to"
+          const salt = generate(150);
+          const password = hasher(autoaccountdetails.pass + salt);
+          const message = `lol, i did verify my email, my email is now ${newemail} and you already know what the password would be set to lol.`
+          await Promise.all([
+            db.run(
+              `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+              {
+                ":ID": generate(100),
+                ":accountID": accountID,
+                ":toAccountID": defaultaccount.accountID,
+                ":message": message,
+                ":time": new Date().getTime(),
+              }
+            ),
+            db.run(
+              `DELETE FROM tokens WHERE accountID = :accountID`,
+              {
+                ":accountID": accountID,
+              }
+            ),
+            db.run(`UPDATE accounts
+            SET email = :email, salt = :salt, password = :password
+            WHERE accountID = :accountID;`, { ":email": newemail, ":salt": salt, ":password": password, ":accountID": accountID })])
+          sendNotification(defaultaccount.accountID, {
+            title: "Not verified lol",
+            message: truncate(message, 25),
+            to: `/chat/${defaultaccount.accountID}`,
+          });
+          updateFromAccountID(accountID)
+        }
       }
     });
     if (!(process.env.NODE_ENV === "development")) {

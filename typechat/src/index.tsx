@@ -32,6 +32,7 @@ import NotificationComponent from "./notification";
 import LoadError from "./pages/error";
 import Settings from "./pages/settings";
 import Blast from "./pages/blast";
+import Verify from "./pages/Verify";
 
 function App() {
   const { data, error, loading, reload } = useApi("/api/userdata");
@@ -46,7 +47,7 @@ function App() {
   useEffect(() => {
     (async () => {
       try {
-        if (!getuserdataonupdate) {
+        if (!getuserdataonupdate && userdata.loggedin) {
           setgetuserdataonupdate(true);
           const response = await (
             await fetch("/api/getuserdataonupdate")
@@ -109,6 +110,9 @@ function App() {
                 </Route>
                 <Route path="/blast" exact>
                   <Blast />
+                </Route>
+                <Route path="/verify/:id" exact>
+                  <Verify />
                 </Route>
                 <Route path="/settings" exact>
                   <Settings />
