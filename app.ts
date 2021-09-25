@@ -1326,7 +1326,7 @@ WHERE friends.accountID == :accountID
       }
     });
     if (!(process.env.NODE_ENV === "development")) {
-      app.use(forceDomain({ hostname: "typechat.us.to" }));
+      app.use(forceDomain({ hostname: "tchat.us.to" }));
     }
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
