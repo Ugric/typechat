@@ -147,4 +147,4 @@ async function VerificationEmail(
   });
 }
 
-module.exports = { verifyemail, NotificationEmail, VerificationEmail };
+export { NotificationEmail, VerificationEmail };

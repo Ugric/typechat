@@ -161,7 +161,8 @@ function Contact({
 
 function Contacts() {
   const { loggedin } = useData();
-  const { data, loading, error } = useApi("/api/getallcontacts");
+  const { data, loading, error } = useApi<any>("/api/getallcontacts");
+  const [search, setsearch] = useState("")
   const [localcontacts, setlocalcontacts] = useLocalStorage<undefined | any>(
     "contacts",
     undefined
@@ -199,10 +200,26 @@ function Contacts() {
         <div>
           {localcontacts || data.resp ? (
             (data && data.contacts.length > 0) ||
-            (localcontacts && localcontacts.length > 0) ? (
-              (data ? data.contacts : localcontacts).map((contact: any) => (
-                <Contact key={contact.id} user={contact}></Contact>
-              ))
+              (localcontacts && localcontacts.length > 0) ? (
+              <>
+                <input
+                  type="text"
+                  style={{
+                    width: "100%",
+                    backgroundColor: "var(--dark-bg-colour)",
+                    padding: "5px",
+                    borderRadius: "20px",
+                    border: "solid 1px var(--light-bg-colour)",
+                    color: "white",
+                    marginBottom: "1rem"
+                  }}
+                  placeholder={"search contacts"}
+                  onKeyUp={(e: any) => {
+                    setsearch(e.target.value.trim());
+                  }}
+                ></input>{(data ? data.contacts : localcontacts).map((contact: any) => (
+                  (contact.username + "#" + contact.tag).toUpperCase().includes(search.toUpperCase()) ? <Contact key={contact.id} user={contact}></Contact> : <></>
+                ))}</>
             ) : (
               <p style={{ textAlign: "center" }}>
                 You have no contacts,{" "}

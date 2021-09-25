@@ -35,7 +35,7 @@ import Blast from "./pages/blast";
 import Verify from "./pages/Verify";
 
 function App() {
-  const { data, error, loading, reload } = useApi("/api/userdata");
+  const { data, error, loading, reload } = useApi<any>("/api/userdata");
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
   const [getuserdataonupdate, setgetuserdataonupdate] = useState(false);

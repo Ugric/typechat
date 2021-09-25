@@ -123,12 +123,12 @@ function UserListing({
 function AddPeople() {
   const [search, setsearch] = useState("");
   const { loggedin, user } = useData();
-  const { data, setData } = useApi(
+  const { data, setData } = useApi<any>(
     search
       ? "/api/searchusers?" + new URLSearchParams({ q: search }).toString()
       : null
   );
-  const { data: friendrequests } = useApi("/api/getallfriendrequests");
+  const { data: friendrequests } = useApi<any>("/api/getallfriendrequests");
   const history = useHistory();
   const [loading, setloading] = useState(false);
   useEffect(() => {

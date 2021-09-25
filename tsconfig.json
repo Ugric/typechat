@@ -1,5 +1,9 @@
 {
-    "compilerOptions": {
-        "target": "ES3", "watch": true, "strict":false
-    }
+  "compilerOptions": {
+    "target": "ES3",
+    "watch": true,
+    "strict": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  }
 }
