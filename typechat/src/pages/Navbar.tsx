@@ -15,6 +15,9 @@ import {
   faCog,
   faRocket,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  faDiscord
+} from "@fortawesome/free-brands-svg-icons";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import useComponentSize from "@rehooks/component-size";
@@ -117,6 +120,17 @@ const PageNav = () => {
           )}
         </Nav>
         <Nav>
+          <Nav.Link
+            onPointerDown={() => {
+              playSound("/sounds/click2.mp3");
+            }}
+            onPointerUp={() => {
+              playSound("/sounds/click1.mp3");
+            }}
+            href="/invite"
+          >
+            <FontAwesomeIcon icon={faDiscord} />
+          </Nav.Link>
           <Nav.Link
             onPointerDown={() => {
               playSound("/sounds/click2.mp3");

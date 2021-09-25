@@ -1,13 +1,14 @@
 import { useData } from "../hooks/datahook";
 import { useState } from "react";
 import Loader from "./loader";
-import { useHistory, Link } from "react-router-dom";
+import { useHistory, Link, useLocation } from "react-router-dom";
 import logo from "../images/logos/TS.svg";
 import { RouterForm } from "./RouterForm";
 import cookies from "../cookies";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAddressCard } from "@fortawesome/free-solid-svg-icons";
 import Avatar from "react-avatar-edit";
+import { parse } from "querystring";
 
 function validateEmail(email: string) {
   const re =
@@ -21,8 +22,11 @@ function Signup() {
   const [profile, setprofile] = useState<Blob | null>(null);
   const history = useHistory();
   const [loading, setloading] = useState(false);
+  const location = useLocation()
+  const query: { [key: string]: string | string[] } = parse(location.search.slice(1))
+  const redirect = query.to ? Array.isArray(query.to) ? query.to[0] : query.to : "/"
   if (loggedin) {
-    history.push("/");
+    history.push(redirect);
     return <></>;
   }
   return (
@@ -102,7 +106,7 @@ function Signup() {
                   fetched.blob().then((blob) => setprofile(blob))
                 );
               }}
-              labelStyle={{color: "white"}}
+              labelStyle={{ color: "white" }}
               onClose={() => {
                 setprofile(null);
               }}
@@ -219,7 +223,7 @@ function Signup() {
               already have an account?{" "}
               <span>
                 <Link
-                  to="/login"
+                  to={"/login" + location.search}
                   style={{ color: "var(--secondary-text-colour)" }}
                 >
                   Login

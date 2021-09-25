@@ -703,8 +703,8 @@ function ChatPage() {
       }
     }
     window.addEventListener("paste", listenerfunction);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => { window.removeEventListener("paste", listenerfunction); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [oldmessagsize, setoldmessagesize] = useState(chats.length > 0);
   const messagesize = chats.length > 0;

@@ -1,4 +1,4 @@
-import { open } from "sqlite";
+import { Database, open } from "sqlite";
 import express from "express";
 import { forceDomain } from 'forcedomain';
 import * as http from "http";
@@ -14,12 +14,17 @@ import { generate } from "randomstring";
 import WebSocket = require('ws');
 import { NotificationEmail, VerificationEmail } from "./emailer";
 import autoaccountdetails from "./autoaccountdetails.json";
+import client from "./typechatbot";
+import { MessageEmbed } from "discord.js";
+require("./typechatbot")
 console.time("express boot");
 
+const discordserver = "https://discord.gg/6FWJ2vwSDh"
+let database: {db?:Database<sqlite3.Database, sqlite3.Statement>} = {}
 const normallimit = 50000000
 const blastlimit = 1000000000
 
-function parseCookies(request: any): any {
+function parseCookies(request: http.IncomingMessage) {
   const list: { [key: string]: any } = {},
     rc = request.headers.cookie;
 
@@ -143,6 +148,7 @@ function updateFromAccountID(accountID: string) {
     filename: "./database.db",
     driver: sqlite3.Database,
   });
+  database.db = db
   await Promise.all([
     db.run(
       "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined)"
@@ -165,6 +171,9 @@ function updateFromAccountID(accountID: string) {
     ),
     db.run(
       "CREATE TABLE IF NOT EXISTS uploadlogs (accountID, size, time, fileID)"
+    ),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS discordAccountLink (accountID, discordID, time)"
     ),
   ]);
   db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
@@ -222,7 +231,7 @@ function updateFromAccountID(accountID: string) {
     }
     return online;
   };
-  const serverboot = (glx) => {
+  const serverboot = (glx: { httpsServer: any; httpServer: any; }) => {
     console.log(glx)
     const httpsServer = glx.httpsServer(null, app);
 
@@ -284,22 +293,10 @@ function updateFromAccountID(accountID: string) {
 
         pingpong();
       } else if (req.url == "/groupchat") {
-        let to: string;
-        let mobile: boolean = false;
-        const connectionID = generate(20);
         if (!accountdata) {
           return ws.close();
         }
         let lastping = 0;
-        const pingpong = async () => {
-          await snooze(10000);
-          ws.send(JSON.stringify({ type: "ping" }));
-          await snooze(2500);
-          const time = new Date().getTime();
-          if (time - lastping > 5000) {
-            ws.close();
-          }
-        };
       } else if (req.url == "/chat") {
         let to: string;
         let mobile: boolean = false;
@@ -1147,6 +1144,39 @@ WHERE friends.accountID == :accountID
         res.send(false);
       }
     });
+    app.get("/api/link/:id", async (req, res)=>{
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        { ":token": req.cookies.token }
+      );
+      const time = new Date().getTime()
+      if (accountdata) {
+        const link = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accountdata.accountID })
+        if (!link) {
+          const discordAccount = client.users.cache.find(user => user.id == req.params.id)
+          if (discordAccount) {
+            const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": discordAccount.id })
+            if (!discordlink) {
+              await db.run("INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)", { ":accountID": accountdata.accountID, ":discordID": discordAccount.id, ":time": time })
+              const guild = client.guilds.cache.get("891393852068470804")
+              const memberonguild = guild.members.cache.get(discordAccount.id)
+              memberonguild.setNickname(accountdata.username, "linked")
+              memberonguild.roles.add("891410369241808936", "linked")
+              discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Account Linked! 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\``).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
+              return res.send({linked: true})
+            }else{
+              return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
+            }
+          } else{
+          return res.send({linked: false, error: "invalid discord account!"})
+          }
+      } else{
+        return res.send({linked: false, error: "this typechat account has already been linked with a discord account!"})
+      }
+    } else {
+      return res.send({linked: false, error: "invalid token!"})
+    }
+    })
     app.post("/api/setprofilepic", async (req: any, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1328,6 +1358,8 @@ WHERE friends.accountID == :accountID
     if (!(process.env.NODE_ENV === "development")) {
       app.use(forceDomain({ hostname: "tchat.us.to" }));
     }
+    app.get("/logo.svg", (_, res) => res.sendFile(path.join(__dirname, "logo.svg")))
+    app.get("/invite", (_, res) => res.redirect(discordserver))
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
       res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
@@ -1352,3 +1384,4 @@ WHERE friends.accountID == :accountID
       }).ready(serverboot)
   }
 })();
+export default database

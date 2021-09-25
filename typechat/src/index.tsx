@@ -33,6 +33,7 @@ import LoadError from "./pages/error";
 import Settings from "./pages/settings";
 import Blast from "./pages/blast";
 import Verify from "./pages/Verify";
+import LinkDiscord from "./pages/LinkDiscord";
 
 function App() {
   const { data, error, loading, reload } = useApi<any>("/api/userdata");
@@ -119,6 +120,9 @@ function App() {
                 </Route>
                 <Route path="/login" exact>
                   <Login />
+                </Route>
+                <Route path="/link/:id" exact>
+                  <LinkDiscord />
                 </Route>
                 <Route path="/signup" exact>
                   <Signup />
