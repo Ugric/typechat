@@ -22,8 +22,9 @@ function Login() {
   const location = useLocation()
   const query: { [key: string]: string | string[] } = parse(location.search.slice(1))
   const [loading, setloading] = useState(false);
+  const redirect = query.to ? Array.isArray(query.to) ? query.to[0] : query.to : "/"
   if (loggedin) {
-    history.push(query.to ? Array.isArray(query.to) ? query.to[0] : query.to : "/");
+    history.push(redirect);
     return <></>;
   }
   return (
