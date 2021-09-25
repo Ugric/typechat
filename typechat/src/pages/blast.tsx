@@ -39,7 +39,7 @@ function Satellite({ file }: { file: string }) {
 }
 
 function Blast() {
-    const { price, sale } = { price: 100, sale: 0.75 }
+    const { price, sale } = { price: 100, sale: 0.10 }
     const { width, height } = useWindowSize()
     const [{ xalien, yalien }] = useState({ xalien: 15 + (Math.random() * 30) + "vw", yalien: 15 + (Math.random() * 30) + "vh" })
     return <div>
@@ -88,7 +88,7 @@ function Blast() {
                         margin: "1rem"
                     }}>
                         <li>unlimied sized messages</li>
-                        <li>Bigger monthly upload limit (2 GB)</li>
+                        <li>Bigger monthly upload limit (1 GB)</li>
                         <li>The Blast Badge (stays after subscription ends)</li>
                         <li>Custom backgrounds</li>
                         <li>and much more!</li>

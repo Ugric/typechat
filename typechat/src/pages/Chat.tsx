@@ -613,9 +613,98 @@ function ChatPage() {
   const [localchats, setlocalchats] = useLocalStorage<{
     [key: string]: Array<messageWithText | messageWithFile>;
   }>("chats", {});
+  async function sendFile(file: any) {
+    const id = Math.random();
+    notifications.addNotification({
+      title: "File",
+      message: "Uploading...",
+      type: "warning",
+      insert: "top",
+      id,
+      container: "top-right",
+      animationIn: ["animate__animated", "animate__fadeIn"],
+      animationOut: ["animate__animated", "animate__fadeOut"],
+    });
+    try {
+      const formdata = new FormData();
+      formdata.append("file", file);
+      const resp = await (
+        await fetch("/api/uploadfile", {
+          method: "POST",
+          body: formdata,
+        })
+      ).json();
+      if (resp.resp) {
+        notifications.removeNotification(id);
+        const time = new Date().getTime();
+        const tempid = Math.random();
+        sendJsonMessage({
+          type: "file",
+          file: resp.id,
+          mimetype: file.type,
+          tempid,
+        });
+        setchats(chats =>
+          chats.concat({
+            from: user.id,
+            message: undefined,
+            mimetype: file.type,
+            file: resp.id,
+            time,
+            tempid,
+          })
+        );
+        notifications.removeNotification(id);
+      } else {
+        notifications.removeNotification(id);
+        notifications.addNotification({
+          title: "Upload Error",
+          message: resp.err,
+          type: "danger",
+          insert: "top",
+          container: "top-right",
+          animationIn: [
+            "animate__animated",
+            "animate__fadeIn",
+          ],
+          animationOut: [
+            "animate__animated",
+            "animate__fadeOut",
+          ],
+        });
+      }
+    } catch (e) {
+      notifications.removeNotification(id);
+      notifications.addNotification({
+        title: "Upload Error",
+        message: String(e),
+        type: "danger",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animate__animated", "animate__fadeIn"],
+        animationOut: [
+          "animate__animated",
+          "animate__fadeOut",
+        ],
+      });
+    }
+  }
   useEffect(() => {
     localStorage.setItem("chattingto", JSON.stringify(chattingto));
+    const listenerfunction = function (event: any) {
+      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (const index in items) {
+        const item = items[index];
+        if (item.kind === 'file') {
+          const blob = item.getAsFile();
+          console.log(blob)
+          sendFile(blob)
+        }
+      }
+    }
+    window.addEventListener("paste", listenerfunction);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { window.removeEventListener("paste", listenerfunction); }
   }, []);
   const [oldmessagsize, setoldmessagesize] = useState(chats.length > 0);
   const messagesize = chats.length > 0;
@@ -967,92 +1056,7 @@ function ChatPage() {
                 onInput={async (e: any) => {
                   if (e.target.files.length > 0) {
                     const file = e.target.files[0];
-                    if (file.size <= 20000000) {
-                      const id = Math.random();
-                      notifications.addNotification({
-                        title: "File",
-                        message: "Uploading...",
-                        type: "warning",
-                        insert: "top",
-                        id,
-                        container: "top-right",
-                        animationIn: ["animate__animated", "animate__fadeIn"],
-                        animationOut: ["animate__animated", "animate__fadeOut"],
-                      });
-                      try {
-                        const formdata = new FormData();
-                        formdata.append("file", file);
-                        const resp = await (
-                          await fetch("/api/uploadfile", {
-                            method: "POST",
-                            body: formdata,
-                          })
-                        ).json();
-                        if (resp.resp) {
-                          notifications.removeNotification(id);
-                          const time = new Date().getTime();
-                          const tempid = Math.random();
-                          sendJsonMessage({
-                            type: "file",
-                            file: resp.id,
-                            mimetype: file.type,
-                            tempid,
-                          });
-                          setchats(
-                            chats.concat({
-                              from: user.id,
-                              message: undefined,
-                              mimetype: file.type,
-                              file: resp.id,
-                              time,
-                              tempid,
-                            })
-                          );
-                          notifications.removeNotification(id);
-                        } else {
-                          notifications.removeNotification(id);
-                          notifications.addNotification({
-                            title: "Upload Error",
-                            message: resp.err,
-                            type: "danger",
-                            insert: "top",
-                            container: "top-right",
-                            animationIn: [
-                              "animate__animated",
-                              "animate__fadeIn",
-                            ],
-                            animationOut: [
-                              "animate__animated",
-                              "animate__fadeOut",
-                            ],
-                          });
-                        }
-                      } catch (e) {
-                        notifications.removeNotification(id);
-                        notifications.addNotification({
-                          title: "Upload Error",
-                          message: String(e),
-                          type: "danger",
-                          insert: "top",
-                          container: "top-right",
-                          animationIn: ["animate__animated", "animate__fadeIn"],
-                          animationOut: [
-                            "animate__animated",
-                            "animate__fadeOut",
-                          ],
-                        });
-                      }
-                    } else {
-                      notifications.addNotification({
-                        title: "File too big!",
-                        message: "file needs to be less the 10MB!",
-                        type: "danger",
-                        insert: "top",
-                        container: "top-right",
-                        animationIn: ["animate__animated", "animate__fadeIn"],
-                        animationOut: ["animate__animated", "animate__fadeOut"],
-                      });
-                    }
+                    sendFile(file)
                   }
                 }}
               />

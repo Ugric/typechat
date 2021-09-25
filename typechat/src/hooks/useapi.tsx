@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 
-interface userApiInterface {
+interface userApiInterface<T> {
   loading: boolean;
-  data: any;
+  data: T | undefined;
   setData: Function;
-  error: boolean | unknown;
+  error: string | undefined;
   reload: Function;
 }
 
-const useApi = (url: string | null): userApiInterface => {
-  const [data, setData] = useState<JSON | unknown>(undefined);
+function useApi<T>(url: string | null): userApiInterface<T> {
+  const [data, setData] = useState<T | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const [request, setrequest] = useState<number>(0);
-  const [error, setError] = useState<boolean | unknown>(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
   const laststamp = useRef<number | null>(null);
   function reload() {
     setrequest(request + 1);
@@ -31,7 +31,7 @@ const useApi = (url: string | null): userApiInterface => {
             setData(result);
           }
         } catch (e) {
-          setError(e);
+          setError(String(e));
         }
         setLoading(false);
       })();

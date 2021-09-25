@@ -1,29 +1,31 @@
 import { open } from "sqlite";
-import * as express from "express";
+import express from "express";
 import { forceDomain } from 'forcedomain';
 import * as http from "http";
 import * as fs from "fs";
-const sqlite3 = require("sqlite3");
-const cookieParser = require("cookie-parser");
-const { createHash } = require("crypto");
-const path = require("path");
-const mime = require("mime-types");
+import sqlite3 = require("sqlite3");
+import cookieParser = require("cookie-parser");
+import { createHash } from "crypto";
+import path = require("path");
+import mime = require("mime-types");
 const snooze = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
-const { generate } = require("randomstring");
-const { NotificationEmail, VerificationEmail } = require("./emailer");
-const autoaccountdetails = require("./autoaccountdetails.json");
-
-const WebSocket = require('ws');
+import { generate } from "randomstring";
+import WebSocket = require('ws');
+import { NotificationEmail, VerificationEmail } from "./emailer";
+import autoaccountdetails from "./autoaccountdetails.json";
 console.time("express boot");
 
-function parseCookies(request): any {
-  var list = {},
+const normallimit = 50000000
+const blastlimit = 1000000000
+
+function parseCookies(request: any): any {
+  const list: { [key: string]: any } = {},
     rc = request.headers.cookie;
 
-  rc && rc.split(';').forEach(function (cookie) {
-    var parts = cookie.split('=');
-    list[parts.shift().trim()] = decodeURI(parts.join('='));
+  rc && rc.split(';').forEach(function (cookie: string) {
+    const parts: string[] = cookie.split('=');
+    list[parts.shift().trim()] = decodeURI(parts.join('='))
   });
 
   return list;
@@ -40,7 +42,11 @@ async function checkFileExists(file) {
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
 
-const notificationsockets = {};
+const notificationsockets: {
+  [key: string | number | symbol]: {
+    [key: string]: { focus: boolean;[key: string]: any }
+  }
+} = {};
 
 const messagefunctions = {};
 
@@ -139,7 +145,7 @@ function updateFromAccountID(accountID: string) {
   });
   await Promise.all([
     db.run(
-      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage)"
+      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
@@ -157,8 +163,12 @@ function updateFromAccountID(accountID: string) {
     db.run(
       "CREATE TABLE IF NOT EXISTS blast (accountID, expires)"
     ),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS uploadlogs (accountID, size, time, fileID)"
+    ),
   ]);
-
+  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
+  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => { });
   db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => { });
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
@@ -170,7 +180,7 @@ function updateFromAccountID(accountID: string) {
     const salt = generate(150);
     const password = hasher(autoaccountdetails.pass + salt);
     await db.run(
-      "INSERT INTO accounts (accountID, email, username, password, salt, tag) VALUES  (:accountID, :email, :username, :password, :salt, :tag)",
+      "INSERT INTO accounts (accountID, email, username, password, salt, tag, joined) VALUES  (:accountID, :email, :username, :password, :salt, :tag, :time)",
       {
         ":accountID": "TypeChat",
         ":email": autoaccountdetails.email,
@@ -178,11 +188,25 @@ function updateFromAccountID(accountID: string) {
         ":password": password,
         ":salt": salt,
         ":tag": "OFFICIAL",
+        ":time": new Date().getTime()
       }
     );
     defaultaccount = await db.get("SELECT * FROM accounts WHERE email=:email", {
       ":email": autoaccountdetails.email,
     });
+  }
+  if (!(await db.get(
+    "SELECT * FROM blast WHERE accountID=:accountID",
+    {
+      ":accountID": defaultaccount.accountID,
+    }
+  ))) {
+    await db.run(
+      "INSERT INTO blast (accountID) VALUES (:accountID)",
+      {
+        ":accountID": defaultaccount.accountID,
+      }
+    );
   }
   const app = express()
   app.use(cookieParser());
@@ -237,7 +261,7 @@ function updateFromAccountID(accountID: string) {
         if (!accountdata) {
           return ws.close();
         }
-        ws.on("message", (data) => {
+        ws.on("message", (data: string) => {
           const msg = JSON.parse(data);
           if (msg.type == "pong") {
             lastping = new Date().getTime();
@@ -610,27 +634,81 @@ function updateFromAccountID(accountID: string) {
       }
     })
     90;
-    app.post("/api/uploadfile", async (req: any, res: any) => {
+    app.get("/api/uploadlimit", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
           ":token": req.cookies.token,
         }
       );
+      const time = new Date().getTime()
       if (accountdata) {
-        const { id, path, exists } = await createFileID(
-          req.files.file,
-          accountdata.accountID
-        );
-        if (!exists) {
-          req.files.file.mv(path);
+        const blastdata = await db.get(
+          "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+          {
+            ":accountID": accountdata.accountID,
+            ":time": time,
+          }
+        )
+        const blast = Boolean(blastdata);
+        const startofmonth = (Math.trunc(time / 2629743000) * 2629743000) + ((blast ? blastdata.expires : accountdata.joined) % 2629743000)
+        const filelimit = blast ? blastlimit : normallimit
+        const limitused = (await db.get(
+          "SELECT SUM(size) as limitused FROM uploadlogs WHERE accountID=:accountID and time>=:startofmonth",
+          {
+            ":accountID": accountdata.accountID,
+            ":startofmonth": startofmonth
+          }
+        )).limitused;
+        return res.send({ filelimit, limitused })
+      }
+      return res.send({ filelimit: 0, limitused: 0 })
+    })
+    app.post("/api/uploadfile", async (req: any, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
         }
-        res.send({ resp: true, id: id });
+      );
+      const time = new Date().getTime()
+      if (accountdata) {
+        const blastdata = await db.get(
+          "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+          {
+            ":accountID": accountdata.accountID,
+            ":time": time,
+          }
+        )
+        const blast = Boolean(blastdata);
+        const startofmonth = (Math.trunc(time / 2629743000) * 2629743000) + (Number(blast ? blastdata.expires : accountdata.joined) % 2629743000)
+        const filelimit = blast ? blastlimit : normallimit
+        const limitused = (await db.get(
+          "SELECT SUM(size) as limitused FROM uploadlogs WHERE accountID=:accountID and time>=:startofmonth",
+          {
+            ":accountID": accountdata.accountID,
+            ":startofmonth": startofmonth
+          }
+        )).limitused;
+        if ((filelimit >= limitused + req.files.file.size) || accountdata.accountID == defaultaccount.accountID) {
+          const { id, path, exists } = await createFileID(
+            req.files.file,
+            accountdata.accountID
+          );
+          if (!exists) {
+            req.files.file.mv(path);
+          }
+          await db.run("INSERT INTO uploadlogs (accountID, size, time, fileID) VALUES  (:accountID, :size, :time, :fileID)", { ":accountID": accountdata.accountID, ":size": req.files.file.size, ":time": time, ":fileID": id })
+          res.send({ resp: true, id: id });
+        }
+        else {
+          res.send({ resp: false, err: "This file is too big and would exceed your monthly upload limit." });
+        }
       } else {
         res.send({ resp: false, err: "invalid token" });
       }
     });
-    app.get("/api/searchusers", async (req: any, res: any) => {
+    app.get("/api/searchusers", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -666,7 +744,7 @@ function updateFromAccountID(accountID: string) {
         });
       }
     });
-    app.post("/api/frienduserfromid", async (req: any, res: any) => {
+    app.post("/api/frienduserfromid", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -680,7 +758,7 @@ function updateFromAccountID(accountID: string) {
             ":id": req.body.user,
           }
         );
-        if (toFriendUserData) {
+        if (toFriendUserData && accountdata.accountID != toFriendUserData.accountID) {
           const alreadyfriendrequest = await db.get(
             "SELECT * FROM friends WHERE accountID=:accountID and toAccountID=:toAccountID",
             {
@@ -742,10 +820,10 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         res.send({ friends: false });
       }
     });
-    app.get("/sounds/:filename", async (req: any, res: any) => {
+    app.get("/sounds/:filename", async (req, res) => {
       res.sendFile(path.join(__dirname, "sounds", req.params.filename));
     });
-    app.get("/api/verify/:verificationID", async (req: any, res: any) => {
+    app.get("/api/verify/:verificationID", async (req, res) => {
       if (toVerify[req.params.verificationID]) {
         const accountdata = await db.get(
           "SELECT * FROM accounts WHERE accountID=:accountID",
@@ -771,13 +849,13 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         verified: false,
       })
     })
-    app.get("/api/logout", async (req: any, res: any) => {
+    app.get("/api/logout", async (req, res) => {
       await db.get("DELETE FROM tokens WHERE token=:token", {
         ":token": req.cookies.token,
       });
       res.send(true);
     });
-    app.get("/api/friendsuserdatafromid", async (req: any, res: any) => {
+    app.get("/api/friendsuserdatafromid", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -817,7 +895,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         return res.send({ exists: false });
       }
     });
-    app.get("/api/getallfriendrequests", async (req: any, res: any) => {
+    app.get("/api/getallfriendrequests", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -850,7 +928,7 @@ WHERE friends.toAccountID == :accountID
         });
       }
     });
-    app.get("/api/getallcontacts", async (req: any, res: any) => {
+    app.get("/api/getallcontacts", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -883,7 +961,7 @@ WHERE friends.accountID == :accountID
         });
       }
     });
-    app.get("/api/getuserdataonupdate", async (req: any, res: any) => {
+    app.get("/api/getuserdataonupdate", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -903,7 +981,7 @@ WHERE friends.accountID == :accountID
 
           if (newaccountdata) {
             const blast = Boolean(await db.get(
-              "SELECT * FROM blast WHERE accountID=:accountID and expires>=:time",
+              "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
               {
                 ":accountID": newaccountdata.accountID,
                 ":time": new Date().getTime(),
@@ -939,7 +1017,7 @@ WHERE friends.accountID == :accountID
         }
       }
     });
-    app.get("/api/userdata", async (req: any, res: any) => {
+    app.get("/api/userdata", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -950,7 +1028,7 @@ WHERE friends.accountID == :accountID
         return res.send({ loggedin: false });
       } else {
         const blast = Boolean(await db.get(
-          "SELECT * FROM blast WHERE accountID=:accountID and expires>=:time",
+          "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
           {
             ":accountID": accountdata.accountID,
             ":time": new Date().getTime(),
@@ -969,7 +1047,7 @@ WHERE friends.accountID == :accountID
         });
       }
     });
-    app.get("/files/:id", async (req: any, res: any) => {
+    app.get("/files/:id", async (req, res) => {
       const imagedata = await db.get(
         `SELECT filename FROM images WHERE imageID=:id`,
         {
@@ -985,7 +1063,7 @@ WHERE friends.accountID == :accountID
       return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
 
     });
-    app.get("/getprofilepicfromid", async (req: any, res: any) => {
+    app.get("/getprofilepicfromid", async (req, res) => {
       const imagedata = await db.get(
         `SELECT filename FROM images WHERE imageID=(SELECT profilePic FROM accounts WHERE accountID==:accountID)`,
         {
@@ -998,7 +1076,7 @@ WHERE friends.accountID == :accountID
         res.status(404).send("image not found in the database!");
       }
     });
-    app.get("/filecontenttype/:id", async (req: any, res: any) => {
+    app.get("/filecontenttype/:id", async (req, res) => {
       const imagedata = await db.get(
         `SELECT filename FROM images WHERE imageID=:id`,
         {
@@ -1011,7 +1089,7 @@ WHERE friends.accountID == :accountID
         res.status(404).send("image not found in the database!");
       }
     });
-    app.post("/api/setusername", async (req: any, res: any) => {
+    app.post("/api/setusername", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         { ":token": req.cookies.token }
@@ -1069,7 +1147,7 @@ WHERE friends.accountID == :accountID
         res.send(false);
       }
     });
-    app.post("/api/setprofilepic", async (req: any, res: any) => {
+    app.post("/api/setprofilepic", async (req: any, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         { ":token": req.cookies.token }
@@ -1096,7 +1174,7 @@ WHERE friends.accountID == :accountID
         res.send({ resp: false, err: "invalid cookie" });
       }
     });
-    app.post("/login", async (req: any, res: any) => {
+    app.post("/login", async (req, res) => {
       const accounts = await db.all("SELECT * FROM accounts");
       let accountdata: any;
       for (let i = 0; i < accounts.length; i++) {
@@ -1120,7 +1198,7 @@ WHERE friends.accountID == :accountID
         return res.send({ resp: false, err: "invalid email or password!" });
       }
     });
-    app.post("/signup", async (req: any, res: any) => {
+    app.post("/signup", async (req: any, res) => {
       const emailInUse =
         (await db.get("SELECT * FROM accounts WHERE email=:email", {
           ":email": req.body.email,
@@ -1142,10 +1220,10 @@ WHERE friends.accountID == :accountID
           req.files.profile.mv(profilePath);
         }
         const time = new Date().getTime();
-        const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text us!`;
+        const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text us! 💬✅`;
         await Promise.all([
           db.run(
-            "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag)",
+            "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, joined) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :time)",
             {
               ":accountID": accountID,
               ":email": req.body.email,
@@ -1154,6 +1232,7 @@ WHERE friends.accountID == :accountID
               ":salt": salt,
               ":profilePic": profileID,
               ":tag": tag,
+              ":time": time,
             } // work on this next! // thanks lol
           ),
           db.run(
@@ -1192,7 +1271,7 @@ WHERE friends.accountID == :accountID
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
               ":toAccountID": accountID,
-              ":message": "A verification email has been sent to your email, you have 1 hour to verify your account before your account is disabled. If your account is disabled before you verify, you can create a new one under the same email. 📨✔",
+              ":message": "A verification email has been sent to your email, you have 1 hour to verify your account before your account is disabled. If your account is disabled before you verify, you can create a new one under the same email. 📧✅",
               ":time": time - 1000,
             }
           ),
@@ -1207,11 +1286,6 @@ WHERE friends.accountID == :accountID
             }
           )
         ]);
-        sendNotification(accountID, {
-          title: "TypeChat",
-          message: truncate(firstMessage, 25),
-          to: `/chat/${defaultaccount.accountID}`,
-        });
         res.send({ resp: true, token });
         const verificationID = generate(100)
         toVerify[verificationID] = accountID
