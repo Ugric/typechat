@@ -5,6 +5,8 @@
   "proxy": "http://localhost:5000/",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
+    "@fortawesome/free-brands-svg-icons": "^5.15.4",
+    "@fortawesome/free-regular-svg-icons": "^5.15.4",
     "@fortawesome/free-solid-svg-icons": "^5.15.3",
     "@fortawesome/react-fontawesome": "^0.1.14",
     "@rehooks/component-size": "^1.0.3",
@@ -32,6 +34,7 @@
     "qrcode-decoder": "^0.2.2",
     "qrcode-reader": "^1.0.4",
     "qrcode.react": "^1.0.1",
+    "query-string": "^4.3.4",
     "randomstring": "^1.2.1",
     "react": "^17.0.2",
     "react-avatar-edit": "^1.0.0",

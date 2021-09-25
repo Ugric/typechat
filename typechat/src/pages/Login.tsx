@@ -1,12 +1,13 @@
 import { useData } from "../hooks/datahook";
 import { useState } from "react";
 import Loader from "./loader";
-import { useHistory, Link } from "react-router-dom";
+import { useHistory, Link, useLocation } from "react-router-dom";
 import logo from "../images/logos/TS.svg";
 import { RouterForm } from "./RouterForm";
 import cookies from "../cookies";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignInAlt } from "@fortawesome/free-solid-svg-icons";
+import { parse } from "querystring";
 
 function validateEmail(email: string) {
   const re =
@@ -18,9 +19,11 @@ function Login() {
   const { rechecklogged, loggedin } = useData();
   const [error, seterror] = useState("");
   const history = useHistory();
+  const location = useLocation()
+  const query: { [key: string]: string | string[] } = parse(location.search.slice(1))
   const [loading, setloading] = useState(false);
   if (loggedin) {
-    history.push("/");
+    history.push(query.to ? Array.isArray(query.to) ? query.to[0] : query.to : "/");
     return <></>;
   }
   return (
@@ -158,7 +161,7 @@ function Login() {
             dont already have an account?{" "}
             <span>
               <Link
-                to="/signup"
+                to={"/signup" + location.search}
                 style={{ color: "var(--secondary-text-colour)" }}
               >
                 Make one
