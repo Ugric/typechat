@@ -43,7 +43,7 @@ const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
 
 const notificationsockets: {
-  [key: string | number | symbol]: {
+  [key: string]: {
     [key: string]: { focus: boolean;[key: string]: any }
   }
 } = {};
