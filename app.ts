@@ -1358,7 +1358,7 @@ WHERE friends.accountID == :accountID
     if (!(process.env.NODE_ENV === "development")) {
       app.use(forceDomain({ hostname: "tchat.us.to" }));
     }
-    app.get("/logo.svg", (_, res) => res.sendFile(path.join(__dirname, "logo.svg")))
+    app.get("/logo.png", (_, res) => res.sendFile(path.join(__dirname, "logo.svg")))
     app.get("/invite", (_, res) => res.redirect(discordserver))
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
