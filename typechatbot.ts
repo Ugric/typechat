@@ -21,8 +21,8 @@ client.on('messageCreate', async message => {
                 if (link) {
                 await db.db.run("DELETE FROM discordAccountLink WHERE discordID=:discordID", {":discordID": message.author.id})
                 const member = client.guilds.cache.get("891393852068470804").members.cache.get(message.author.id)
-                member.setNickname('', "unlink account")
-                member.roles.remove(member.guild.roles.cache.find(role => role.name === "Online"), "unlink account")
+                member.setNickname('', "unlink account").catch(()=>{})
+                member.roles.remove(member.guild.roles.cache.find(role => role.name === "Online"), "unlink account").catch(()=>{})
                 message.reply({ embeds: [new discord.MessageEmbed().setTitle("Unlinked 🔓")] })}
                 else {
                     message.reply({ embeds: [new discord.MessageEmbed().setTitle("Not Linked")] })
@@ -57,8 +57,8 @@ client.on('guildMemberAdd', async member => {
             embeds: [new discord.MessageEmbed().setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome back to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.png"),
             new discord.MessageEmbed().setTitle(`${accountdata.username}#${accountdata.tag}`).setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]
         })
-        member.setNickname(accountdata.username, "rejoin")
-        member.roles.add(member.guild.roles.cache.find(role => role.name === "Online"), "rejoin")
+        member.setNickname(accountdata.username, "rejoin").catch(()=>{})
+        member.roles.add(member.guild.roles.cache.find(role => role.name === "Online"), "rejoin").catch(()=>{})
     }
 });
 
