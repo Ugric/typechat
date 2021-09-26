@@ -14,7 +14,6 @@ client.on('ready', () => {
 
 client.on('messageCreate', async message => {
     if (message.author.id == client.user.id || message.author.bot) return
-    console.log(message.guild)
     if(!message.guild) {
         if (["!unlink", "!link"].includes(message.content)) {
             const link = await db.db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": message.author.id })
