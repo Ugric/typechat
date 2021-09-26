@@ -1,10 +1,20 @@
 import * as discord from 'discord.js';
 import { Client } from 'discord.js';
+import { generate } from 'randomstring';
 import db from "./app";
 const client = new Client({ intents: ["GUILDS", "GUILD_MESSAGES", "DIRECT_MESSAGES", "GUILD_MEMBERS", "GUILD_INVITES", "GUILD_INTEGRATIONS", "GUILD_PRESENCES"], partials: ["CHANNEL"] });
 
 
-const linkaccount = (member: { id: any; })=>new discord.MessageEmbed().setTitle("Link your TypeChat account!").setDescription("Link your Discord and TypeChat account to get the best experience with the Platform!").setURL(`https://tchat.us.to/link/${member.id}`)
+const linkaccount = (member: { id: any; })=>{
+    if (db.linkurls.discordID[member.id]) {
+        delete db.linkurls.linkID[db.linkurls.discordID[member.id]]
+        delete db.linkurls.discordID[member.id]
+    }
+    const id = generate(20)
+    db.linkurls.linkID[id] = member.id
+    db.linkurls.discordID[member.id] = id
+    return new discord.MessageEmbed().setTitle("Link your TypeChat account!").setDescription("Link your Discord and TypeChat account to get the best experience with the Platform!").setURL(`https://tchat.us.to/link/${id}`)
+}
 
 const serverID = process.env.NODE_ENV === "development"?"891619528205795358":"891393852068470804"
 

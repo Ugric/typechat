@@ -20,7 +20,11 @@ require("./typechatbot")
 console.time("express boot");
 
 const discordserver = "https://discord.gg/R6FnAaX8rC"
-let database: {db?:Database<sqlite3.Database, sqlite3.Statement>} = {}
+
+interface linkurls {linkID:{[key: string]: string}, discordID: {[key: string]: string}};
+
+const linkurls: linkurls = {linkID:{}, discordID: {}}
+let database: {db?:Database<sqlite3.Database, sqlite3.Statement>, linkurls: linkurls} = {linkurls}
 const normallimit = 50000000
 const blastlimit = 1000000000
 
@@ -1158,33 +1162,40 @@ WHERE friends.accountID == :accountID
       );
       const time = new Date().getTime()
       if (accountdata) {
+        const discordID = linkurls.linkID[req.params.id]
+        if (discordID) {
         if (!toVerify[accountdata.accountID]) {
           const link = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accountdata.accountID })
           if (!link) {
-            const discordAccount = client.users.cache.find(user => user.id == req.params.id)
-            if (discordAccount) {
-              const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": discordAccount.id })
-              if (!discordlink) {
-                await db.run("INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)", { ":accountID": accountdata.accountID, ":discordID": discordAccount.id, ":time": time })
-                const guild = client.guilds.cache.get(serverID)
-                const memberonguild = guild.members.cache.get(discordAccount.id)
-                memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
-                memberonguild.roles.add(roleID, "linked").catch(()=>{})
-                memberonguild.roles.remove(unlinkedroleID, "linked").catch(()=>{})
-                discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Account Linked! 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
-                return res.send({linked: true})
-              }else{
-                return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
+              const discordAccount = client.users.cache.find(user => user.id == discordID)
+              if (discordAccount) {
+                const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": discordAccount.id })
+                if (!discordlink) {
+                  await db.run("INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)", { ":accountID": accountdata.accountID, ":discordID": discordAccount.id, ":time": time })
+                  const guild = client.guilds.cache.get(serverID)
+                  const memberonguild = guild.members.cache.get(discordAccount.id)
+                  delete linkurls.discordID[linkurls.linkID[req.params.id]]
+                  delete linkurls.linkID[req.params.id]
+                  memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
+                  memberonguild.roles.add(roleID, "linked").catch(()=>{})
+                  memberonguild.roles.remove(unlinkedroleID, "linked").catch(()=>{})
+                  discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Linked 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
+                  return res.send({linked: true})
+                }else{
+                  return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
+                }
+              } else{
+                return res.send({linked: false, error: "invalid discord account or discord account not on server!"})
               }
             } else{
-            return res.send({linked: false, error: "invalid discord account!"})
-            }
-          } else{
-          return res.send({linked: false, error: "this typechat account has already been linked with a discord account!"})
+              return res.send({linked: false, error: "this typechat account has already been linked with a discord account!"})
+              }
+          } else {
+            return res.send({linked: false, error: "Your account must be verified before you link your discord account!"})
           }
-        } else {
-          return res.send({linked: false, error: "Your account must be verified before you link your discord account!"})
-        }
+        } else{
+          return res.send({linked: false, error: "invaild link ID, maybe try create a new link url!"})
+          }
       } else {
       return res.send({linked: false, error: "invalid token!"})
     }
