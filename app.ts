@@ -288,6 +288,7 @@ function updateFromAccountID(accountID: string) {
           return ws.close();
         }
         ws.on("message", (data: string) => {
+          try {
           const msg = JSON.parse(data);
           if (msg.type == "pong") {
             lastping = new Date().getTime();
@@ -295,7 +296,9 @@ function updateFromAccountID(accountID: string) {
           } else if (msg.type == "setFocus") {
             notificationsockets[accountdata.accountID][connectionID].focus =
               msg.focus;
-          }
+          }} catch (e) {
+            console.error(e, e.stack);
+        }
         });
         ws.on("close", () => {
           delete notificationsockets[accountdata.accountID][connectionID];
@@ -354,6 +357,7 @@ function updateFromAccountID(accountID: string) {
           }
         });
         ws.on("message", async (data: string) => {
+          try {
           const msg = JSON.parse(data);
           if (msg.type === "start") {
             if (msg.to === accountdata.accountID) {
@@ -642,6 +646,9 @@ function updateFromAccountID(accountID: string) {
               }
             }
           }
+        } catch (e) {
+            console.error(e, e.stack);
+        }
         });
         ws.send(JSON.stringify({ type: "start" }));
         pingpong();
