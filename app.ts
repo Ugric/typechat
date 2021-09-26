@@ -14,7 +14,7 @@ import { generate } from "randomstring";
 import WebSocket = require('ws');
 import { NotificationEmail, VerificationEmail } from "./emailer";
 import autoaccountdetails from "./autoaccountdetails.json";
-import client from "./typechatbot";
+import {client, roleID, serverID} from "./typechatbot";
 import { MessageEmbed } from "discord.js";
 require("./typechatbot")
 console.time("express boot");
@@ -1105,6 +1105,12 @@ WHERE friends.accountID == :accountID
             }
           );
           updateFromAccountID(accountdata.accountID)
+          const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accountdata.accountID })
+          if (discordlink) {
+            const guild = client.guilds.cache.get(serverID)
+            const memberonguild = guild?.members?.cache?.get(discordlink.discordID)
+            memberonguild?.setNickname(req.body.username, "rename").catch(()=>{})
+          }
           res.send({ resp: true });
         } else {
           res.send({
@@ -1151,29 +1157,33 @@ WHERE friends.accountID == :accountID
       );
       const time = new Date().getTime()
       if (accountdata) {
-        const link = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accountdata.accountID })
-        if (!link) {
-          const discordAccount = client.users.cache.find(user => user.id == req.params.id)
-          if (discordAccount) {
-            const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": discordAccount.id })
-            if (!discordlink) {
-              await db.run("INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)", { ":accountID": accountdata.accountID, ":discordID": discordAccount.id, ":time": time })
-              const guild = client.guilds.cache.get("891393852068470804")
-              const memberonguild = guild.members.cache.get(discordAccount.id)
-              memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
-              memberonguild.roles.add("891410369241808936", "linked").catch(()=>{})
-              discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Account Linked! 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\``).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
-              return res.send({linked: true})
-            }else{
-              return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
+        if (!toVerify[accountdata.accountID]) {
+          const link = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accountdata.accountID })
+          if (!link) {
+            const discordAccount = client.users.cache.find(user => user.id == req.params.id)
+            if (discordAccount) {
+              const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": discordAccount.id })
+              if (!discordlink) {
+                await db.run("INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)", { ":accountID": accountdata.accountID, ":discordID": discordAccount.id, ":time": time })
+                const guild = client.guilds.cache.get(serverID)
+                const memberonguild = guild.members.cache.get(discordAccount.id)
+                memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
+                memberonguild.roles.add(roleID, "linked").catch(()=>{})
+                discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Account Linked! 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\``).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
+                return res.send({linked: true})
+              }else{
+                return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
+              }
+            } else{
+            return res.send({linked: false, error: "invalid discord account!"})
             }
           } else{
-          return res.send({linked: false, error: "invalid discord account!"})
+          return res.send({linked: false, error: "this typechat account has already been linked with a discord account!"})
           }
-      } else{
-        return res.send({linked: false, error: "this typechat account has already been linked with a discord account!"})
-      }
-    } else {
+        } else {
+          return res.send({linked: false, error: "Your account must be verified before you link your discord account!"})
+        }
+      } else {
       return res.send({linked: false, error: "invalid token!"})
     }
     })
@@ -1311,7 +1321,7 @@ WHERE friends.accountID == :accountID
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
               ":toAccountID": accountID,
-              ":message": "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://typechat.us.to/blast",
+              ":message": "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.us.to/blast",
               ":time": time,
             }
           )

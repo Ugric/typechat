@@ -29,3 +29,4 @@ ssl
 .greenlockrc
 greenlock.d
 discordtoken.json
+devdiscordtoken.json
