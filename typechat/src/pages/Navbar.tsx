@@ -128,6 +128,7 @@ const PageNav = () => {
               playSound("/sounds/click1.mp3");
             }}
             href="/invite"
+            target="blank_"
           >
             <FontAwesomeIcon icon={faDiscord} />
           </Nav.Link>
