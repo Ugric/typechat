@@ -8,7 +8,7 @@ const linkaccount = (member: { id: any; })=>new discord.MessageEmbed().setTitle(
 
 const serverID = process.env.NODE_ENV === "development"?"891619528205795358":"891393852068470804"
 
-const roleID = process.env.NODE_ENV === "development"?"891622093286940702":"891393852068470804"
+const roleID = process.env.NODE_ENV === "development"?"891622093286940702":"891410369241808936"
 
 const DMCommandsList = [{name: "!link", value: "link your discord account to your typechat account! 🔒"}, {name: "!unlink", value: "unlink your discord account from your typechat account! 🔓"}]
 
