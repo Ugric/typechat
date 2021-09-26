@@ -14,10 +14,13 @@ import { generate } from "randomstring";
 import WebSocket = require('ws');
 import { NotificationEmail, VerificationEmail } from "./emailer";
 import autoaccountdetails from "./autoaccountdetails.json";
+import EmailValidation from 'emailvalid';
 import {client, roleID, serverID, unlinkedroleID} from "./typechatbot";
 import { MessageEmbed } from "discord.js";
 require("./typechatbot")
 console.time("express boot");
+
+const ev = new EmailValidation()
 
 const discordserver = "https://discord.gg/R6FnAaX8rC"
 
@@ -71,6 +74,10 @@ function updateFromAccountID(accountID: string) {
       }
     }
   } catch { }
+}
+
+function DiscordNotification({id}: {id: string}) {
+
 }
 
 (async () => {
@@ -143,6 +150,7 @@ function updateFromAccountID(accountID: string) {
           }
         );
         await NotificationEmail(email, data).catch();
+
       } catch (e) {
         console.error(e);
       }
@@ -1256,7 +1264,9 @@ WHERE friends.accountID == :accountID
         (await db.get("SELECT * FROM accounts WHERE email=:email", {
           ":email": req.body.email,
         })) != undefined;
-      if (emailInUse) {
+      if (ev.check(req.body.email).valid) {
+        return res.send({ resp: false, err: "Please use a valid email!" });
+      } else if (emailInUse) {
         return res.send({ resp: false, err: "That email is already in use!" });
       } else {
         const token = generate(100);

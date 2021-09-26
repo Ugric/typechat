@@ -11,6 +11,7 @@
     "cookie-parser": "^1.4.5",
     "discord.js": "^13.2.0-dev.1632571378.839974c",
     "discord.js.old": "^11.6.5",
+    "emailvalid": "^1.0.3",
     "exif-parser": "^0.1.12",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
