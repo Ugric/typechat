@@ -19,7 +19,7 @@ import { MessageEmbed } from "discord.js";
 require("./typechatbot")
 console.time("express boot");
 
-const discordserver = "https://discord.gg/Xs9NmMwTNP"
+const discordserver = "https://discord.gg/R6FnAaX8rC"
 let database: {db?:Database<sqlite3.Database, sqlite3.Statement>} = {}
 const normallimit = 50000000
 const blastlimit = 1000000000
