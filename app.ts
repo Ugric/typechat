@@ -19,6 +19,7 @@ import { MessageEmbed } from "discord.js";
 require("./typechatbot")
 console.time("express boot");
 
+const discordserver = "https://discord.gg/R6FnAaX8rC"
 let database: {db?:Database<sqlite3.Database, sqlite3.Statement>} = {}
 const normallimit = 50000000
 const blastlimit = 1000000000
@@ -1368,7 +1369,7 @@ WHERE friends.accountID == :accountID
       app.use(forceDomain({ hostname: "tchat.us.to" }));
     }
     app.get("/logo.png", (_, res) => res.sendFile(path.join(__dirname, "logo.svg")))
-    app.get("/invite", async (_, res) => res.redirect(client.guilds.cache.get(serverID).channels.cache.get("891478554020306954").client.generateInvite()))
+    app.get("/invite", (_, res) => res.redirect(discordserver))
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
       res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
