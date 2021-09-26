@@ -76,10 +76,6 @@ function updateFromAccountID(accountID: string) {
   } catch { }
 }
 
-function DiscordNotification({id}: {id: string}) {
-
-}
-
 (async () => {
   const tagGenerator = (): string => {
     const output = [];
@@ -127,6 +123,14 @@ function DiscordNotification({id}: {id: string}) {
   const hasher = (string: string) =>
     createHash("md5").update(string).digest("hex");
 
+
+  async function DiscordNotification(accoutID: string, data: { title: string; message: string; to: string; sound?: string }) {
+    const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accoutID })
+    if (discordlink) {
+      const discordAccount = client.users.cache.find(user => user.id == discordlink.discordID)
+      await discordAccount.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("New Notification 🎉").addField(data.title, data.message).setURL(new URL(data.to, "https://tchat.us.to/").href).setThumbnail("https://tchat.us.to/logo.png")]})
+    }
+  }
   const sendNotification = async (
     to: string,
     data: { title: string; message: string; to: string; sound?: string }
@@ -150,6 +154,7 @@ function DiscordNotification({id}: {id: string}) {
           }
         );
         await NotificationEmail(email, data).catch();
+        await DiscordNotification(to,data).catch();
 
       } catch (e) {
         console.error(e);
@@ -1187,7 +1192,7 @@ WHERE friends.accountID == :accountID
                   await memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
                   await memberonguild.roles.add(roleID, "linked").catch(()=>{})
                   await memberonguild.roles.remove(unlinkedroleID, "linked").catch(()=>{})
-                  discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Linked 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
+                  discordAccount.dmChannel.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("Linked 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
                   return res.send({linked: true})
                 }else{
                   return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
