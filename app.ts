@@ -1160,8 +1160,8 @@ WHERE friends.accountID == :accountID
               await db.run("INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)", { ":accountID": accountdata.accountID, ":discordID": discordAccount.id, ":time": time })
               const guild = client.guilds.cache.get("891393852068470804")
               const memberonguild = guild.members.cache.get(discordAccount.id)
-              memberonguild.setNickname(accountdata.username, "linked")
-              memberonguild.roles.add("891410369241808936", "linked")
+              memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
+              memberonguild.roles.add("891410369241808936", "linked").catch(()=>{})
               discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Account Linked! 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\``).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
               return res.send({linked: true})
             }else{
