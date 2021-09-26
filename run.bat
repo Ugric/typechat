@@ -1,3 +1,5 @@
-:A
-ts-node app.ts
-goto A
+@echo off
+:loop
+npm run pro
+pause
+goto loop
