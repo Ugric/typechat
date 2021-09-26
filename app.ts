@@ -14,7 +14,7 @@ import { generate } from "randomstring";
 import WebSocket = require('ws');
 import { NotificationEmail, VerificationEmail } from "./emailer";
 import autoaccountdetails from "./autoaccountdetails.json";
-import {client, roleID, serverID} from "./typechatbot";
+import {client, roleID, serverID, unlinkedroleID} from "./typechatbot";
 import { MessageEmbed } from "discord.js";
 require("./typechatbot")
 console.time("express boot");
@@ -1170,7 +1170,8 @@ WHERE friends.accountID == :accountID
                 const memberonguild = guild.members.cache.get(discordAccount.id)
                 memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
                 memberonguild.roles.add(roleID, "linked").catch(()=>{})
-                discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Account Linked! 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\``).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
+                memberonguild.roles.remove(unlinkedroleID, "linked").catch(()=>{})
+                discordAccount.dmChannel.send({embeds: [new MessageEmbed().setTitle("Account Linked! 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
                 return res.send({linked: true})
               }else{
                 return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})

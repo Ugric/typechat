@@ -10,6 +10,8 @@ const serverID = process.env.NODE_ENV === "development"?"891619528205795358":"89
 
 const roleID = process.env.NODE_ENV === "development"?"891622093286940702":"891410369241808936"
 
+const unlinkedroleID = process.env.NODE_ENV === "development"? "891677851647086652" :"891673538480701440"
+
 const DMCommandsList = [{name: "!link", value: "link your discord account to your typechat account! 🔒"}, {name: "!unlink", value: "unlink your discord account from your typechat account! 🔓"}]
 
 client.on('ready', () => {
@@ -28,6 +30,7 @@ client.on('messageCreate', async message => {
                 const member = client.guilds.cache.get(serverID).members.cache.get(message.author.id)
                 member.setNickname('', "unlink account").catch(()=>{})
                 member.roles.remove(roleID, "unlink account").catch(()=>{})
+                member.roles.add(unlinkedroleID, "unlink account").catch(()=>{})
                 message.reply({ embeds: [new discord.MessageEmbed().setTitle("Unlinked 🔓")] })}
                 else {
                     message.reply({ embeds: [new discord.MessageEmbed().setTitle("Not Linked")] })
@@ -56,6 +59,7 @@ client.on('guildMemberAdd', async member => {
             embeds: [new discord.MessageEmbed().setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.png"),
             linkaccount(member)]
         })
+        member.roles.add(unlinkedroleID, "not linked").catch(()=>{})
     } else {
         const accountdata = await db.db.get(
             "SELECT * FROM accounts WHERE accountID=:accountID",
@@ -69,8 +73,9 @@ client.on('guildMemberAdd', async member => {
         })
         member.setNickname(accountdata.username, "rejoin").catch(()=>{})
         member.roles.add(roleID, "rejoin").catch(()=>{})
+        member.roles.remove(unlinkedroleID, "rejoin").catch(()=>{})
     }
 });
 
 client.login(process.env.NODE_ENV === "development"?require("./devdiscordtoken.json"):require("./discordtoken.json"));
-export {serverID, client, roleID}
+export {serverID, client, roleID, unlinkedroleID}
