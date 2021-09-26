@@ -1,4 +1,4 @@
-import { Redirect, useLocation, useParams } from "react-router";
+import { Redirect, useParams } from "react-router";
 import { useData } from "../hooks/datahook";
 import useApi from "../hooks/useapi"
 import Loader from "./loader";
@@ -6,7 +6,6 @@ import Loader from "./loader";
 function LinkDiscord() {
     const { id } = useParams<{ id: string }>();
     const { loggedin } = useData();
-    const location = useLocation()
     const { data, error, loading } = useApi<{ linked: boolean, error?: string }>(loggedin?`/api/link/${id}`: null)
     if (!loggedin) {
         return <Redirect to={"/login?"+new URLSearchParams({to: `/link/${id}`})}></Redirect>;

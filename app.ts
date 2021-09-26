@@ -657,9 +657,10 @@ function updateFromAccountID(accountID: string) {
             ":startofmonth": startofmonth
           }
         )).limitused;
-        return res.send({ filelimit, limitused })
+        const timeleft = 2629743000-(time - startofmonth)
+        return res.send({ filelimit, limitused, timeleft })
       }
-      return res.send({ filelimit: 0, limitused: 0 })
+      return res.send({ filelimit: 0, limitused: 0, timeleft: 0 })
     })
     app.post("/api/uploadfile", async (req: any, res) => {
       const accountdata = await db.get(
