@@ -1,4 +1,3 @@
-import exp from 'constants';
 import * as discord from 'discord.js';
 import { Client } from 'discord.js';
 import db from "./app";
@@ -15,7 +14,6 @@ client.on('ready', () => {
 
 client.on('messageCreate', async message => {
     if (message.author.id == client.user.id || message.author.bot) return
-    console.log(message.guild)
     if(!message.guild) {
         if (["!unlink", "!link"].includes(message.content)) {
             const link = await db.db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": message.author.id })
@@ -45,7 +43,7 @@ client.on('guildMemberAdd', async member => {
     const link = await db.db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": member.id })
     if (!link) {
         member.send({
-            embeds: [new discord.MessageEmbed().setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.svg"),
+            embeds: [new discord.MessageEmbed().setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.png"),
             linkaccount(member)]
         })
     } else {
@@ -56,7 +54,7 @@ client.on('guildMemberAdd', async member => {
             }
         );
         member.send({
-            embeds: [new discord.MessageEmbed().setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome back to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.svg"),
+            embeds: [new discord.MessageEmbed().setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome back to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.png"),
             new discord.MessageEmbed().setTitle(`${accountdata.username}#${accountdata.tag}`).setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]
         })
         member.setNickname(accountdata.username, "rejoin")
