@@ -14,6 +14,8 @@ import {
   faSignOutAlt,
   faCog,
   faRocket,
+  faUserCog,
+  faPhotoVideo,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faDiscord
@@ -127,8 +129,7 @@ const PageNav = () => {
             onPointerUp={() => {
               playSound("/sounds/click1.mp3");
             }}
-            href="/invite"
-            target="blank_"
+            onClick={()=> window.open("/invite", "blank_")}
           >
             <FontAwesomeIcon icon={faDiscord} />
           </Nav.Link>
@@ -193,7 +194,19 @@ const PageNav = () => {
                       playSound("/sounds/click1.mp3");
                     }}
                   >
-                    User Settings
+                    <FontAwesomeIcon icon={faUserCog} /> User Settings
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    as={Link}
+                    to="/user/drive"
+                    onPointerDown={() => {
+                      playSound("/sounds/click2.mp3");
+                    }}
+                    onPointerUp={() => {
+                      playSound("/sounds/click1.mp3");
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faPhotoVideo} /> Drive
                   </Dropdown.Item>
                   <Dropdown.Item
                     onClick={async () => {
@@ -211,7 +224,7 @@ const PageNav = () => {
                       playSound("/sounds/click1.mp3");
                     }}
                   >
-                    Logout <FontAwesomeIcon icon={faSignOutAlt} />
+                    <FontAwesomeIcon icon={faSignOutAlt} /> Logout
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>

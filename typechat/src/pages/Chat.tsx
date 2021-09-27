@@ -1056,6 +1056,7 @@ function ChatPage() {
                 onInput={async (e: any) => {
                   if (e.target.files.length > 0) {
                     const file = e.target.files[0];
+                    e.target.value = ""
                     sendFile(file)
                   }
                 }}

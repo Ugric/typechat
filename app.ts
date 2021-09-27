@@ -1,5 +1,5 @@
 import { Database, open } from "sqlite";
-import express from "express";
+import express, { json } from "express";
 import { forceDomain } from 'forcedomain';
 import * as http from "http";
 import * as fs from "fs";
@@ -90,19 +90,8 @@ function updateFromAccountID(accountID: string) {
       "SELECT * FROM images WHERE hash=:hash LIMIT 1",
       { ":hash": hashed }
     );
-    if (existsindatabase) {
-      const id = existsindatabase.imageID;
-      const filename = existsindatabase.filename;
-      const paths = path.join(__dirname, "files", filename);
-      return {
-        id,
-        filename,
-        path: paths,
-        exists: true,
-      };
-    }
     const id = generate(25);
-    const filename = generate(45) + "." + mime.extension(file.mimetype);
+    const filename = !existsindatabase? generate(45) + "." + mime.extension(file.mimetype): existsindatabase.filename;
     const paths = path.join(__dirname, "files", filename);
     db.run(
       "INSERT INTO images (imageID, filename, hash, fromID) VALUES  (:id, :filename, :hash, :fromID)",
@@ -117,7 +106,7 @@ function updateFromAccountID(accountID: string) {
       id,
       filename,
       path: paths,
-      exists: false,
+      exists: Boolean(existsindatabase),
     };
   };
   const hasher = (string: string) =>
@@ -147,15 +136,18 @@ function updateFromAccountID(accountID: string) {
       )
     ) {
       try {
-        const { email } = await db.get(
-          "SELECT email FROM accounts WHERE accountID=:to",
+        const { email, discordnotifications, emailnotifications } = await db.get(
+          "SELECT email, discordnotifications, emailnotifications FROM accounts WHERE accountID=:to",
           {
             ":to": to,
           }
         );
-        await NotificationEmail(email, data).catch();
-        await DiscordNotification(to,data).catch();
-
+        if (discordnotifications) {
+          NotificationEmail(email, data).catch();
+        }
+        if (emailnotifications){
+          DiscordNotification(to,data).catch();
+        } 
       } catch (e) {
         console.error(e);
       }
@@ -168,7 +160,7 @@ function updateFromAccountID(accountID: string) {
   database.db = db
   await Promise.all([
     db.run(
-      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined)"
+      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
@@ -194,6 +186,8 @@ function updateFromAccountID(accountID: string) {
     ),
   ]);
   db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
+  db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(() => { });
+  db.run("ALTER TABLE accounts ADD emailnotification DEFAULT true").catch(() => { });
   db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => { });
   db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => { });
   let defaultaccount = await db.get(
@@ -1069,6 +1063,61 @@ WHERE friends.accountID == :accountID
         });
       }
     });
+    app.get("/api/getNotificationsOn", async (req, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (!accountdata) {
+        return res.send({ discord: false, email: false });
+      }
+      return res.send({
+        discord: Boolean(accountdata.discordnotification),
+        email: Boolean(accountdata.emailnotification)
+      });
+    });
+    app.post("/api/togglediscord", async (req, res)=>{
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (accountdata) {
+        await db.run(
+          "UPDATE accounts SET discordnotification=:discordnotification WHERE accountID=:accountID",
+          {
+            ":discordnotification": JSON.parse(req.body.toggle),
+            ":accountID": accountdata.accountID,
+          }
+        );
+        return res.send(true)
+      }
+      return res.send(false)
+    })
+
+    app.post("/api/toggleemail", async (req, res)=>{
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (accountdata) {
+        await db.run(
+          "UPDATE accounts SET emailnotification=:emailnotification WHERE accountID=:accountID",
+          {
+            ":emailnotification": JSON.parse(req.body.toggle),
+            ":accountID": accountdata.accountID,
+          }
+        );
+        return res.send(true)
+      }
+      return res.send(false)
+    })
+
     app.get("/files/:id", async (req, res) => {
       const imagedata = await db.get(
         `SELECT filename FROM images WHERE imageID=:id`,
@@ -1298,7 +1347,7 @@ WHERE friends.accountID == :accountID
         const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text us! 💬✅`;
         await Promise.all([
           db.run(
-            "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, joined) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :time)",
+            "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, joined, discordnotification, emailnotification) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :time, true, true)",
             {
               ":accountID": accountID,
               ":email": req.body.email,
