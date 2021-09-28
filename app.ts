@@ -5,7 +5,7 @@ import * as http from "http";
 import * as fs from "fs";
 import sqlite3 = require("sqlite3");
 import cookieParser = require("cookie-parser");
-import { createHash } from "crypto";
+import { BinaryLike, createHash } from "crypto";
 import path = require("path");
 import mime = require("mime-types");
 const snooze = (milliseconds: number) =>
@@ -43,7 +43,7 @@ function parseCookies(request: http.IncomingMessage) {
   return list;
 }
 
-async function checkFileExists(file) {
+async function checkFileExists(file: fs.PathLike) {
   try {
     await fs.promises.access(file, fs.constants.F_OK)
     return true
@@ -84,7 +84,7 @@ function updateFromAccountID(accountID: string) {
     }
     return output.join("");
   };
-  const createFileID = async (file: any, from?: string) => {
+  const createFileID = async (file: { data: BinaryLike; mimetype: string; name: string; }, from?: string) => {
     const hashed = createHash("md5").update(file.data).digest("hex");
     const existsindatabase = await db.get(
       "SELECT * FROM images WHERE hash=:hash LIMIT 1",
@@ -93,13 +93,15 @@ function updateFromAccountID(accountID: string) {
     const id = generate(25);
     const filename = !existsindatabase? generate(45) + "." + mime.extension(file.mimetype): existsindatabase.filename;
     const paths = path.join(__dirname, "files", filename);
+    const originalfilename = file.name
     db.run(
-      "INSERT INTO images (imageID, filename, hash, fromID) VALUES  (:id, :filename, :hash, :fromID)",
+      "INSERT INTO images (imageID, filename, hash, fromID, originalfilename) VALUES  (:id, :filename, :hash, :fromID, :originalfilename)",
       {
         ":id": id,
         ":filename": filename,
         ":hash": hashed,
         ":fromID": from,
+        ":originalfilename": originalfilename
       }
     );
     return {
@@ -136,16 +138,16 @@ function updateFromAccountID(accountID: string) {
       )
     ) {
       try {
-        const { email, discordnotifications, emailnotifications } = await db.get(
-          "SELECT email, discordnotifications, emailnotifications FROM accounts WHERE accountID=:to",
+        const { email, discordnotification, emailnotification } = await db.get(
+          "SELECT email, discordnotification, emailnotification FROM accounts WHERE accountID=:to",
           {
             ":to": to,
           }
         );
-        if (discordnotifications) {
+        if (discordnotification) {
           NotificationEmail(email, data).catch();
         }
-        if (emailnotifications){
+        if (emailnotification){
           DiscordNotification(to,data).catch();
         } 
       } catch (e) {
@@ -173,7 +175,7 @@ function updateFromAccountID(accountID: string) {
       "CREATE TABLE IF NOT EXISTS groupchatMessages (ID,accountID, chatID, message, time, file, mimetype)"
     ),
     db.run(
-      "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID)"
+      "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID, originalfilename)"
     ),
     db.run(
       "CREATE TABLE IF NOT EXISTS blast (accountID, expires)"
@@ -185,6 +187,7 @@ function updateFromAccountID(accountID: string) {
       "CREATE TABLE IF NOT EXISTS discordAccountLink (accountID, discordID, time)"
     ),
   ]);
+  db.run("ALTER TABLE images ADD originalfilename").catch(() => { });
   db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
   db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(() => { });
   db.run("ALTER TABLE accounts ADD emailnotification DEFAULT true").catch(() => { });
@@ -911,6 +914,20 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         return res.send({ exists: false });
       }
     });
+    app.get("/api/mydrive", async (req, res)=>{
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (accountdata) {
+        const fileslist = (await db.all("SELECT * FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE uploadlogs.accountID=:accountID and images.originalfilename is not NULL", {":accountID": accountdata.accountID})).reverse()
+        return res.send(fileslist)
+      } else {
+        return res.send(false)
+      }
+    })
     app.get("/api/getallfriendrequests", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",

@@ -34,6 +34,7 @@ import Settings from "./pages/settings";
 import Blast from "./pages/blast";
 import Verify from "./pages/Verify";
 import LinkDiscord from "./pages/LinkDiscord";
+import Drive from "./pages/Drive";
 
 function App() {
   const { data, error, loading, reload } = useApi<any>("/api/userdata");

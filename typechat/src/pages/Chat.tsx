@@ -269,7 +269,7 @@ function MessageMaker({
                   <img
                     alt={file}
                     src={`/files/${file}`}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", maxHeight: "300px" }}
                     loading="lazy"
                     onLoad={() => {
                       if (toscroll.current) {
@@ -280,7 +280,7 @@ function MessageMaker({
                 ) : mimetype.split("/")[0] === "video" ? (
                   <video
                     src={`/files/${file}`}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", maxHeight: "300px" }}
                     controls
                     playsInline
                     onLoad={() => {
@@ -292,7 +292,7 @@ function MessageMaker({
                 ) : mimetype.split("/")[0] === "audio" ? (
                   <audio
                     src={`/files/${file}`}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", maxHeight: "300px" }}
                     controls
                     playsInline
                     onLoad={() => {
