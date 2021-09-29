@@ -230,7 +230,7 @@ function MessageMaker({
         key: number;
       }[] = [];
       const donekeys: number[] = [];
-      if (lastmessage && messages[i].from != lastmessage.from && lastmessage.time-messages[i].time>300) {
+      if (lastmessage && messages[i].from !== lastmessage.from && lastmessage.time-messages[i].time>300000) {
         output.push(<p
         key={lastmessage.time}
                 style={{
@@ -243,9 +243,9 @@ function MessageMaker({
                 {new Date(lastmessage.time).toLocaleString()}
               </p>)
       }
-      if (!lastmessage || messages[i].from != lastmessage.from) {
+      if (!lastmessage || messages[i].from !== lastmessage.from) {
         output.push(messages[i].from === user.id || users[messages[i].from] ? (
-          <div key={messages[i].ID+"topname"}>
+          <div key={messages[i].ID+"topname"} style={{alignSelf: messages[i].from === user.id?"flex-end":"flex-start"}}>
             {messages[i].from === user.id ? (
               <span style={{ marginRight: "5px" }}>{user.username}</span>
             ) : (
@@ -278,7 +278,7 @@ function MessageMaker({
       }
       output.push(<div 
         key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from != messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`}>
+        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`}>
 {message ? (
             <>
               {Array.from(message).length > 3 ||
@@ -399,6 +399,7 @@ function MessageMaker({
     }
     console.timeEnd("chatrender")
     return output
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, canloadmore, loadingmore, chatUpdateID]);
   const { id: chattingto } = useParams<{ id: string }>();
   const location = useLocation();
@@ -452,9 +453,8 @@ function MessageMaker({
           </p>
         )}
         {typingdata.typing ? (
-          <div className={`yours messages`}>
             <div
-              className="message"
+              className="message message-yours last-yours"
               style={{
                 opacity: 0.5,
                 textShadow: "0 0 7px black",
@@ -463,7 +463,6 @@ function MessageMaker({
             >
               {faketext}
             </div>
-          </div>
         ) : (
           <></>
         )}

@@ -230,5 +230,5 @@ function Image() {
 }
 
 
-
-export default {Drive, Image}
+const exports = {Drive, Image}
+export default exports
