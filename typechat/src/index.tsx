@@ -128,6 +128,12 @@ function App() {
                 <Route path="/signup" exact>
                   <Signup />
                 </Route>
+                <Route path="/user/drive" exact>
+                  <Drive.Drive />
+                </Route>
+                <Route path="/drive/:id" exact>
+                  <Drive.Image />
+                </Route>
                 <Route path="/user/settings" exact>
                   <UserSettings />
                 </Route>

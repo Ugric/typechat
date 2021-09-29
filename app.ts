@@ -95,13 +95,14 @@ function updateFromAccountID(accountID: string) {
     const paths = path.join(__dirname, "files", filename);
     const originalfilename = file.name
     db.run(
-      "INSERT INTO images (imageID, filename, hash, fromID, originalfilename) VALUES  (:id, :filename, :hash, :fromID, :originalfilename)",
+      "INSERT INTO images (imageID, filename, hash, fromID, originalfilename, mimetype) VALUES  (:id, :filename, :hash, :fromID, :originalfilename, :mimetype)",
       {
         ":id": id,
         ":filename": filename,
         ":hash": hashed,
         ":fromID": from,
-        ":originalfilename": originalfilename
+        ":originalfilename": originalfilename,
+        ":mimetype": file.mimetype
       }
     );
     return {
@@ -145,10 +146,10 @@ function updateFromAccountID(accountID: string) {
           }
         );
         if (discordnotification) {
-          NotificationEmail(email, data).catch();
+          NotificationEmail(email, data).catch(console.error);
         }
         if (emailnotification){
-          DiscordNotification(to,data).catch();
+          DiscordNotification(to,data).catch(console.error);
         } 
       } catch (e) {
         console.error(e);
@@ -175,7 +176,7 @@ function updateFromAccountID(accountID: string) {
       "CREATE TABLE IF NOT EXISTS groupchatMessages (ID,accountID, chatID, message, time, file, mimetype)"
     ),
     db.run(
-      "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID, originalfilename)"
+      "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID, originalfilename, mimetype)"
     ),
     db.run(
       "CREATE TABLE IF NOT EXISTS blast (accountID, expires)"
@@ -187,6 +188,7 @@ function updateFromAccountID(accountID: string) {
       "CREATE TABLE IF NOT EXISTS discordAccountLink (accountID, discordID, time)"
     ),
   ]);
+  db.run("ALTER TABLE images ADD mimetype").catch(() => { });
   db.run("ALTER TABLE images ADD originalfilename").catch(() => { });
   db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
   db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(() => { });
@@ -914,6 +916,10 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         return res.send({ exists: false });
       }
     });
+    app.get("/api/getimagedata", async (req, res)=>{
+      const imagedata = await db.get("SELECT imageID as id, originalfilename as filename, mimetype FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE imageID=:id", {":id": req.query.id})
+      return res.send(imagedata)
+    })
     app.get("/api/mydrive", async (req, res)=>{
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -922,7 +928,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         }
       );
       if (accountdata) {
-        const fileslist = (await db.all("SELECT * FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE uploadlogs.accountID=:accountID and images.originalfilename is not NULL", {":accountID": accountdata.accountID})).reverse()
+        const fileslist = (await db.all("SELECT imageID as id, originalfilename as filename, mimetype FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE uploadlogs.accountID=:accountID and images.originalfilename is not NULL", {":accountID": accountdata.accountID})).reverse()
         return res.send(fileslist)
       } else {
         return res.send(false)

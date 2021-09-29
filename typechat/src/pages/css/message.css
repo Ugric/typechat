@@ -10,12 +10,6 @@
   color: var(--secondary-text-colour);
 }
 
-.messages {
-  margin-top: 5px;
-  display: flex;
-  flex-direction: column;
-}
-
 .emojimessage {
   text-align: end;
 }
@@ -28,11 +22,8 @@
   display: inline-block;
 }
 
-.yours {
-  align-items: flex-start;
-}
-
-.yours .message {
+.message-yours {
+  align-self: flex-start;
   max-width: 75%;
   background-color: #eee;
   word-break: normal;
@@ -41,7 +32,7 @@
   color: black;
 }
 
-.yours .message:last-child:before {
+.last-yours:before {
   content: "";
   position: absolute;
   z-index: 0;
@@ -53,7 +44,7 @@
   border-bottom-right-radius: 15px;
 }
 
-.yours .message:last-child:after {
+.last-yours:after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -64,11 +55,8 @@
   border-bottom-right-radius: 10px;
 }
 
-.mine {
-  align-items: flex-end;
-}
-
-.mine .message {
+.message-mine {
+  align-self: flex-end;
   color: white;
   max-width: 75%;
   word-break: normal;
@@ -78,7 +66,7 @@
   position: relative;
 }
 
-.mine .message:last-child:before {
+.last-mine:before {
   content: "";
   position: absolute;
   z-index: 0;
@@ -91,7 +79,7 @@
   border-bottom-left-radius: 15px;
 }
 
-.mine .message:last-child:after {
+.last-mine:after {
   content: "";
   position: absolute;
   bottom: 0;

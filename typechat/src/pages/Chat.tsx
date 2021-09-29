@@ -40,6 +40,7 @@ import useWindowSize from "../hooks/usescreensize";
 import isElectron from "is-electron";
 import notify from "../notifier";
 import Linkify from "react-linkify";
+import ReactPlayer from "react-player/lazy";
 
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
@@ -93,6 +94,22 @@ interface messageWithFile extends messageTypes {
   mimetype: string;
 }
 
+const videoSites = [
+  "youtube.com",
+  "www.youtube.com",
+  "twitch.tv",
+  "www.twitch.tv",
+  "youtu.be",
+  "soundcloud.com",
+  "www.soundcloud.com",
+  "dailymotion.com",
+  "www.dailymotion.com",
+  "facebook.com",
+  "www.facebook.com",
+  "vimeo.com",
+  "www.vimeo.com",
+];
+
 function MessageFaviconOrVideoRenderer({
   links,
   mine,
@@ -122,38 +139,47 @@ function MessageFaviconOrVideoRenderer({
               key={key}
               style={{
                 padding: "1rem",
-                border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"
-                  }`,
+                border: `solid 1px ${
+                  mine ? "var(--main-bg-colour)" : "#d0d0d0"
+                }`,
                 backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
                 borderRadius: "10px",
                 margin: "5px",
               }}
             >
-              <a
-                href={decoratedHref}
-                target="blank"
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  margin: 0,
-                }}
-              >
-                <img
-                  alt={url.hostname}
-                  style={{
-                    marginRight: "5px",
-                    aspectRatio: "1/1",
-                    height: "100%",
-                    minHeight: "24px",
-                  }}
-                  src={`https://www.google.com/s2/favicons?${new URLSearchParams(
-                    { size: "24", domain: url.hostname }
-                  )}`}
+              {videoSites.includes(url.hostname) ? (
+                <ReactPlayer
+                  url={decoratedHref}
+                  width="100%"
+                  height="100%"
+                  controls={true}
+                  style={{ aspectRatio: "16/9" }}
                 />
-                <p style={{ maxWidth: "90%", textAlign: "end" }}>
-                  {decoratedText}
-                </p>
-              </a>
+              ) : (
+                <a
+                  href={decoratedHref}
+                  target="blank"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    margin: 0,
+                  }}
+                >
+                  <img
+                    alt={url.hostname}
+                    style={{
+                      marginRight: "5px",
+                      aspectRatio: "1/1",
+                      height: "100%",
+                      minHeight: "24px",
+                    }}
+                    src={`https://www.google.com/s2/favicons?${new URLSearchParams(
+                      { size: "24", domain: url.hostname }
+                    )}`}
+                  />
+                  <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
+                </a>
+              )}
             </div>
           );
         }
@@ -195,8 +221,7 @@ function MessageMaker({
     if (canloadmore && loadingmore) {
       output.push(<Loader key={"loader"}></Loader>);
     }
-    let tempmessages: Array<any> = [];
-    let lastmessagegrouptime;
+    let lastmessage: messageWithText | messageWithFile |null = null
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i].message;
       const file = messages[i].file;
@@ -207,20 +232,23 @@ function MessageMaker({
         key: number;
       }[] = [];
       const donekeys: number[] = [];
-      tempmessages.push(
-        <div
-          className={
-            (message &&
-              (Array.from(message).length > 3 ||
-                !onlyContainsEmojis(message))) ||
-              !message
-              ? "message"
-              : undefined
-          }
-          key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-          style={{ opacity: !messages[i].ID ? 0.5 : undefined }}
-        >
-          {message ? (
+      if (lastmessage && messages[i].from != lastmessage.from) {
+        output.push(<p
+        key={lastmessage.time}
+                style={{
+                  margin: "0",
+                  color: `lightgray`,
+                  fontSize: "10px",
+                  textAlign: "center",
+                }}
+              >
+                {new Date(lastmessage.time).toLocaleString()}
+              </p>)
+      }
+      output.push(<div 
+        key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from != messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`}>
+{message ? (
             <>
               {Array.from(message).length > 3 ||
                 !onlyContainsEmojis(message) ? (
@@ -269,7 +297,7 @@ function MessageMaker({
                   <img
                     alt={file}
                     src={`/files/${file}`}
-                    style={{ width: "100%", maxHeight: "300px" }}
+                    style={{ width: "100%", maxHeight: "300px", borderRadius: "20px" }}
                     loading="lazy"
                     onLoad={() => {
                       if (toscroll.current) {
@@ -335,87 +363,11 @@ function MessageMaker({
           ) : (
             <></>
           )}
-        </div>
-      );
-      if (!messages[i + 1] || messages[i + 1].from !== messages[i].from) {
-        output.push(
-          <Fragment key={messages[i].ID ? messages[i].ID : messages[i].tempid}>
-            {lastmessagegrouptime &&
-              messages[i].time - lastmessagegrouptime > 300000 ? (
-              <p
-                style={{
-                  margin: "0",
-                  color: `lightgray`,
-                  fontSize: "10px",
-                  textAlign: "center",
-                }}
-              >
-                {new Date(lastmessagegrouptime).toLocaleString()}
-              </p>
-            ) : (
-              <></>
-            )}
-            <div
-              className={`${messages[i].from === user.id ? "mine" : "yours"
-                } messages`}
-              key={i}
-            >
-              {messages[i].from === user.id || users[messages[i].from] ? (
-                <div>
-                  {messages[i].from === user.id ? (
-                    <span style={{ marginRight: "5px" }}>{user.username}</span>
-                  ) : (
-                    <></>
-                  )}
-                  <img
-                    src={`/files/${messages[i].from === user.id
-                      ? user.profilePic
-                      : users[messages[i].from].profilePic
-                      }`}
-                    style={{
-                      width: "25px",
-                      height: "25px",
-                      margin: "3px",
-                      borderRadius: "50%",
-                    }}
-                    alt=""
-                  />
-                  {users[messages[i].from] ? (
-                    <span style={{ marginLeft: "5px" }}>
-                      {users[messages[i].from].username}
-                    </span>
-                  ) : (
-                    <></>
-                  )}
-                </div>
-              ) : (
-                <></>
-              )}
-              {tempmessages}
-            </div>
-            {!messages[i + 1] ? (
-              <p
-                style={{
-                  margin: "0",
-                  color: `lightgray`,
-                  fontSize: "10px",
-                  textAlign: "center",
-                }}
-              >
-                {new Date(messages[i].time).toLocaleString()}
-              </p>
-            ) : (
-              <></>
-            )}
-          </Fragment>
-        );
-        lastmessagegrouptime = messages[i].time;
-        tempmessages = [];
-      }
+      </div>)
+      lastmessage = messages[i]
     }
-    console.timeEnd("chatrender");
-    return output;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    console.timeEnd("chatrender")
+    return output
   }, [messages, canloadmore, loadingmore, chatUpdateID]);
   const { id: chattingto } = useParams<{ id: string }>();
   const location = useLocation();
@@ -455,7 +407,7 @@ function MessageMaker({
       ref={scrollref}
     >
       <div
-        className="chat noselect"
+        className="chat"
         style={{
           margin: `90px auto 3rem auto`,
           maxWidth: "900px",
