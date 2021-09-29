@@ -135,7 +135,16 @@ function MessageFaviconOrVideoRenderer({
         }) => {
           const url = new URL(decoratedHref);
           return (
-            <div
+              videoSites.includes(url.hostname) ? (
+                <ReactPlayer
+                  url={decoratedHref}
+                  width="100%"
+                  height="100%"
+                  controls={true}
+                  style={{ aspectRatio: "16/9" }}
+                />
+              ) : (
+                <div
               key={key}
               style={{
                 padding: "1rem",
@@ -146,17 +155,7 @@ function MessageFaviconOrVideoRenderer({
                 borderRadius: "10px",
                 margin: "5px",
               }}
-            >
-              {videoSites.includes(url.hostname) ? (
-                <ReactPlayer
-                  url={decoratedHref}
-                  width="100%"
-                  height="100%"
-                  controls={true}
-                  style={{ aspectRatio: "16/9" }}
-                />
-              ) : (
-                <a
+            ><a
                   href={decoratedHref}
                   target="blank"
                   style={{
@@ -178,9 +177,8 @@ function MessageFaviconOrVideoRenderer({
                     )}`}
                   />
                   <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
-                </a>
-              )}
-            </div>
+                </a></div>
+              )
           );
         }
       )}
@@ -232,7 +230,7 @@ function MessageMaker({
         key: number;
       }[] = [];
       const donekeys: number[] = [];
-      if (lastmessage && messages[i].from != lastmessage.from) {
+      if (lastmessage && messages[i].from != lastmessage.from && lastmessage.time-messages[i].time>300) {
         output.push(<p
         key={lastmessage.time}
                 style={{
@@ -244,6 +242,39 @@ function MessageMaker({
               >
                 {new Date(lastmessage.time).toLocaleString()}
               </p>)
+      }
+      if (!lastmessage || messages[i].from != lastmessage.from) {
+        output.push(messages[i].from === user.id || users[messages[i].from] ? (
+          <div key={messages[i].ID+"topname"}>
+            {messages[i].from === user.id ? (
+              <span style={{ marginRight: "5px" }}>{user.username}</span>
+            ) : (
+              <></>
+            )}
+            <img
+              src={`/files/${messages[i].from === user.id
+                ? user.profilePic
+                : users[messages[i].from].profilePic
+                }`}
+              style={{
+                width: "25px",
+                height: "25px",
+                margin: "3px",
+                borderRadius: "50%",
+              }}
+              alt=""
+            />
+            {users[messages[i].from] ? (
+              <span style={{ marginLeft: "5px" }}>
+                {users[messages[i].from].username}
+              </span>
+            ) : (
+              <></>
+            )}
+          </div>
+        ) : (
+          <></>
+        ))
       }
       output.push(<div 
         key={messages[i].ID ? messages[i].ID : messages[i].tempid}
