@@ -31,7 +31,7 @@ interface linkurls {linkID:{[key: string]: string}, discordID: {[key: string]: s
 
 const linkurls: linkurls = {linkID:{}, discordID: {}}
 let database: {db?:Database<sqlite3.Database, sqlite3.Statement>, linkurls: linkurls} = {linkurls}
-const normallimit = 50000000
+const normallimit = 100000000
 const blastlimit = 1000000000
 
 function parseCookies(request: http.IncomingMessage) {
