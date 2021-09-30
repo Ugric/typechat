@@ -351,7 +351,7 @@ function MessageMaker({
       }
       output.push(<div 
         key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis && !file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
+        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
 {message ? (
             <>
               {onlyemojis ? (
