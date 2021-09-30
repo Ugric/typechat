@@ -1263,7 +1263,7 @@ WHERE friends.accountID == :accountID
           function (metadata) {
             tempmetadata[url] = metadata
             res.send(metadata)
-            setTimeout(()=>{delete tempmetadata[url]}, 100)
+            setTimeout(()=>{delete tempmetadata[url]}, 3600000)
           },
           function (error) {
             res.sendStatus(404).send(false)
