@@ -25,7 +25,8 @@ import useLocalStorage from "./hooks/useLocalStorage";
 import UserSettings from "./pages/usersettings";
 import snooze from "./snooze";
 import Contacts from "./pages/contacts";
-import ReactNotification, { store } from "react-notifications-component";
+import ReactNotification, { ReactNotificationOptions, store } from "react-notifications-component";
+
 import "react-notifications-component/dist/theme.css";
 import AddPeople from "./pages/addpeople";
 import NotificationComponent from "./notification";
@@ -47,6 +48,9 @@ function App() {
     setuserdata(data);
   }, [data]);
   useEffect(() => {
+    if (("Notification" in window) && Notification.permission === "default") {
+      Notification.requestPermission()
+    }
     (async () => {
       try {
         if (!getuserdataonupdate && userdata.loggedin) {
@@ -65,6 +69,14 @@ function App() {
       }
     })();
   });
+  function NotificationAPI(options: ReactNotificationOptions, onclick: ()=>{}) {
+    if (("Notification" in window) && Notification.permission === "granted") {
+      const notify = new Notification(String(options.title), {body: String(options.message), icon: "/logo.png"})
+      notify.addEventListener("click", onclick)
+    } else {
+      store.addNotification(options)
+    }
+  }
   return (
     <Router>
       <div style={{ overflowWrap: "anywhere" }}>
@@ -87,6 +99,7 @@ function App() {
               notifications: store,
               catchedcontacts,
               setcachedcontacts,
+              NotificationAPI
             }}
           >
             <PageNav />

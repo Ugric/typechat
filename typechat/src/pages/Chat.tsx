@@ -16,7 +16,6 @@ import {
   useState,
   createContext,
   useContext,
-  Fragment,
 } from "react";
 import {
   Link,
@@ -41,6 +40,7 @@ import isElectron from "is-electron";
 import notify from "../notifier";
 import Linkify from "react-linkify";
 import ReactPlayer from "react-player/lazy";
+import useApi from "../hooks/useapi";
 
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
@@ -110,6 +110,111 @@ const videoSites = [
   "www.vimeo.com",
 ];
 
+function MetaPage({url, metakey, decoratedText, decoratedHref, mine}: {url: string, decoratedText: string, decoratedHref: string, mine: boolean, metakey: number}) {
+  const urldata = new URL(decoratedHref);
+  const {data} = useApi<{
+    'url': '',
+    'canonical': '',
+    'title': '',
+    'image': '',
+    'author': '',
+    'description': '',
+    'keywords': '',
+    'source': '',
+    'price': '',
+    'priceCurrency': '',
+    'availability': '',
+    'robots': '',
+    'og:url': '',
+    'og:locale': '',
+    'og:locale:alternate': '',
+    'og:title': '',
+    'og:type': '',
+    'og:description': '',
+    'og:determiner': '',
+    'og:site_name': '',
+    'og:image': '',
+    'og:image:secure_url': '',
+    'og:image:type': '',
+    'og:image:width': '',
+    'og:image:height': '',
+    'twitter:title': '',
+    'twitter:image': '',
+    'twitter:image:alt': '',
+    'twitter:card': '',
+    'twitter:site': '',
+    'twitter:site:id': '',
+    'twitter:account_id': '',
+    'twitter:creator': '',
+    'twitter:creator:id': '',
+    'twitter:player': '',
+    'twitter:player:width': '',
+    'twitter:player:height': '',
+    'twitter:player:stream': '',
+    'jsonld': {}
+}>("/api/getmetadata?"+new URLSearchParams({url}))
+  return data? <div
+  key={metakey}
+  style={{
+    padding: "1rem",
+    border: `solid 1px ${
+      mine ? "var(--main-bg-colour)" : "#d0d0d0"
+    }`,
+    backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
+    borderRadius: "10px",
+    maxWidth: "350px",
+    margin: "auto",
+  }}
+><a
+      href={decoratedHref}
+      target="blank" style={{
+          fontSize: "24px"}}><img
+        alt={urldata.hostname}
+        style={{
+          marginRight: "5px",
+          aspectRatio: "1/1",
+          height: "100%",
+          minHeight: "24px",
+        }}
+        src={`https://www.google.com/s2/favicons?${new URLSearchParams(
+          { size: "24", domain: urldata.hostname }
+        )}`}
+      />{data.title?data.title:decoratedText}</a><p>{data.description}</p>{data.image.length>0?<img src={new URL(data.image, url).href} style={{width: "100%", borderRadius: "10px"}}></img>:<></>}</div> :<div
+  key={metakey}
+  style={{
+    padding: "1rem",
+    border: `solid 1px ${
+      mine ? "var(--main-bg-colour)" : "#d0d0d0"
+    }`,
+    backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
+    borderRadius: "10px",
+    margin: "5px",
+  }}
+><a
+      href={decoratedHref}
+      target="blank"
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        margin: 0,
+      }}
+    >
+      <img
+        alt={urldata.hostname}
+        style={{
+          marginRight: "5px",
+          aspectRatio: "1/1",
+          height: "100%",
+          minHeight: "24px",
+        }}
+        src={`https://www.google.com/s2/favicons?${new URLSearchParams(
+          { size: "24", domain: urldata.hostname }
+        )}`}
+      />
+      <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
+    </a></div>
+}
+
 function MessageFaviconOrVideoRenderer({
   links,
   mine,
@@ -144,40 +249,7 @@ function MessageFaviconOrVideoRenderer({
                   style={{ aspectRatio: "16/9" }}
                 />
               ) : (
-                <div
-              key={key}
-              style={{
-                padding: "1rem",
-                border: `solid 1px ${
-                  mine ? "var(--main-bg-colour)" : "#d0d0d0"
-                }`,
-                backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
-                borderRadius: "10px",
-                margin: "5px",
-              }}
-            ><a
-                  href={decoratedHref}
-                  target="blank"
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    margin: 0,
-                  }}
-                >
-                  <img
-                    alt={url.hostname}
-                    style={{
-                      marginRight: "5px",
-                      aspectRatio: "1/1",
-                      height: "100%",
-                      minHeight: "24px",
-                    }}
-                    src={`https://www.google.com/s2/favicons?${new URLSearchParams(
-                      { size: "24", domain: url.hostname }
-                    )}`}
-                  />
-                  <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
-                </a></div>
+                <MetaPage url={decoratedHref} metakey={key} decoratedText={decoratedText} decoratedHref={decoratedHref} mine={mine}></MetaPage>
               )
           );
         }
@@ -224,13 +296,14 @@ function MessageMaker({
       const message = messages[i].message;
       const file = messages[i].file;
       const mimetype = messages[i].mimetype;
+      const onlyemojis = message? Array.from(message).length > 3 || !onlyContainsEmojis(message): false
       const links: {
         decoratedHref: string;
         decoratedText: string;
         key: number;
       }[] = [];
       const donekeys: number[] = [];
-      if (lastmessage && messages[i].from !== lastmessage.from && lastmessage.time-messages[i].time>300000) {
+      if (lastmessage && messages[i].from !== lastmessage.from && messages[i].time-lastmessage.time>300000) {
         output.push(<p
         key={lastmessage.time}
                 style={{
@@ -278,11 +351,10 @@ function MessageMaker({
       }
       output.push(<div 
         key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`}>
+        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
 {message ? (
             <>
-              {Array.from(message).length > 3 ||
-                !onlyContainsEmojis(message) ? (
+              {onlyemojis ? (
                 message.split("```").map((value, index) =>
                   index % 2 === 0 ? (
                     <div key={index}>
@@ -328,7 +400,7 @@ function MessageMaker({
                   <img
                     alt={file}
                     src={`/files/${file}`}
-                    style={{ width: "100%", maxHeight: "300px", borderRadius: "20px" }}
+                    style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "20px" }}
                     loading="lazy"
                     onLoad={() => {
                       if (toscroll.current) {
@@ -541,7 +613,7 @@ function ChatPage() {
   const isFocussed = useWindowFocus();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
-  const { notifications, user } = useData();
+  const { notifications, user, NotificationAPI } = useData();
 
   const { isGroupChat } = useContext(chatSettings);
   const [usersdata, setusersdata] = useState<
@@ -735,8 +807,8 @@ function ChatPage() {
         if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
           playSound("/sounds/newmessage.mp3");
         }
-        chats.push(lastJsonMessage.message);
-        setchats(chats);
+        setchats(
+          chats=>chats.concat(lastJsonMessage.message));
 
         settypingdata({
           typing: false,
@@ -749,6 +821,7 @@ function ChatPage() {
             isLoadMore.current = false;
             setloadingchatmessages(false);
             setchats(
+              chats=>
               chats.slice(Math.max(chats.length - StartMessagesLength, 0))
             );
             setTimeout(scrolltobottom, 0);
@@ -777,7 +850,7 @@ function ChatPage() {
                 }
               );
             } else {
-              notifications.addNotification({
+              NotificationAPI({
                 title: `${usersdata.users[lastJsonMessage.message.from].username
                   }`,
                 message: lastJsonMessage.message.message
@@ -799,6 +872,9 @@ function ChatPage() {
                   duration: 5000,
                   onScreen: true,
                 },
+              }, ()=>{
+                history.push(`/chat/${chattingto}`);
+                scrolltobottom();
               });
             }
           }

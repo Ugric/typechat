@@ -6,14 +6,17 @@ import { useData } from "../hooks/datahook"
 import useApi from "../hooks/useapi"
 import Loader from "./loader"
 
-function downloadURI(uri: string, name: string) {
-    const link = document.createElement("a");
-    link.download = name;
-    link.href = uri;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+function downloadURI(url: string, filename: string) {
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+  })
+  .catch(console.error);
+}
 
 function FilePreview({id, name, mimetype}: {id: string; name: string; mimetype:string}) {
     const fname = name.replace(/\.[^/.]+$/, "")
@@ -168,7 +171,7 @@ function Image() {
     const mimetype = data?.mimetype
     const file = data?.id
 
-    return data?<div 
+    return data?<div style={{margin: "1rem"}}><div 
         style={{
         margin: "1rem auto",
         border: "solid 1px var(--light-bg-colour)",
@@ -176,7 +179,18 @@ function Image() {
         backgroundColor: "var(--dark-bg-colour)",
         padding: "1rem",
         maxWidth: "700px",
-        }}><h1>{data.filename}</h1><div style={{height: "1px", backgroundColor: "var(--light-bg-colour)", width: "100%", margin: "1rem 0"}}></div>{mimetype ? (
+        }}><h1>{data.filename}</h1><div
+        onClick={() => {
+          downloadURI("/files/"+file, data.filename)
+        }}
+        style={{
+          color: "var(--secondary-text-colour)",
+          cursor: "pointer",
+          fontSize: "25px"
+        }}
+      >
+      <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon> Download
+      </div><div style={{height: "1px", backgroundColor: "var(--light-bg-colour)", width: "100%", margin: "1rem 0"}}></div>{mimetype ? (
             mimetype.split("/")[0] === "image" ? (
               <img
                 alt={file}
@@ -199,34 +213,10 @@ function Image() {
                 playsInline
               ></audio>
             ) : (
-                <><p>No Preview!</p>
-                <div
-                  onClick={() => {
-                    downloadURI("/files/"+file, data.filename)
-                  }}
-                  style={{
-                    color: "var(--secondary-text-colour)",
-                    cursor: "pointer",
-                    fontSize: "25px"
-                  }}
-                >
-                <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon> Download
-                </div></>
+              <p>No Preview!</p>
             )
-          ) : (<><p>No Preview!</p>
-            <div
-              onClick={() => {
-                downloadURI("/files/"+file, data.filename)
-              }}
-              style={{
-                color: "var(--secondary-text-colour)",
-                cursor: "pointer",
-                fontSize: "25px"
-              }}
-            >
-            <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon> Download
-            </div></>
-          )}</div>:<Loader></Loader>
+          ) : (<p>No Preview!</p>
+          )}</div></div>:<Loader></Loader>
 }
 
 

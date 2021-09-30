@@ -10,8 +10,12 @@
   color: var(--secondary-text-colour);
 }
 
-.emojimessage {
+.emojimessage-mine {
   text-align: end;
+}
+
+.emojimessage-yours {
+  text-align: start;
 }
 
 .message {

@@ -30,7 +30,8 @@
     "randomstring": "^1.2.1",
     "selfsigned": "^1.10.11",
     "sqlite": "^4.0.23",
-    "sqlite3": "^5.0.2"
+    "sqlite3": "^5.0.2",
+    "url-metadata": "^2.5.0"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.0",

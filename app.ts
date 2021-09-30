@@ -17,8 +17,11 @@ import autoaccountdetails from "./autoaccountdetails.json";
 import EmailValidation from 'emailvalid';
 import {client, roleID, serverID, unlinkedroleID} from "./typechatbot";
 import { MessageEmbed } from "discord.js";
+import urlMetadata from 'url-metadata';
 require("./typechatbot")
 console.time("express boot");
+
+const tempmetadata: {[key: string]: urlMetadata.Result} = {}
 
 const ev = new EmailValidation()
 
@@ -1247,6 +1250,25 @@ WHERE friends.accountID == :accountID
         res.send(false);
       }
     });
+    app.get("/api/getmetadata", (req, res) =>{
+      const url = String(req.query.url)
+      if (tempmetadata[url]) {
+        return res.send(tempmetadata[url])
+      }
+      urlMetadata(url, {
+          maxRedirects: 10,
+          timeout: 10000,
+          ensureSecureImageRequest: true,
+        }).then(
+          function (metadata) {
+            tempmetadata[url] = metadata
+            res.send(metadata)
+            setTimeout(()=>{delete tempmetadata[url]}, 100)
+          },
+          function (error) {
+            res.sendStatus(404).send(false)
+          })
+    })
     app.get("/api/link/:id", async (req, res)=>{
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
