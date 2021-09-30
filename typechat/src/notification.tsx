@@ -8,7 +8,7 @@ import isElectron from "is-electron";
 import notify from "./notifier";
 
 function NotificationComponent() {
-  const { loggedin, notifications } = useData();
+  const { loggedin, NotificationAPI } = useData();
   const isFocussed = useWindowFocus();
   const history = useHistory();
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(
@@ -38,12 +38,7 @@ function NotificationComponent() {
               : "/sounds/notification.mp3"
           );
         }
-        if (isElectron()) {
-          notify(lastJsonMessage.title, lastJsonMessage.message, () => {
-            history.push(lastJsonMessage.to);
-          });
-        } else {
-          notifications.addNotification({
+        NotificationAPI({
             title: lastJsonMessage.title,
             message: lastJsonMessage.message,
             type: "default",
@@ -61,9 +56,10 @@ function NotificationComponent() {
               duration: 5000,
               onScreen: true,
             },
+          }, ()=>{
+            history.push(lastJsonMessage.to);
           });
         }
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
