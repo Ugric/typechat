@@ -351,7 +351,7 @@ function MessageMaker({
       }
       output.push(<div 
         key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
+        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis && !file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
 {message ? (
             <>
               {onlyemojis ? (
@@ -840,16 +840,6 @@ function ChatPage() {
               );
             }
           } else if (lastJsonMessage.message.from !== user.id) {
-            if (isElectron()) {
-              notify(
-                `${usersdata.users[lastJsonMessage.message.from].username}`,
-                lastJsonMessage.message.message,
-                () => {
-                  history.push(`/chat/${chattingto}`);
-                  scrolltobottom();
-                }
-              );
-            } else {
               NotificationAPI({
                 title: `${usersdata.users[lastJsonMessage.message.from].username
                   }`,
@@ -876,7 +866,6 @@ function ChatPage() {
                 history.push(`/chat/${chattingto}`);
                 scrolltobottom();
               });
-            }
           }
         }
       } else if (lastJsonMessage.type === "start") {
