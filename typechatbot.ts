@@ -13,7 +13,7 @@ const linkaccount = (member: { id: any; })=>{
     const id = generate(20)
     db.linkurls.linkID[id] = member.id
     db.linkurls.discordID[member.id] = id
-    return new discord.MessageEmbed().setColor("#5656ff").setTitle("Link your TypeChat account!").setDescription("Link your Discord and TypeChat account to get the best experience with the Platform!").setURL(`https://tchat.us.to/link/${id}`)
+    return new discord.MessageEmbed().setColor("#5656ff").setTitle("Link your TypeChat account!").setDescription("Link your Discord and TypeChat account to get the best experience with the Platform!").setURL(`https://tchat.my.to/link/${id}`)
 }
 
 const serverID = process.env.NODE_ENV === "development"?"891619528205795358":"891393852068470804";
@@ -64,7 +64,7 @@ client.on('guildMemberAdd', async member => {
     const link = await db.db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": member.id })
     if (!link) {
         member.send({
-            embeds: [new discord.MessageEmbed().setColor("#5656ff").setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.png"),
+            embeds: [new discord.MessageEmbed().setColor("#5656ff").setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome to the TypeChat Discord Server!").setThumbnail("https://tchat.my.to/logo.png"),
             linkaccount(member)]
         })
         member.roles.add(unlinkedroleID, "not linked").catch(()=>{})
@@ -76,8 +76,8 @@ client.on('guildMemberAdd', async member => {
             }
         );
         member.send({
-            embeds: [new discord.MessageEmbed().setColor("#5656ff").setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome back to the TypeChat Discord Server!").setThumbnail("https://tchat.us.to/logo.png"),
-            new discord.MessageEmbed().setColor("#5656ff").setTitle(`${accountdata.username}#${accountdata.tag}`).setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]
+            embeds: [new discord.MessageEmbed().setColor("#5656ff").setTitle(`hello ${member.displayName} 👋`).setDescription("Welcome back to the TypeChat Discord Server!").setThumbnail("https://tchat.my.to/logo.png"),
+            new discord.MessageEmbed().setColor("#5656ff").setTitle(`${accountdata.username}#${accountdata.tag}`).setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.my.to/files/${accountdata.profilePic}`)]
         })
         await member.setNickname(accountdata.username, "rejoin").catch(()=>{})
         await member.roles.add(roleID, "rejoin").catch(()=>{})

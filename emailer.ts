@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const { email, password } = require("./emailconfig.json");
 const bleach = require("bleach");
 
-const url = "https://tchat.us.to/"
+const url = "https://tchat.my.to/"
 
 async function NotificationEmail(
   to: string,
