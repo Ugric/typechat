@@ -149,10 +149,10 @@ function updateFromAccountID(accountID: string) {
             ":to": to,
           }
         );
-        if (discordnotification) {
+        if (emailnotification) {
           NotificationEmail(email, data).catch(console.error);
         }
-        if (emailnotification){
+        if (discordnotification){
           DiscordNotification(to,data).catch(console.error);
         } 
       } catch (e) {
