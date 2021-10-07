@@ -900,6 +900,8 @@ function ChatPage() {
               });
           }
         }
+      } else if (lastJsonMessage.type === "delete") {
+        deleteFromID(lastJsonMessage.id)
       } else if (lastJsonMessage.type === "start") {
         setcanloadmore(false);
         isLoadMore.current = true;
