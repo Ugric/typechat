@@ -18,6 +18,7 @@ import EmailValidation from 'emailvalid';
 import {client, roleID, serverID, unlinkedroleID} from "./typechatbot";
 import { MessageEmbed } from "discord.js";
 import urlMetadata from 'url-metadata';
+import greenlockexpress from "greenlock-express";
 require("./typechatbot")
 console.time("express boot");
 
@@ -171,7 +172,7 @@ function updateFromAccountID(accountID: string) {
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file, mimetype)"
+      "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file, mimetype, deleted)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS groupchats (chatID, name, picture)"),
     db.run("CREATE TABLE IF NOT EXISTS groupchatUsers (chatID, accountID)"),
@@ -191,6 +192,8 @@ function updateFromAccountID(accountID: string) {
       "CREATE TABLE IF NOT EXISTS discordAccountLink (accountID, discordID, time)"
     ),
   ]);
+  db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(() => { });
+  db.run("ALTER TABLE friendsChatMessages ADD edited DEFAULT false").catch(() => { });
   db.run("ALTER TABLE images ADD mimetype").catch(() => { });
   db.run("ALTER TABLE images ADD originalfilename").catch(() => { });
   db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
@@ -390,7 +393,7 @@ function updateFromAccountID(accountID: string) {
               await db.all(
                 `SELECT * 
         FROM (SELECT
-        ID, accountID as "from", message, time, file, mimetype
+        ID, accountID as "from", message, time, file, mimetype, edited
         FROM friendsChatMessages
         WHERE (
                 accountID = :accountID
@@ -399,7 +402,7 @@ function updateFromAccountID(accountID: string) {
             or (
                 accountID = :toUser
                 and toAccountID = :accountID
-            ) ORDER  BY time DESC) LIMIT :max`,
+            ) and deleted=false ORDER  BY time DESC) LIMIT :max`,
                 {
                   ":accountID": accountdata.accountID,
                   ":toUser": msg.to,
@@ -488,11 +491,52 @@ function updateFromAccountID(accountID: string) {
               mobile: msg.mobile,
               focus: true,
             };
+          } else if (msg.type == "delete") {
+            const id = msg.id;
+            const isowned = Boolean(await db.get("SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID}))
+            if (isowned) {
+              db.run("DELETE FROM friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID})
+              if (
+                messagefunctions[to] &&
+                messagefunctions[to][accountdata.accountID]
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[to][accountdata.accountID]
+                )) {
+                  messagefunctions[to][accountdata.accountID][ws].ws.send(
+                    JSON.stringify({
+                      type: "delete",
+                      id
+                    })
+                  );
+                }
+              }
+              if (
+                messagefunctions[accountdata.accountID] &&
+                messagefunctions[accountdata.accountID][to]
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[accountdata.accountID][to]
+                )) {
+                  if (
+                    messagefunctions[accountdata.accountID][to][ws].connectionID !==
+                    connectionID
+                  ) {
+                    messagefunctions[accountdata.accountID][to][ws].ws.send(
+                      JSON.stringify({
+                        type: "delete",
+                        id
+                      })
+                    );
+                  }
+                }
+              }
+            }
           } else if (msg.type == "getmessages") {
             const messages = (
               await db.all(
                 `SELECT * FROM (SELECT
-        ID, accountID as "from", message, time, file, mimetype
+        ID, accountID as "from", message, time, file, mimetype, edited
         FROM friendsChatMessages
         WHERE (
                 accountID = :accountID
@@ -501,7 +545,7 @@ function updateFromAccountID(accountID: string) {
             or (
                 accountID = :toUser
                 and toAccountID = :accountID
-            ) ORDER  BY time DESC) LIMIT :start, :max`,
+            ) and deleted=false ORDER  BY time DESC) LIMIT :start, :max`,
                 {
                   ":accountID": accountdata.accountID,
                   ":toUser": to,
@@ -616,7 +660,7 @@ function updateFromAccountID(accountID: string) {
             }
             await db
               .run(
-                `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype)`,
+                `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype, false)`,
                 {
                   ":ID": id,
                   ":accountID": accountdata.accountID,
@@ -1425,7 +1469,7 @@ WHERE friends.accountID == :accountID
             }
           ),
           db.run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
             {
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
@@ -1435,7 +1479,7 @@ WHERE friends.accountID == :accountID
             }
           ),
           db.run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
             {
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
@@ -1445,7 +1489,7 @@ WHERE friends.accountID == :accountID
             }
           ),
           db.run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
             {
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
@@ -1467,7 +1511,7 @@ WHERE friends.accountID == :accountID
           const message = `lol, i did verify my email, my email is now ${newemail} and you already know what the password would be set to lol.`
           await Promise.all([
             db.run(
-              `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time) VALUES (:ID, :accountID, :toAccountID, :message, :time)`,
+              `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
               {
                 ":ID": generate(100),
                 ":accountID": accountID,
@@ -1509,17 +1553,12 @@ WHERE friends.accountID == :accountID
     serverboot({ httpsServer: () => http.createServer(app), httpServer: () => { return { listen: () => { } } } })
   } else {
 
-    require("greenlock-express")
+    greenlockexpress
       .init({
         packageRoot: __dirname,
         configDir: "./greenlock.d",
-
-        // contact for security and critical bug notices
         maintainerEmail: "epicugric@gmail.com",
-
-        // whether or not to run at cloudscale
         cluster: false,
-        approveDomains: ['typechat.us.to', 'www.typechat.us.to', 'typechat.uk.to', 'www.typechat.uk.to']
       }).ready(serverboot)
   }
 })();

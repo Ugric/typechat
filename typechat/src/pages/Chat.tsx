@@ -1,5 +1,6 @@
 import {
   faCommentSlash,
+  faCopy,
   faDesktop,
   faEyeSlash,
   faFile,
@@ -7,9 +8,10 @@ import {
   faPaperPlane,
   faPlus,
   faSadCry,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
+import React, {
   useEffect,
   useMemo,
   useRef,
@@ -41,6 +43,7 @@ import notify from "../notifier";
 import Linkify from "react-linkify";
 import ReactPlayer from "react-player/lazy";
 import useApi from "../hooks/useapi";
+import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
@@ -110,51 +113,50 @@ const videoSites = [
   "www.vimeo.com",
 ];
 
-function MetaPage({url, metakey, decoratedText, decoratedHref, mine}: {url: string, decoratedText: string, decoratedHref: string, mine: boolean, metakey: number}) {
+function MetaPage({url, decoratedText, decoratedHref, mine}: {url: string, decoratedText: string, decoratedHref: string, mine: boolean}) {
   const urldata = new URL(decoratedHref);
   const {data} = useApi<{
-    'url': '',
-    'canonical': '',
-    'title': '',
-    'image': '',
-    'author': '',
-    'description': '',
-    'keywords': '',
-    'source': '',
-    'price': '',
-    'priceCurrency': '',
-    'availability': '',
-    'robots': '',
-    'og:url': '',
-    'og:locale': '',
-    'og:locale:alternate': '',
-    'og:title': '',
-    'og:type': '',
-    'og:description': '',
-    'og:determiner': '',
-    'og:site_name': '',
-    'og:image': '',
-    'og:image:secure_url': '',
-    'og:image:type': '',
-    'og:image:width': '',
-    'og:image:height': '',
-    'twitter:title': '',
-    'twitter:image': '',
-    'twitter:image:alt': '',
-    'twitter:card': '',
-    'twitter:site': '',
-    'twitter:site:id': '',
-    'twitter:account_id': '',
-    'twitter:creator': '',
-    'twitter:creator:id': '',
-    'twitter:player': '',
-    'twitter:player:width': '',
-    'twitter:player:height': '',
-    'twitter:player:stream': '',
+    'url': string,
+    'canonical': string,
+    'title': string,
+    'image': string,
+    'author': string,
+    'description': string,
+    'keywords': string,
+    'source': string,
+    'price': string,
+    'priceCurrency': string,
+    'availability': string,
+    'robots': string,
+    'og:url': string,
+    'og:locale': string,
+    'og:locale:alternate': string,
+    'og:title': string,
+    'og:type': string,
+    'og:description': string,
+    'og:determiner': string,
+    'og:site_name': string,
+    'og:image': string,
+    'og:image:secure_url': string,
+    'og:image:type': string,
+    'og:image:width': string,
+    'og:image:height': string,
+    'twitter:title': string,
+    'twitter:image': string,
+    'twitter:image:alt': string,
+    'twitter:card': string,
+    'twitter:site': string,
+    'twitter:site:id': string,
+    'twitter:account_id': string,
+    'twitter:creator': string,
+    'twitter:creator:id': string,
+    'twitter:player': string,
+    'twitter:player:width': string,
+    'twitter:player:height': string,
+    'twitter:player:stream': string,
     'jsonld': {}
 }>("/api/getmetadata?"+new URLSearchParams({url}))
   return data? <div
-  key={metakey}
   style={{
     padding: "1rem",
     border: `solid 1px ${
@@ -180,7 +182,6 @@ function MetaPage({url, metakey, decoratedText, decoratedHref, mine}: {url: stri
           { size: "24", domain: urldata.hostname }
         )}`}
       />{data.title?data.title:decoratedText}</a><p>{data.description}</p>{data.image.length>0?<img src={new URL(data.image, url).href} style={{width: "100%", borderRadius: "10px"}}></img>:<></>}</div> :<div
-  key={metakey}
   style={{
     padding: "1rem",
     border: `solid 1px ${
@@ -226,9 +227,7 @@ function MessageFaviconOrVideoRenderer({
   }[];
   mine: boolean;
 }) {
-  return (
-    <div>
-      {links.map(
+  return <>{links.map(
         ({
           decoratedHref,
           decoratedText,
@@ -239,7 +238,7 @@ function MessageFaviconOrVideoRenderer({
           key: number;
         }) => {
           const url = new URL(decoratedHref);
-          return (
+          return <React.Fragment key={key}>{(
               videoSites.includes(url.hostname) ? (
                 <ReactPlayer
                   url={decoratedHref}
@@ -249,13 +248,11 @@ function MessageFaviconOrVideoRenderer({
                   style={{ aspectRatio: "16/9" }}
                 />
               ) : (
-                <MetaPage url={decoratedHref} metakey={key} decoratedText={decoratedText} decoratedHref={decoratedHref} mine={mine}></MetaPage>
+                <MetaPage url={decoratedHref} decoratedText={decoratedText} decoratedHref={decoratedHref} mine={mine}></MetaPage>
               )
-          );
+          )}</React.Fragment>;
         }
-      )}
-    </div>
-  );
+      )}</>
 }
 
 function MessageMaker({
@@ -268,6 +265,8 @@ function MessageMaker({
   loadmore,
   chatUpdateID,
   scrolltobottom,
+  deleteFromID,
+  sendJsonMessage
 }: {
   messages: Array<messageWithText | messageWithFile>;
   typingdata: {
@@ -282,6 +281,8 @@ function MessageMaker({
   loadmore: Function;
   chatUpdateID: number | null;
   scrolltobottom: Function;
+  deleteFromID: Function;
+  sendJsonMessage: Function;
 }) {
   const { user } = useData();
   const { users } = useContext(usersContext);
@@ -349,10 +350,11 @@ function MessageMaker({
           <></>
         ))
       }
-      output.push(<div 
-        key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-        style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
-{message ? (
+      output.push(
+        <React.Fragment key={messages[i].ID ? messages[i].ID : messages[i].tempid}>
+         <ContextMenuTrigger id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
+           <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
+          {message ? (
             <>
               {onlyemojis ? (
                 message.split("```").map((value, index) =>
@@ -466,7 +468,25 @@ function MessageMaker({
           ) : (
             <></>
           )}
-      </div>)
+      </div></ContextMenuTrigger>
+ 
+ <ContextMenu id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
+          <p style={{textAlign: "center"}}>{new Date(messages[i].time).toLocaleString()}</p>
+        <MenuItem onClick={()=>{navigator.clipboard.writeText(message?message:`${window.location.protocol}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
+      ? window.location.hostname + ":5000"
+      : window.location.host
+    }/files/${file}`);}}>
+          <span><FontAwesomeIcon icon={faCopy}/> Copy</span>
+        </MenuItem>
+        {messages[i].from === user.id && messages[i].ID?
+        <MenuItem onClick={()=>{
+          sendJsonMessage({type: "delete", id: messages[i].ID})
+          deleteFromID(messages[i].ID)
+        }}>
+          <span><FontAwesomeIcon icon={faTrash}/> Delete</span>
+        </MenuItem>
+        :<></>}
+ </ContextMenu></React.Fragment>)
       lastmessage = messages[i]
     }
     console.timeEnd("chatrender")
@@ -782,6 +802,18 @@ function ChatPage() {
       });
     }
   }
+  function deleteFromID(id: string) {
+    for (let i=0; i<=chats.length; i++) {
+      console.log(chats[i])
+      if (chats[i].ID == id) {
+        chats.splice(i, 1)
+        console.log(chats[i],chats)
+        setchats(chats)
+        setChatUpdateID(Math.random())
+        break
+      }
+    }
+  }
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     socketUrl,
     {
@@ -1066,6 +1098,7 @@ function ChatPage() {
             }}
           />
           <MessageMaker
+            deleteFromID={deleteFromID}
             scrolltobottom={scrolltobottom}
             scrollref={scrollerref}
             messages={loadingchatmessages ? localchats[chattingto] : chats}
@@ -1075,6 +1108,7 @@ function ChatPage() {
             loadingmore={loadingmore}
             loadmore={loadmore}
             chatUpdateID={chatUpdateID}
+            sendJsonMessage={sendJsonMessage}
           />
           <div ref={bottomref}></div>
           <div
