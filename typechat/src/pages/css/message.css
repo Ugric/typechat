@@ -10,6 +10,10 @@
   color: var(--secondary-text-colour);
 }
 
+.react-contextmenu-wrapper {
+  display: contents;
+}
+
 .emojimessage-mine {
   text-align: end;
 }
@@ -134,4 +138,49 @@
     -webkit-transform: scale(1);
     transform: scale(1);
   }
+}
+
+nav.react-contextmenu {
+  position: fixed;
+  width: 200px;
+  left: 0;
+  top: calc(100% + 10px);
+  border-radius: 4px;
+  background-color: var(--dark-bg-colour);
+  padding: 10px 0;
+  z-index: 99;
+  box-shadow: 0 0 20px rgba(0, 0, 0, .2);
+}
+
+.react-contextmenu .react-contextmenu-item:hover {
+  background: var(--light-bg-colour);
+}
+
+.react-contextmenu-item:hover:not(.react-contextmenu-item--disabled) {
+  background-color: var(--light-bg-colour);
+}
+
+.react-contextmenu .react-contextmenu-item {
+  font-size: 14px;
+  display: block;
+  text-decoration: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  user-select: none;
+  transition: .2s;
+  position: relative;
+  margin-bottom: 2px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  outline: none;
+}
+
+.react-contextmenu-item span {
+  margin-left: 10px;
+  color: var(--secondary-text-colour);
+}
+
+.react-contextmenu-item svg {
+  font-size: 14px;
 }
