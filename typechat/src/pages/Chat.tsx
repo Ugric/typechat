@@ -283,7 +283,7 @@ function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, 
   const key = useRef(null);
   const submitref = useRef<any>();
   const messageref = useRef(message)
-  return <React.Fragment key={messages[i].ID ? messages[i].ID : messages[i].tempid}>
+  return <>
   <ContextMenuTrigger id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
     <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
     {message ? (editing?<><form onSubmit={(e: any)=>{
@@ -470,7 +470,7 @@ function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, 
    <span>{editing?<><FontAwesomeIcon icon={faTimes}/> Cancel Edit</>:<><FontAwesomeIcon icon={faPencilAlt}/> Edit</>}</span>
  </MenuItem>:<></>}</>
  :<></>}
-</ContextMenu></React.Fragment>
+</ContextMenu></>
 }
 
 function MessageMaker({
@@ -558,7 +558,7 @@ function MessageMaker({
         ))
       }
       output.push(
-        <Message messages={messages} deleteFromID={deleteFromID} i={i} user={user} toscroll={toscroll} scrolltobottom={scrolltobottom} sendJsonMessage={sendJsonMessage} editFromID={editFromID}></Message>)
+        <Message key={messages[i].ID ? messages[i].ID : messages[i].tempid} messages={messages} deleteFromID={deleteFromID} i={i} user={user} toscroll={toscroll} scrolltobottom={scrolltobottom} sendJsonMessage={sendJsonMessage} editFromID={editFromID}></Message>)
       lastmessage = messages[i]
     }
     console.timeEnd("chatrender")
