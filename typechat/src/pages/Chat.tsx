@@ -6,8 +6,10 @@ import {
   faFile,
   faMobileAlt,
   faPaperPlane,
+  faPencilAlt,
   faPlus,
   faSadCry,
+  faTimes,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -84,6 +86,7 @@ interface messageTypes {
   tempid?: number;
   time: number;
   from: string;
+  edited: boolean;
 }
 
 interface messageWithText extends messageTypes {
@@ -255,6 +258,221 @@ function MessageFaviconOrVideoRenderer({
       )}</>
 }
 
+function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, deleteFromID, editFromID}: {
+  messages: Array<messageWithText | messageWithFile>;
+  i: number;
+  toscroll: any;
+  user: any;
+  scrolltobottom: Function;
+  deleteFromID: Function;
+  editFromID: Function;
+  sendJsonMessage: Function;
+  }) {
+  const message = messages[i].message;
+  const [editing, setediting] = useState(false)
+  const file = messages[i].file;
+  const mimetype = messages[i].mimetype;
+  const onlyemojis = message? Array.from(message).length > 3 || !onlyContainsEmojis(message): false
+  const links: {
+    decoratedHref: string;
+    decoratedText: string;
+    key: number;
+  }[] = [];
+  const donekeys: number[] = [];
+  const shiftkey = useRef(false);
+  const key = useRef(null);
+  const submitref = useRef<any>();
+  const messageref = useRef(message)
+  return <React.Fragment key={messages[i].ID ? messages[i].ID : messages[i].tempid}>
+  <ContextMenuTrigger id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
+    <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
+    {message ? (editing?<><form onSubmit={(e: any)=>{
+     e.preventDefault()
+     setediting(false)
+     const tempmessage = messageref.current
+     if (tempmessage === "") {
+      sendJsonMessage({type: "delete", id: messages[i].ID})
+      deleteFromID(messages[i].ID)
+     } else if (message !== tempmessage) {
+      sendJsonMessage({type: "edit", id: messages[i].ID, message: tempmessage})
+      editFromID(messages[i].ID, tempmessage)
+    }
+   }}><TextareaAutosize
+                  onInput={(e: any) => {
+                    if (key.current === 13 && !shiftkey.current) {
+                      submitref.current.click();
+                    }else {
+                    const message = e.target.value.trim();
+                    messageref.current = message
+                      }
+                      const messagetoarray: string[] = Array.from(message);
+                        e.target.value = Array.from(e.target.value)
+                          .slice(0, 3000)
+                          .join("");
+                     if (messagetoarray.length <= 3000) {
+                      e.target.value = Array.from(e.target.value)
+                        .slice(0, 3000)
+                        .join("");
+                    }
+                  }}
+                  onKeyDown={(e: any) => {
+                    key.current = e.keyCode;
+                    shiftkey.current = e.shiftKey;
+                  }}
+                  autoFocus
+                  style={{
+                    backgroundColor: "var(--dark-bg-colour)",
+                    padding: "5px",
+                    borderRadius: "20px",
+                    border: "solid 1px var(--light-bg-colour)",
+                    color: "white",
+                    resize: "none",
+                    width: "100%"
+                  }}
+                  maxRows={10}
+                  placeholder="Type Something..."
+                  defaultValue={message}
+                /><input type="submit" ref={submitref} style={{display: "none"}}></input></form></>:
+     <>
+       {onlyemojis ? (
+         message.split("```").map((value: string, index: number) =>
+           index % 2 === 0 ? (
+             <div key={index}>
+               <Linkify
+                 componentDecorator={(
+                   decoratedHref,
+                   decoratedText,
+                   key
+                 ) => {
+                   if (!donekeys.includes(key)) {
+                     links.push({ decoratedHref, decoratedText, key });
+                     donekeys.push(key);
+                   }
+                   return (
+                     <a target="blank" href={decoratedHref} key={key}>
+                       {decoratedText}
+                     </a>
+                   );
+                 }}
+               >
+                 {value.trim()}
+               </Linkify>
+             </div>
+           ) : (
+             <SyntaxHighlighter key={index}>
+               {value.trim()}
+             </SyntaxHighlighter>
+           )
+         )
+       ) : (
+         <h1 className="emojimessage">{message}</h1>
+       )}
+       <MessageFaviconOrVideoRenderer
+         links={links}
+         mine={messages[i].from === user.id}
+       ></MessageFaviconOrVideoRenderer>{messages[i].edited?<p style={{color: messages[i].from === user.id?"lightgray":"gray", fontSize: "10px", float: "right"}}>edited</p>:<></>}
+     </>
+   ) : file ? (
+     <div
+     >
+       {mimetype ? (
+         mimetype.split("/")[0] === "image" ? (
+           <img
+             alt={file}
+             src={`/files/${file}`}
+             style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "20px" }}
+             loading="lazy"
+             onLoad={() => {
+               if (toscroll.current) {
+                 scrolltobottom();
+               }
+             }}
+           ></img>
+         ) : mimetype.split("/")[0] === "video" ? (
+           <video
+             src={`/files/${file}`}
+             style={{ width: "100%", maxHeight: "300px" }}
+             controls
+             playsInline
+             onLoad={() => {
+               if (toscroll.current) {
+                 scrolltobottom();
+               }
+             }}
+           ></video>
+         ) : mimetype.split("/")[0] === "audio" ? (
+           <audio
+             src={`/files/${file}`}
+             style={{ width: "100%", maxHeight: "300px" }}
+             controls
+             playsInline
+             onLoad={() => {
+               if (toscroll.current) {
+                 scrolltobottom();
+               }
+             }}
+           ></audio>
+         ) : (
+           <div
+             onClick={() => {
+               window.open(
+                 `/files/${file}`,
+                 file,
+                 "width=600,height=400"
+               );
+             }}
+             style={{
+               color: "var(--secondary-text-colour)",
+               cursor: "pointer",
+             }}
+           >
+             <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+           </div>
+         )
+       ) : (
+         <div
+           onClick={() => {
+             window.open(`/files/${file}`, file, "width=600,height=400");
+           }}
+           style={{
+             color: "var(--secondary-text-colour)",
+             cursor: "pointer",
+           }}
+         >
+           <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+         </div>
+       )}
+     </div>
+   ) : (
+     <></>
+   )}
+</div></ContextMenuTrigger>
+
+<ContextMenu id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
+   <p style={{textAlign: "center"}}>{new Date(messages[i].time).toLocaleString()}</p>
+ <MenuItem onClick={()=>{navigator.clipboard.writeText(message?message:`${window.location.protocol}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
+? window.location.hostname + ":5000"
+: window.location.host
+}/files/${file}`);}}>
+   <span><FontAwesomeIcon icon={faCopy}/> Copy</span>
+ </MenuItem>
+ {messages[i].from === user.id && messages[i].ID?<>
+ <MenuItem onClick={()=>{
+   sendJsonMessage({type: "delete", id: messages[i].ID})
+   deleteFromID(messages[i].ID)
+ }}>
+   <span><FontAwesomeIcon icon={faTrash}/> Delete</span>
+ </MenuItem>
+ {message?
+ <MenuItem onClick={()=>{
+   setediting(!editing)
+ }}>
+   <span>{editing?<><FontAwesomeIcon icon={faTimes}/> Cancel Edit</>:<><FontAwesomeIcon icon={faPencilAlt}/> Edit</>}</span>
+ </MenuItem>:<></>}</>
+ :<></>}
+</ContextMenu></React.Fragment>
+}
+
 function MessageMaker({
   messages,
   typingdata,
@@ -266,6 +484,7 @@ function MessageMaker({
   chatUpdateID,
   scrolltobottom,
   deleteFromID,
+  editFromID,
   sendJsonMessage
 }: {
   messages: Array<messageWithText | messageWithFile>;
@@ -282,6 +501,7 @@ function MessageMaker({
   chatUpdateID: number | null;
   scrolltobottom: Function;
   deleteFromID: Function;
+  editFromID: Function;
   sendJsonMessage: Function;
 }) {
   const { user } = useData();
@@ -289,21 +509,8 @@ function MessageMaker({
   const output = useMemo(() => {
     console.time("chatrender");
     const output = [];
-    if (canloadmore && loadingmore) {
-      output.push(<Loader key={"loader"}></Loader>);
-    }
     let lastmessage: messageWithText | messageWithFile |null = null
     for (let i = 0; i < messages.length; i++) {
-      const message = messages[i].message;
-      const file = messages[i].file;
-      const mimetype = messages[i].mimetype;
-      const onlyemojis = message? Array.from(message).length > 3 || !onlyContainsEmojis(message): false
-      const links: {
-        decoratedHref: string;
-        decoratedText: string;
-        key: number;
-      }[] = [];
-      const donekeys: number[] = [];
       if (lastmessage && messages[i].from !== lastmessage.from && messages[i].time-lastmessage.time>300000) {
         output.push(<p
         key={lastmessage.time}
@@ -351,142 +558,7 @@ function MessageMaker({
         ))
       }
       output.push(
-        <React.Fragment key={messages[i].ID ? messages[i].ID : messages[i].tempid}>
-         <ContextMenuTrigger id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
-           <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
-          {message ? (
-            <>
-              {onlyemojis ? (
-                message.split("```").map((value, index) =>
-                  index % 2 === 0 ? (
-                    <div key={index}>
-                      <Linkify
-                        componentDecorator={(
-                          decoratedHref,
-                          decoratedText,
-                          key
-                        ) => {
-                          if (!donekeys.includes(key)) {
-                            links.push({ decoratedHref, decoratedText, key });
-                            donekeys.push(key);
-                          }
-                          return (
-                            <a target="blank" href={decoratedHref} key={key}>
-                              {decoratedText}
-                            </a>
-                          );
-                        }}
-                      >
-                        {value.trim()}
-                      </Linkify>
-                    </div>
-                  ) : (
-                    <SyntaxHighlighter key={index}>
-                      {value.trim()}
-                    </SyntaxHighlighter>
-                  )
-                )
-              ) : (
-                <h1 className="emojimessage">{message}</h1>
-              )}
-              <MessageFaviconOrVideoRenderer
-                links={links}
-                mine={messages[i].from === user.id}
-              ></MessageFaviconOrVideoRenderer>
-            </>
-          ) : file ? (
-            <div
-            >
-              {mimetype ? (
-                mimetype.split("/")[0] === "image" ? (
-                  <img
-                    alt={file}
-                    src={`/files/${file}`}
-                    style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "20px" }}
-                    loading="lazy"
-                    onLoad={() => {
-                      if (toscroll.current) {
-                        scrolltobottom();
-                      }
-                    }}
-                  ></img>
-                ) : mimetype.split("/")[0] === "video" ? (
-                  <video
-                    src={`/files/${file}`}
-                    style={{ width: "100%", maxHeight: "300px" }}
-                    controls
-                    playsInline
-                    onLoad={() => {
-                      if (toscroll.current) {
-                        scrolltobottom();
-                      }
-                    }}
-                  ></video>
-                ) : mimetype.split("/")[0] === "audio" ? (
-                  <audio
-                    src={`/files/${file}`}
-                    style={{ width: "100%", maxHeight: "300px" }}
-                    controls
-                    playsInline
-                    onLoad={() => {
-                      if (toscroll.current) {
-                        scrolltobottom();
-                      }
-                    }}
-                  ></audio>
-                ) : (
-                  <div
-                    onClick={() => {
-                      window.open(
-                        `/files/${file}`,
-                        file,
-                        "width=600,height=400"
-                      );
-                    }}
-                    style={{
-                      color: "var(--secondary-text-colour)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
-                  </div>
-                )
-              ) : (
-                <div
-                  onClick={() => {
-                    window.open(`/files/${file}`, file, "width=600,height=400");
-                  }}
-                  style={{
-                    color: "var(--secondary-text-colour)",
-                    cursor: "pointer",
-                  }}
-                >
-                  <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
-                </div>
-              )}
-            </div>
-          ) : (
-            <></>
-          )}
-      </div></ContextMenuTrigger>
- 
- <ContextMenu id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
-          <p style={{textAlign: "center"}}>{new Date(messages[i].time).toLocaleString()}</p>
-        <MenuItem onClick={()=>{navigator.clipboard.writeText(message?message:`${window.location.protocol}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
-      ? window.location.hostname + ":5000"
-      : window.location.host
-    }/files/${file}`);}}>
-          <span><FontAwesomeIcon icon={faCopy}/> Copy</span>
-        </MenuItem>
-        {messages[i].from === user.id && messages[i].ID?
-        <MenuItem onClick={()=>{
-          sendJsonMessage({type: "delete", id: messages[i].ID})
-          deleteFromID(messages[i].ID)
-        }}>
-          <span><FontAwesomeIcon icon={faTrash}/> Delete</span>
-        </MenuItem>
-        :<></>}
- </ContextMenu></React.Fragment>)
+        <Message messages={messages} deleteFromID={deleteFromID} i={i} user={user} toscroll={toscroll} scrolltobottom={scrolltobottom} sendJsonMessage={sendJsonMessage} editFromID={editFromID}></Message>)
       lastmessage = messages[i]
     }
     console.timeEnd("chatrender")
@@ -538,7 +610,10 @@ function MessageMaker({
         }}
       >
         {messages.length > 0 ? (
-          output
+          <>
+         {(canloadmore && loadingmore)?<Loader key={"loader"}></Loader>: <></>}
+          {output}
+          </>
         ) : (
           <p style={{ color: "gray", textAlign: "center" }}>
             this chat is empty... say hi!
@@ -726,6 +801,7 @@ function ChatPage() {
             file: resp.id,
             time,
             tempid,
+            edited: false
           })
         );
         notifications.removeNotification(id);
@@ -804,10 +880,19 @@ function ChatPage() {
   }
   function deleteFromID(id: string) {
     for (let i=0; i<=chats.length; i++) {
-      console.log(chats[i])
       if (chats[i].ID == id) {
         chats.splice(i, 1)
-        console.log(chats[i],chats)
+        setchats(chats)
+        setChatUpdateID(Math.random())
+        break
+      }
+    }
+  }
+  function editFromID(id: string, message: string) {
+    for (let i=0; i<=chats.length; i++) {
+      if (chats[i].ID == id) {
+        chats[i].message = message
+        chats[i].edited = true
         setchats(chats)
         setChatUpdateID(Math.random())
         break
@@ -901,7 +986,15 @@ function ChatPage() {
           }
         }
       } else if (lastJsonMessage.type === "delete") {
+        if (lastJsonMessage.from !== user.id && ReceiveSound) {
+          playSound("/sounds/delete.mp3")
+        }
         deleteFromID(lastJsonMessage.id)
+      } else if (lastJsonMessage.type === "edit") {
+        if (lastJsonMessage.from !== user.id && ReceiveSound) {
+          playSound("/sounds/edit.mp3")
+        }
+        editFromID(lastJsonMessage.id, lastJsonMessage.message)
       } else if (lastJsonMessage.type === "start") {
         setcanloadmore(false);
         isLoadMore.current = true;
@@ -962,9 +1055,9 @@ function ChatPage() {
         if (lastJsonMessage.messages.length > 0) {
           const lastheight = document.documentElement.offsetHeight;
           setTimeout(() => {
-            document.documentElement.scrollTop =
+              document.documentElement.scrollTop =
               document.documentElement.scrollHeight - lastheight;
-            isLoadMore.current = false;
+              isLoadMore.current = false;
 
             setloadingmore(false);
           }, 0);
@@ -1101,6 +1194,7 @@ function ChatPage() {
           />
           <MessageMaker
             deleteFromID={deleteFromID}
+            editFromID={editFromID}
             scrolltobottom={scrolltobottom}
             scrollref={scrollerref}
             messages={loadingchatmessages ? localchats[chattingto] : chats}
@@ -1191,6 +1285,7 @@ function ChatPage() {
                           message,
                           time,
                           tempid,
+                          edited: false
                         })
                     );
                     setTimeout(scrolltobottom, 0);
@@ -1295,7 +1390,7 @@ function ChatPage() {
                     textAlign: "center",
                   }}
                   type="submit"
-                  onClick={(e: any) => {
+                  onClick={() => {
                     inputref.current.focus();
                   }}
                 >

@@ -398,11 +398,13 @@ function updateFromAccountID(accountID: string) {
         WHERE (
                 accountID = :accountID
                 and toAccountID = :toUser
+                and deleted=false
             )
             or (
                 accountID = :toUser
                 and toAccountID = :accountID
-            ) and deleted=false ORDER  BY time DESC) LIMIT :max`,
+                and deleted=false
+            ) ORDER  BY time DESC) LIMIT :max`,
                 {
                   ":accountID": accountdata.accountID,
                   ":toUser": msg.to,
@@ -495,7 +497,7 @@ function updateFromAccountID(accountID: string) {
             const id = msg.id;
             const isowned = Boolean(await db.get("SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID}))
             if (isowned) {
-              db.run("DELETE FROM friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID})
+              db.run("UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID})
               if (
                 messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
@@ -506,7 +508,8 @@ function updateFromAccountID(accountID: string) {
                   messagefunctions[to][accountdata.accountID][ws].ws.send(
                     JSON.stringify({
                       type: "delete",
-                      id
+                      id,
+                      from: accountdata.accountID
                     })
                   );
                 }
@@ -525,7 +528,54 @@ function updateFromAccountID(accountID: string) {
                     messagefunctions[accountdata.accountID][to][ws].ws.send(
                       JSON.stringify({
                         type: "delete",
-                        id
+                        id,
+                        from: accountdata.accountID
+                      })
+                    );
+                  }
+                }
+              }
+            }
+          } else if (msg.type == "edit") {
+            const id = msg.id;
+            const message = String(msg.message)
+            const isowned = Boolean(await db.get("SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID}))
+            if (isowned) {
+              db.run("UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID, ":message": message})
+              if (
+                messagefunctions[to] &&
+                messagefunctions[to][accountdata.accountID]
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[to][accountdata.accountID]
+                )) {
+                  messagefunctions[to][accountdata.accountID][ws].ws.send(
+                    JSON.stringify({
+                      type: "edit",
+                      id,
+                      message,
+                      from: accountdata.accountID
+                    })
+                  );
+                }
+              }
+              if (
+                messagefunctions[accountdata.accountID] &&
+                messagefunctions[accountdata.accountID][to]
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[accountdata.accountID][to]
+                )) {
+                  if (
+                    messagefunctions[accountdata.accountID][to][ws].connectionID !==
+                    connectionID
+                  ) {
+                    messagefunctions[accountdata.accountID][to][ws].ws.send(
+                      JSON.stringify({
+                        type: "edit",
+                        id,
+                        message,
+                        from: accountdata.accountID
                       })
                     );
                   }
@@ -541,11 +591,13 @@ function updateFromAccountID(accountID: string) {
         WHERE (
                 accountID = :accountID
                 and toAccountID = :toUser
+                and deleted=false
             )
             or (
                 accountID = :toUser
                 and toAccountID = :accountID
-            ) and deleted=false ORDER  BY time DESC) LIMIT :start, :max`,
+                and deleted=false
+            ) ORDER  BY time DESC) LIMIT :start, :max`,
                 {
                   ":accountID": accountdata.accountID,
                   ":toUser": to,
