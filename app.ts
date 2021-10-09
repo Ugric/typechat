@@ -124,7 +124,7 @@ function updateFromAccountID(accountID: string) {
     const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accoutID })
     if (discordlink) {
       const discordAccount = client.users.cache.find(user => user.id == discordlink.discordID)
-      await discordAccount.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("New Notification 🎉").addField(data.title, data.message).setURL(new URL(data.to, "https://tchat.my.to/").href).setThumbnail("https://tchat.my.to/logo.png")]})
+      await discordAccount.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("New Notification 🎉").addField(data.title, data.message).setURL(new URL(data.to, "https://tchat.us.to/").href).setThumbnail("https://tchat.us.to/logo.png")]})
     }
   }
   const sendNotification = async (
@@ -1337,7 +1337,7 @@ WHERE friends.accountID == :accountID
                   await memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
                   await memberonguild.roles.add(roleID, "linked").catch(()=>{})
                   await memberonguild.roles.remove(unlinkedroleID, "linked").catch(()=>{})
-                  discordAccount.dmChannel.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("Linked 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.my.to/files/${accountdata.profilePic}`)]})
+                  discordAccount.dmChannel.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("Linked 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
                   return res.send({linked: true})
                 }else{
                   return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
@@ -1494,7 +1494,7 @@ WHERE friends.accountID == :accountID
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
               ":toAccountID": accountID,
-              ":message": "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.my.to/blast",
+              ":message": "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.us.to/blast",
               ":time": time,
             }
           )
@@ -1539,7 +1539,7 @@ WHERE friends.accountID == :accountID
       }
     });
     if (!(process.env.NODE_ENV === "development")) {
-      app.use(forceDomain({ hostname: "tchat.my.to" }));
+      app.use(forceDomain({ hostname: "tchat.us.to" }));
     }
     app.get("/logo.png", (_, res) => res.sendFile(path.join(__dirname, "logo.png")))
     app.get("/invite", (_, res) => res.redirect(discordserver))
