@@ -1,0 +1,16 @@
+@keyframes slideinimage {
+    10% {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0px);
+    }
+}
+
+.slideinimage {
+    opacity: 0;
+    animation: slideinimage 2s ease-in-out;
+    animation-fill-mode: forwards;
+}
