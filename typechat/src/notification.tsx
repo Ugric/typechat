@@ -4,8 +4,6 @@ import useWebSocket from "react-use-websocket";
 import { useData } from "./hooks/datahook";
 import playSound from "./playsound";
 import useWindowFocus from "use-window-focus";
-import isElectron from "is-electron";
-import notify from "./notifier";
 
 function NotificationComponent() {
   const { loggedin, NotificationAPI } = useData();
