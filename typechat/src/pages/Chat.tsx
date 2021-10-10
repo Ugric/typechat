@@ -184,7 +184,7 @@ function MetaPage({url, decoratedText, decoratedHref, mine}: {url: string, decor
         src={`https://www.google.com/s2/favicons?${new URLSearchParams(
           { size: "24", domain: urldata.hostname }
         )}`}
-      />{data.title?data.title:decoratedText}</a><p>{data.description}</p>{data.image.length>0?<img src={new URL(data.image, url).href} style={{width: "100%", borderRadius: "10px"}}></img>:<></>}</div> :<div
+      />{data.title?data.title:decoratedText}</a><p>{data.description}</p>{data.image.length>0?<img src={new URL(data.image, url).href} style={{width: "100%", borderRadius: "10px"}} alt={data.title?data.title:decoratedText}></img>:<></>}</div> :<div
   style={{
     padding: "1rem",
     border: `solid 1px ${
@@ -258,8 +258,9 @@ function MessageFaviconOrVideoRenderer({
       )}</>
 }
 
-function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, deleteFromID, editFromID}: {
+function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, deleteFromID, editFromID, lastmessage}: {
   messages: Array<messageWithText | messageWithFile>;
+  lastmessage: messageWithText | messageWithFile | null;
   i: number;
   toscroll: any;
   user: any;
@@ -283,9 +284,17 @@ function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, 
   const key = useRef(null);
   const submitref = useRef<any>();
   const messageref = useRef(message)
+  console.log(lastmessage && messages[i].time-lastmessage.time)
   return <>
+  {!messages[i+1] && message? 
+          <KeyboardEventHandler
+            handleKeys={["up"]}
+            onKeyEvent={() => {
+              setediting(true)
+            }}
+          />:<></>}
   <ContextMenuTrigger id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
-    <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${messages[i].from === user.id ? "mine" : "yours"}`}>
+    <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from || (messages[i+1] && messages[i+1].time-messages[i].time>300000)?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${(messages[i].from === user.id) ? "mine" : "yours"}`}>
     {message ? (editing?<><form onSubmit={(e: any)=>{
      e.preventDefault()
      setediting(false)
@@ -511,9 +520,9 @@ function MessageMaker({
     const output = [];
     let lastmessage: messageWithText | messageWithFile |null = null
     for (let i = 0; i < messages.length; i++) {
-      if (lastmessage && messages[i].from !== lastmessage.from && messages[i].time-lastmessage.time>300000) {
+      if ((!lastmessage && !canloadmore) || (lastmessage && messages[i].time-lastmessage.time>300000)) {
         output.push(<p
-        key={lastmessage.time}
+        key={messages[i].time}
                 style={{
                   margin: "0",
                   color: `lightgray`,
@@ -521,7 +530,7 @@ function MessageMaker({
                   textAlign: "center",
                 }}
               >
-                {new Date(lastmessage.time).toLocaleString()}
+                {new Date(messages[i].time).toLocaleString()}
               </p>)
       }
       if (!lastmessage || messages[i].from !== lastmessage.from) {
@@ -558,7 +567,7 @@ function MessageMaker({
         ))
       }
       output.push(
-        <Message key={messages[i].ID ? messages[i].ID : messages[i].tempid} messages={messages} deleteFromID={deleteFromID} i={i} user={user} toscroll={toscroll} scrolltobottom={scrolltobottom} sendJsonMessage={sendJsonMessage} editFromID={editFromID}></Message>)
+        <Message key={messages[i].ID ? messages[i].ID : messages[i].tempid} messages={messages} lastmessage={lastmessage} deleteFromID={deleteFromID} i={i} user={user} toscroll={toscroll} scrolltobottom={scrolltobottom} sendJsonMessage={sendJsonMessage} editFromID={editFromID}></Message>)
       lastmessage = messages[i]
     }
     console.timeEnd("chatrender")
@@ -880,7 +889,7 @@ function ChatPage() {
   }
   function deleteFromID(id: string) {
     for (let i=0; i<=chats.length; i++) {
-      if (chats[i].ID == id) {
+      if (chats[i].ID === id) {
         chats.splice(i, 1)
         setchats(chats)
         setChatUpdateID(Math.random())
@@ -890,7 +899,7 @@ function ChatPage() {
   }
   function editFromID(id: string, message: string) {
     for (let i=0; i<=chats.length; i++) {
-      if (chats[i].ID == id) {
+      if (chats[i].ID === id) {
         chats[i].message = message
         chats[i].edited = true
         setchats(chats)
