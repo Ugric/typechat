@@ -87,7 +87,7 @@ function ChangePassword() {
           />
             <input
               type="submit"
-              value="Request New Password"
+              value="Change Password"
               style={{
                 padding: "1rem",
                 width: "100%",
