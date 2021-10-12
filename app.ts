@@ -12,14 +12,13 @@ const snooze = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
 import { generate } from "randomstring";
 import WebSocket = require('ws');
-import { NotificationEmail, VerificationEmail } from "./emailer";
+import { NotificationEmail, PasswordEmail, VerificationEmail } from "./emailer";
 import autoaccountdetails from "./autoaccountdetails.json";
 import EmailValidation from 'emailvalid';
 import {client, roleID, serverID, unlinkedroleID} from "./typechatbot";
 import { MessageEmbed } from "discord.js";
 import urlMetadata from 'url-metadata';
 import greenlockexpress from "greenlock-express";
-require("./typechatbot")
 console.time("express boot");
 
 const tempmetadata: {[key: string]: urlMetadata.Result} = {}
@@ -29,6 +28,12 @@ const ev = new EmailValidation()
 const discordserver = "https://discord.gg/R6FnAaX8rC"
 
 interface linkurls {linkID:{[key: string]: string}, discordID: {[key: string]: string}};
+
+interface updatepassword {
+  [key: string]: string
+}
+
+const updatepassword:updatepassword = {}
 
 const linkurls: linkurls = {linkID:{}, discordID: {}}
 let database: {db?:Database<sqlite3.Database, sqlite3.Statement>, linkurls: linkurls} = {linkurls}
@@ -1185,6 +1190,36 @@ WHERE friends.accountID == :accountID
         });
       }
     });
+    app.post("/api/requestnewpassword", async (req, res) => {
+      const requestaccount = await db.get("SELECT * FROM accounts WHERE email=:email", {":email": req.body.email})
+      if (requestaccount) {
+        const passwordUpdateID = generate(30)
+        updatepassword[passwordUpdateID] = requestaccount.accountID
+        PasswordEmail(req.body.email, passwordUpdateID).catch(()=>{})
+        setTimeout(()=>{if (updatepassword[passwordUpdateID]) delete updatepassword[passwordUpdateID]}, 3600000)
+      }
+      return res.send(true)
+    })
+    app.post("/api/changepassword", async (req, res) => {
+      const accountdata = await db.get("SELECT * FROM accounts WHERE accountID=:accountID", {":accountID": updatepassword[req.body.updateID]})
+      if (accountdata) {
+        const salt = generate(150);
+        console.log(req.body.pass)
+        const password = hasher(req.body.pass + salt);
+        updateFromAccountID(accountdata.accountID)
+        await Promise.all([
+          db.run("UPDATE accounts SET password=:password, salt=:salt WHERE accountID=:accountID", {":salt": salt, ":password": password, ":accountID": updatepassword[req.body.updateID]}),
+          db.run(
+          `DELETE FROM tokens WHERE accountID = :accountID`,
+          {
+            ":accountID": accountdata.accountID,
+          }
+        )])
+        delete updatepassword[req.body.updateID]
+        return res.send(true)
+      }
+      return res.send(false)
+    })
     app.get("/api/getNotificationsOn", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
