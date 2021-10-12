@@ -36,6 +36,7 @@ import Blast from "./pages/blast";
 import Verify from "./pages/Verify";
 import LinkDiscord from "./pages/LinkDiscord";
 import Drive from "./pages/Drive";
+import RequestNewPassword from "./pages/requestNewPassword";
 
 function App() {
   const { data, error, loading, reload } = useApi<any>("/api/userdata");
@@ -147,6 +148,13 @@ function App() {
                 <Route path="/drive/:id" exact>
                   <Drive.Image />
                 </Route>
+                <Route path="/requestNewPassword" exact>
+                  <RequestNewPassword.RequestNewPassword />
+                </Route>
+                <Route path="/updatepassword/:id" exact>
+                  <RequestNewPassword.ChangePassword />
+                </Route>
+
                 <Route path="/user/settings" exact>
                   <UserSettings />
                 </Route>

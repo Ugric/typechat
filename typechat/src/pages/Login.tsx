@@ -169,6 +169,17 @@ function Login() {
               </Link>
             </span>
           </p>
+          <p style={{ margin: "1rem 0", color: "white" }}>
+            Forgot your password?{" "}
+            <span>
+              <Link
+                to={"/requestNewPassword"}
+                style={{ color: "var(--secondary-text-colour)" }}
+              >
+                Change it
+              </Link>
+            </span>
+          </p>
         </RouterForm>
       </div>
     </>

@@ -1,4 +1,4 @@
-import { Link, Redirect } from "react-router-dom";
+import { Redirect } from "react-router-dom";
 import { useData } from "../hooks/datahook";
 import appPage from "./images/app page.png";
 import "./css/home.css"
@@ -16,7 +16,7 @@ function Home() {
         </p>
         </div>
         <div style={{width: "100%", backgroundColor: "var(--main-bg-colour)", height: "1px"}}></div>
-        <div style={{textAlign: "center", margin: "1rem", width: "calc(100vw - 2rem)", overflow: "hidden"}}><h3>Add to your homepage to get the best mobile experience!</h3><img className="slideinimage" src={appPage} style={{width: "100%", maxWidth: "350px"}}></img></div>
+        <div style={{textAlign: "center", margin: "1rem", width: "calc(100vw - 2rem)", overflow: "hidden"}}><h3>Add to your homepage to get the best mobile experience!</h3><img className="slideinimage" alt="phone app" src={appPage} style={{width: "100%", maxWidth: "350px"}}></img></div>
       </>
     );
   }
