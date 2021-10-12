@@ -286,13 +286,6 @@ function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, 
   const messageref = useRef(message)
   console.log(lastmessage && messages[i].time-lastmessage.time)
   return <>
-  {!messages[i+1] && message? 
-          <KeyboardEventHandler
-            handleKeys={["up"]}
-            onKeyEvent={() => {
-              setediting(true)
-            }}
-          />:<></>}
   <ContextMenuTrigger id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
     <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from || (messages[i+1] && messages[i+1].time-messages[i].time>300000)?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${(messages[i].from === user.id) ? "mine" : "yours"}`}>
     {message ? (editing?<><form onSubmit={(e: any)=>{
