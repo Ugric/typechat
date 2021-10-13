@@ -1,4 +1,5 @@
 import blastIcon from "./images/Blast icon.svg";
+import fuelIcon from "./images/fuel-pump.svg";
 import meteorites from "./images/meteorites.svg";
 import "./css/blast.css"
 import { useState } from "react";
@@ -39,7 +40,7 @@ function Satellite({ file }: { file: string }) {
 }
 
 function Blast() {
-    const { price, sale } = { price: 100, sale: 0.10 }
+    const { price, sale } = { price: 100, sale: 0.05 }
     const { width, height } = useWindowSize()
     const [{ xalien, yalien }] = useState({ xalien: 15 + (Math.random() * 30) + "vw", yalien: 15 + (Math.random() * 30) + "vh" })
     return <div>
@@ -73,7 +74,7 @@ function Blast() {
                 }}
             >
                 <h1 style={{ textAlign: "center" }}>Blast <img src={blastIcon} height="35px" alt="🚀" /></h1>
-                <h3>GBP £{((price * (1 - sale)) / 100).toFixed(2)} / month</h3>
+                <h3>GBP £{((price * (1 - sale)) / 100).toFixed(2)} / Rocket Fuel <img src={fuelIcon} height="35px" alt="⛽" /></h3>
                 {sale ? <h4>{sale * 100}% off <img src={meteorites} height="35px" alt="☄" /></h4> : <></>}
 
                 <div style={{
@@ -88,8 +89,8 @@ function Blast() {
                         margin: "1rem"
                     }}>
                         <li>unlimied sized messages</li>
-                        <li>Bigger monthly upload limit (1 GB)</li>
-                        <li>The Blast Badge (stays after subscription ends)</li>
+                        <li>Bigger monthly upload limit (1 GB / Rocket Fuel <img src={fuelIcon} height="15px" alt="⛽" /> set that month)</li>
+                        <li>Blast Profile Badge (stays forever!)</li>
                         <li>Custom backgrounds</li>
                         <li>and much more!</li>
                     </ul>
@@ -101,7 +102,8 @@ function Blast() {
                     padding: "1rem",
                     margin: "1rem"
                 }}><h5>Ready to go to space? <img src={blastIcon} height="20px" alt="🚀" /></h5>
-                    <button className="subbutton"><img src={blastIcon} height="20px" alt="🚀" /> Subscribe</button>
+                    <button className="subbutton" disabled style={{opacity: 0.25, cursor: "not-allowed"}}>Buy Rocket Fuel <img src={fuelIcon} height="25px" alt="⛽" /></button>
+                    <p style={{textAlign: "center"}}>Sorry, Rocket Fuel is unable to be bought at the moment. When TypeChat leaves beta, all beta testing account will get 1 free Rocket Fuel!</p>
                 </div>
             </div>
         </div>

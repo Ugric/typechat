@@ -19,8 +19,6 @@ function ChangePassword() {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const [loading, setloading] = useState(false);
-  const location = useLocation()
-  const query: { [key: string]: string | string[] } = parse(location.search.slice(1))
   return (
     <>
       <div style={{ display: loading ? "" : "none" }}>
@@ -217,4 +215,6 @@ function RequestNewPassword() {
   );
 }
 
-export default {RequestNewPassword, ChangePassword};
+const exports = {RequestNewPassword, ChangePassword}
+
+export default exports;
