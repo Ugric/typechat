@@ -15,16 +15,18 @@ body {
   user-select: none;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+html {
+  background-color: var(--dark-mode) !important;
 }
-input:focus,
-select:focus,
-textarea:focus,
-button:focus {
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+input:focus, select:focus, textarea:focus, button:focus {
   outline: none;
 }
+
 ::placeholder {
   color: white;
   opacity: 1;
@@ -38,10 +40,10 @@ button:focus {
   color: white;
 }
 
-p,
-pre {
+p, pre {
   margin: 0 !important;
 }
+
 .noselect {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -54,11 +56,13 @@ pre {
 .titlebar {
   position: fixed !important;
 }
+
 .container-after-titlebar {
   inset: 0 !important;
   position: static !important;
-  overflow:inherit !important;
+  overflow: inherit !important;
 }
+
 .window-title {
   opacity: 0;
 }

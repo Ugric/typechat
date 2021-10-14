@@ -1085,12 +1085,12 @@ WHERE friends.toAccountID == :accountID
     FROM friends
     WHERE toAccountID == :accountID
 )
-SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage
+SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage, (SELECT time FROM friendsChatMessages WHERE (friendsChatMessages.accountID == :accountID and friendsChatMessages.toAccountID == friends.toAccountID) LIMIT 1) as time
 FROM friends 
 JOIN accounts ON friends.toAccountID=accounts.accountID
 WHERE friends.accountID == :accountID
     and toAccountID in friendrequestlist ORDER BY
-    username ASC`,
+    (SELECT time FROM friendsChatMessages WHERE (friendsChatMessages.accountID == :accountID and friendsChatMessages.toAccountID == friends.toAccountID) or (friendsChatMessages.accountID == friends.toAccountID and friendsChatMessages.toAccountID == :accountID) ORDER BY time DESC LIMIT 1) DESC`,
           { ":accountID": accountdata.accountID }
         );
         res.send({
@@ -1204,7 +1204,6 @@ WHERE friends.accountID == :accountID
       const accountdata = await db.get("SELECT * FROM accounts WHERE accountID=:accountID", {":accountID": updatepassword[req.body.updateID]})
       if (accountdata) {
         const salt = generate(150);
-        console.log(req.body.pass)
         const password = hasher(req.body.pass + salt);
         updateFromAccountID(accountdata.accountID)
         await Promise.all([

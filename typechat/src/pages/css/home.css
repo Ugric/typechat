@@ -1,16 +1,62 @@
-@keyframes slideinimage {
-    10% {
+@keyframes slideinright {
+    0% {
         opacity: 0;
+        height: unset;
         transform: translateX(100px);
     }
     100% {
         opacity: 1;
+        height: unset;
         transform: translateX(0px);
     }
 }
 
-.slideinimage {
+.slideinright {
     opacity: 0;
-    animation: slideinimage 2s ease-in-out;
+    height: 0px;
+    animation: slideinright ease-in-out;
+    animation-fill-mode: forwards;
+}
+
+@keyframes slideinleft {
+    0% {
+        opacity: 0;
+        height: unset;
+        transform: translateX(-100px);
+    }
+    100% {
+        opacity: 1;
+        height: unset;
+        transform: translateX(0px);
+    }
+}
+
+.slideinleft {
+    opacity: 0;
+    height: 0px;
+    animation: slideinleft ease-in-out;
+    animation-fill-mode: forwards;
+}
+
+@keyframes logindraw {
+    0% {
+        opacity: 0;
+        height: 0px;
+    }
+    100% {
+        opacity: 1;
+        height: 156px;
+    }
+}
+
+.logindraw {
+    overflow: hidden;
+    opacity: 0;
+    width: 100%;
+    max-width: 350px;
+    margin: auto;
+    border-radius: 10px;
+    height: 0px;
+    animation: logindraw ease-in-out;
     animation-fill-mode: forwards;
 }
