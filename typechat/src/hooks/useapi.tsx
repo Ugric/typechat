@@ -39,6 +39,6 @@ function useApi<T>(url: string | null): userApiInterface<T> {
   }, [url, request]);
 
   return { loading, data, setData, error, reload };
-};
+}
 
 export default useApi;

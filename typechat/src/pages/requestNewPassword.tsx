@@ -7,6 +7,7 @@ import { RouterForm } from "./RouterForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faKey } from "@fortawesome/free-solid-svg-icons";
 import { parse } from "querystring";
+import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 
 function validateEmail(email: string) {
   const re =
@@ -18,6 +19,7 @@ function ChangePassword() {
   const [error, seterror] = useState("");
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
+  const [recapToken, setRecapToken] = useState<null | string>(null);
   const [loading, setloading] = useState(false);
   return (
     <>
@@ -31,7 +33,11 @@ function ChangePassword() {
           display: !loading ? "" : "none",
         }}
       >
-        <img src={logo} alt="logo" style={{ width: "150px", borderRadius: "10px" }}></img>
+        <img
+          src={logo}
+          alt="logo"
+          style={{ width: "150px", borderRadius: "10px" }}
+        ></img>
         <h1
           style={{
             fontSize: "20px",
@@ -43,46 +49,64 @@ function ChangePassword() {
         <div>
           <RouterForm
             action={"/api/changepassword"}
-            beforecallback={() => {setloading(true); return true}}
-            appendtoformdata={(fd: FormData)=>{fd.append("updateID", id); return fd}}
+            beforecallback={() => {
+              if (recapToken) {
+                setloading(true);
+                return true;
+              } else {
+                seterror("waiting for recaptcha token... try again later.");
+              }
+            }}
+            appendtoformdata={(fd) => {
+              fd.append("updateID", id);
+              if (recapToken) fd.append("g-recaptcha-response", recapToken);
+              return fd;
+            }}
             style={{ width: "fit-content", margin: "auto", maxWidth: "300px" }}
             callback={(resp: boolean) => {
-              setloading(false)
+              setloading(false);
               if (resp) {
-              history.push("/login")
+                history.push("/login");
               } else {
-                seterror("failed to change password, maybe the update password key has reset.")
+                seterror(
+                  "failed to change password, maybe the update password key has reset."
+                );
               }
             }}
           >
+            <GoogleReCaptcha
+              onVerify={(token) => {
+                setRecapToken(token);
+              }}
+            />
             <p
-            style={{
-              textAlign: "end",
-              margin: "0",
-            }}
-          >
-            Password
-          </p>
-          <input
-            type="password"
-            placeholder="Password"
-            name="pass"
-            style={{
-              background: "transparent",
-              borderTop: "none",
-              borderRight: "none",
-              borderBottom: "1px solid white",
-              borderLeft: "none",
-              borderImage: "initial",
-              marginBottom: "1rem",
-              width: "100%",
-              paddingBottom: "0.5rem",
-              fontFamily: "'Source Sans Pro', sans-serif",
-              fontSize: "17px",
-              color: "white",
-              borderRadius: "0px",
-            }}
-          />
+              style={{
+                textAlign: "end",
+                margin: "0",
+              }}
+            >
+              Password
+            </p>
+            <input
+              type="password"
+              placeholder="Password"
+              name="pass"
+              style={{
+                background: "transparent",
+                borderTop: "none",
+                borderRight: "none",
+                borderBottom: "1px solid white",
+                borderLeft: "none",
+                borderImage: "initial",
+                marginBottom: "1rem",
+                width: "100%",
+                paddingBottom: "0.5rem",
+                fontFamily: "'Source Sans Pro', sans-serif",
+                fontSize: "17px",
+                color: "white",
+                borderRadius: "0px",
+              }}
+            />
             <input
               type="submit"
               value="Change Password"
@@ -112,9 +136,16 @@ function RequestNewPassword() {
   const [error, seterror] = useState("");
   const history = useHistory();
   const [loading, setloading] = useState(false);
-  const location = useLocation()
-  const query: { [key: string]: string | string[] } = parse(location.search.slice(1))
-  const redirect = query.to ? Array.isArray(query.to) ? query.to[0] : query.to : "/"
+  const location = useLocation();
+  const query: { [key: string]: string | string[] } = parse(
+    location.search.slice(1)
+  );
+  const [recapToken, setRecapToken] = useState<null | string>(null);
+  const redirect = query.to
+    ? Array.isArray(query.to)
+      ? query.to[0]
+      : query.to
+    : "/";
   if (loggedin) {
     history.push(redirect);
     return <></>;
@@ -131,7 +162,11 @@ function RequestNewPassword() {
           display: !loading ? "" : "none",
         }}
       >
-        <img src={logo} alt="logo" style={{ width: "150px", borderRadius: "10px" }}></img>
+        <img
+          src={logo}
+          alt="logo"
+          style={{ width: "150px", borderRadius: "10px" }}
+        ></img>
         <h1
           style={{
             fontSize: "20px",
@@ -144,24 +179,35 @@ function RequestNewPassword() {
           <RouterForm
             action={"/api/requestnewpassword"}
             beforecallback={(e: any) => {
-              if (
-                e.target[0].value !== ""
-              ) { 
-                if (validateEmail(e.target[0].value)) {
-                  setloading(true);
-                  return true;
+              if (recapToken) {
+                if (e.target[0].value !== "") {
+                  if (validateEmail(e.target[0].value)) {
+                    setloading(true);
+                    return true;
+                  } else {
+                    seterror("input a valid email!");
+                  }
                 } else {
-                  seterror("input a valid email!");
+                  seterror("input a profile, username, email and password!");
                 }
               } else {
-                seterror("input a profile, username, email and password!");
+                seterror("waiting for recaptcha token... try again later.");
               }
+            }}
+            appendtoformdata={(fd) => {
+              if (recapToken) fd.append("g-recaptcha-response", recapToken);
+              return fd;
             }}
             style={{ width: "fit-content", margin: "auto", maxWidth: "300px" }}
             callback={() => {
-              history.push("/login")
+              history.push("/login");
             }}
           >
+            <GoogleReCaptcha
+              onVerify={(token) => {
+                setRecapToken(token);
+              }}
+            />
             <p
               style={{
                 textAlign: "end",
@@ -215,6 +261,6 @@ function RequestNewPassword() {
   );
 }
 
-const exports = {RequestNewPassword, ChangePassword}
+const exports = { RequestNewPassword, ChangePassword };
 
 export default exports;

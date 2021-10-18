@@ -17,9 +17,7 @@ import {
   faUserCog,
   faPhotoVideo,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faDiscord
-} from "@fortawesome/free-brands-svg-icons";
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import useComponentSize from "@rehooks/component-size";
@@ -129,7 +127,7 @@ const PageNav = () => {
             onPointerUp={() => {
               playSound("/sounds/click1.mp3");
             }}
-            onClick={()=> window.open("/invite", "blank_")}
+            onClick={() => window.open("/invite", "blank_")}
           >
             <FontAwesomeIcon icon={faDiscord} />
           </Nav.Link>

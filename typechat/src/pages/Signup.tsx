@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAddressCard } from "@fortawesome/free-solid-svg-icons";
 import Avatar from "react-avatar-edit";
 import { parse } from "querystring";
+import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 
 function validateEmail(email: string) {
   const re =
@@ -21,10 +22,17 @@ function Signup() {
   const [error, seterror] = useState("");
   const [profile, setprofile] = useState<Blob | null>(null);
   const history = useHistory();
+  const [recapToken, setRecapToken] = useState<null | string>(null);
   const [loading, setloading] = useState(false);
-  const location = useLocation()
-  const query: { [key: string]: string | string[] } = parse(location.search.slice(1))
-  const redirect = query.to ? Array.isArray(query.to) ? query.to[0] : query.to : "/"
+  const location = useLocation();
+  const query: { [key: string]: string | string[] } = parse(
+    location.search.slice(1)
+  );
+  const redirect = query.to
+    ? Array.isArray(query.to)
+      ? query.to[0]
+      : query.to
+    : "/";
   if (loggedin) {
     history.push(redirect);
     return <></>;
@@ -41,7 +49,11 @@ function Signup() {
           display: !loading ? "" : "none",
         }}
       >
-        <img src={logo} alt="logo" style={{ width: "150px", borderRadius: "10px" }}></img>
+        <img
+          src={logo}
+          alt="logo"
+          style={{ width: "150px", borderRadius: "10px" }}
+        ></img>
         <h1
           style={{
             fontSize: "20px",
@@ -54,23 +66,28 @@ function Signup() {
           <RouterForm
             action={"/signup"}
             beforecallback={(e: any) => {
-              if (
-                e.target[0].value !== "" &&
-                e.target[1].value !== "" &&
-                e.target[2].value !== "" &&
-                profile
-              ) {
-                if (validateEmail(e.target[0].value)) {
-                  setloading(true);
-                  return true;
+              if (recapToken) {
+                if (
+                  e.target[0].value !== "" &&
+                  e.target[1].value !== "" &&
+                  e.target[2].value !== "" &&
+                  profile
+                ) {
+                  if (validateEmail(e.target[0].value)) {
+                    setloading(true);
+                    return true;
+                  } else {
+                    seterror("input a valid email!");
+                  }
                 } else {
-                  seterror("input a valid email!");
+                  seterror("input a profile, username, email and password!");
                 }
               } else {
-                seterror("input a profile, username, email and password!");
+                seterror("waiting for recaptcha token... try again later.");
               }
             }}
             appendtoformdata={(fd: FormData) => {
+              if (recapToken) fd.append("g-recaptcha-response", recapToken);
               fd.append("profile", profile ? profile : "");
               return fd;
             }}
@@ -88,7 +105,11 @@ function Signup() {
               }
             }}
           >
-            {" "}
+            <GoogleReCaptcha
+              onVerify={(token) => {
+                setRecapToken(token);
+              }}
+            />{" "}
             <p
               style={{
                 textAlign: "end",
