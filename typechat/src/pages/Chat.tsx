@@ -116,107 +116,139 @@ const videoSites = [
   "www.vimeo.com",
 ];
 
-function MetaPage({url, decoratedText, decoratedHref, mine}: {url: string, decoratedText: string, decoratedHref: string, mine: boolean}) {
+function MetaPage({
+  url,
+  decoratedText,
+  decoratedHref,
+  mine,
+}: {
+  url: string;
+  decoratedText: string;
+  decoratedHref: string;
+  mine: boolean;
+}) {
   const urldata = new URL(decoratedHref);
-  const {data} = useApi<{
-    'url': string,
-    'canonical': string,
-    'title': string,
-    'image': string,
-    'author': string,
-    'description': string,
-    'keywords': string,
-    'source': string,
-    'price': string,
-    'priceCurrency': string,
-    'availability': string,
-    'robots': string,
-    'og:url': string,
-    'og:locale': string,
-    'og:locale:alternate': string,
-    'og:title': string,
-    'og:type': string,
-    'og:description': string,
-    'og:determiner': string,
-    'og:site_name': string,
-    'og:image': string,
-    'og:image:secure_url': string,
-    'og:image:type': string,
-    'og:image:width': string,
-    'og:image:height': string,
-    'twitter:title': string,
-    'twitter:image': string,
-    'twitter:image:alt': string,
-    'twitter:card': string,
-    'twitter:site': string,
-    'twitter:site:id': string,
-    'twitter:account_id': string,
-    'twitter:creator': string,
-    'twitter:creator:id': string,
-    'twitter:player': string,
-    'twitter:player:width': string,
-    'twitter:player:height': string,
-    'twitter:player:stream': string,
-    'jsonld': {}
-}>("/api/getmetadata?"+new URLSearchParams({url}))
-  return data? <div
-  style={{
-    padding: "1rem",
-    border: `solid 1px ${
-      mine ? "var(--main-bg-colour)" : "#d0d0d0"
-    }`,
-    backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
-    borderRadius: "10px",
-    maxWidth: "350px",
-    margin: "auto",
-  }}
-><a
-      href={decoratedHref}
-      target="blank" style={{
-          fontSize: "24px"}}><img
-        alt={urldata.hostname}
-        style={{
-          marginRight: "5px",
-          aspectRatio: "1/1",
-          height: "100%",
-          minHeight: "24px",
-        }}
-        src={`https://www.google.com/s2/favicons?${new URLSearchParams(
-          { size: "24", domain: urldata.hostname }
-        )}`}
-      />{data.title?data.title:decoratedText}</a><p>{data.description}</p>{data.image.length>0?<img src={new URL(data.image, url).href} style={{width: "100%", borderRadius: "10px"}} alt={data.title?data.title:decoratedText}></img>:<></>}</div> :<div
-  style={{
-    padding: "1rem",
-    border: `solid 1px ${
-      mine ? "var(--main-bg-colour)" : "#d0d0d0"
-    }`,
-    backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
-    borderRadius: "10px",
-    margin: "5px",
-  }}
-><a
-      href={decoratedHref}
-      target="blank"
+  const { data } = useApi<{
+    url: string;
+    canonical: string;
+    title: string;
+    image: string;
+    author: string;
+    description: string;
+    keywords: string;
+    source: string;
+    price: string;
+    priceCurrency: string;
+    availability: string;
+    robots: string;
+    "og:url": string;
+    "og:locale": string;
+    "og:locale:alternate": string;
+    "og:title": string;
+    "og:type": string;
+    "og:description": string;
+    "og:determiner": string;
+    "og:site_name": string;
+    "og:image": string;
+    "og:image:secure_url": string;
+    "og:image:type": string;
+    "og:image:width": string;
+    "og:image:height": string;
+    "twitter:title": string;
+    "twitter:image": string;
+    "twitter:image:alt": string;
+    "twitter:card": string;
+    "twitter:site": string;
+    "twitter:site:id": string;
+    "twitter:account_id": string;
+    "twitter:creator": string;
+    "twitter:creator:id": string;
+    "twitter:player": string;
+    "twitter:player:width": string;
+    "twitter:player:height": string;
+    "twitter:player:stream": string;
+    jsonld: {};
+  }>("/api/getmetadata?" + new URLSearchParams({ url }));
+  return data ? (
+    <div
       style={{
-        display: "flex",
-        justifyContent: "space-between",
-        margin: 0,
+        padding: "1rem",
+        border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"}`,
+        backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
+        borderRadius: "10px",
+        maxWidth: "350px",
+        margin: "auto",
       }}
     >
-      <img
-        alt={urldata.hostname}
+      <a
+        href={decoratedHref}
+        target="blank"
         style={{
-          marginRight: "5px",
-          aspectRatio: "1/1",
-          height: "100%",
-          minHeight: "24px",
+          fontSize: "24px",
         }}
-        src={`https://www.google.com/s2/favicons?${new URLSearchParams(
-          { size: "24", domain: urldata.hostname }
-        )}`}
-      />
-      <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
-    </a></div>
+      >
+        <img
+          alt={urldata.hostname}
+          style={{
+            marginRight: "5px",
+            aspectRatio: "1/1",
+            height: "100%",
+            minHeight: "24px",
+          }}
+          src={`https://www.google.com/s2/favicons?${new URLSearchParams({
+            size: "24",
+            domain: urldata.hostname,
+          })}`}
+        />
+        {data.title ? data.title : decoratedText}
+      </a>
+      <p>{data.description}</p>
+      {data.image.length > 0 ? (
+        <img
+          src={new URL(data.image, url).href}
+          style={{ width: "100%", borderRadius: "10px" }}
+          alt={data.title ? data.title : decoratedText}
+        ></img>
+      ) : (
+        <></>
+      )}
+    </div>
+  ) : (
+    <div
+      style={{
+        padding: "1rem",
+        border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"}`,
+        backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
+        borderRadius: "10px",
+        margin: "5px",
+      }}
+    >
+      <a
+        href={decoratedHref}
+        target="blank"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          margin: 0,
+        }}
+      >
+        <img
+          alt={urldata.hostname}
+          style={{
+            marginRight: "5px",
+            aspectRatio: "1/1",
+            height: "100%",
+            minHeight: "24px",
+          }}
+          src={`https://www.google.com/s2/favicons?${new URLSearchParams({
+            size: "24",
+            domain: urldata.hostname,
+          })}`}
+        />
+        <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
+      </a>
+    </div>
+  );
 }
 
 function MessageFaviconOrVideoRenderer({
@@ -230,7 +262,9 @@ function MessageFaviconOrVideoRenderer({
   }[];
   mine: boolean;
 }) {
-  return <>{links.map(
+  return (
+    <>
+      {links.map(
         ({
           decoratedHref,
           decoratedText,
@@ -241,8 +275,9 @@ function MessageFaviconOrVideoRenderer({
           key: number;
         }) => {
           const url = new URL(decoratedHref);
-          return <React.Fragment key={key}>{(
-              videoSites.includes(url.hostname) ? (
+          return (
+            <React.Fragment key={key}>
+              {videoSites.includes(url.hostname) ? (
                 <ReactPlayer
                   url={decoratedHref}
                   width="100%"
@@ -251,16 +286,32 @@ function MessageFaviconOrVideoRenderer({
                   style={{ aspectRatio: "16/9" }}
                 />
               ) : (
-                <MetaPage url={decoratedHref} decoratedText={decoratedText} decoratedHref={decoratedHref} mine={mine}></MetaPage>
-              )
-          )}</React.Fragment>;
+                <MetaPage
+                  url={decoratedHref}
+                  decoratedText={decoratedText}
+                  decoratedHref={decoratedHref}
+                  mine={mine}
+                ></MetaPage>
+              )}
+            </React.Fragment>
+          );
         }
-      )}</>
+      )}
+    </>
+  );
 }
 
-function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, deleteFromID, editFromID, lastmessage}: {
+function Message({
+  messages,
+  i,
+  toscroll,
+  scrolltobottom,
+  user,
+  sendJsonMessage,
+  deleteFromID,
+  editFromID,
+}: {
   messages: Array<messageWithText | messageWithFile>;
-  lastmessage: messageWithText | messageWithFile | null;
   i: number;
   toscroll: any;
   user: any;
@@ -268,12 +319,16 @@ function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, 
   deleteFromID: Function;
   editFromID: Function;
   sendJsonMessage: Function;
-  }) {
+}) {
   const message = messages[i].message;
-  const [editing, setediting] = useState(false)
+  const messagecharlist = message ? Array.from(message) : undefined;
+  const [editing, setediting] = useState(false);
+  const [fullyopened, setfullyopened] = useState(false);
   const file = messages[i].file;
   const mimetype = messages[i].mimetype;
-  const onlyemojis = message? Array.from(message).length > 3 || !onlyContainsEmojis(message): false
+  const onlyemojis = message
+    ? Array.from(message).length > 3 || !onlyContainsEmojis(message)
+    : false;
   const links: {
     decoratedHref: string;
     decoratedText: string;
@@ -283,196 +338,326 @@ function Message({messages, i, toscroll, scrolltobottom, user, sendJsonMessage, 
   const shiftkey = useRef(false);
   const key = useRef(null);
   const submitref = useRef<any>();
-  const messageref = useRef(message)
-  console.log(lastmessage && messages[i].time-lastmessage.time)
-  return <>
-  <ContextMenuTrigger id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
-    <div style={{ opacity: !messages[i].ID ? 0.5 : undefined }} className={onlyemojis || file?`message message-${messages[i].from === user.id ? "mine" : "yours"} ${!messages[i+1] || messages[i+1].from !== messages[i].from || (messages[i+1] && messages[i+1].time-messages[i].time>300000)?`last-${messages[i].from === user.id ? "mine" : "yours"}`: ""}`: `emojimessage-${(messages[i].from === user.id) ? "mine" : "yours"}`}>
-    {message ? (editing?<><form onSubmit={(e: any)=>{
-     e.preventDefault()
-     setediting(false)
-     const tempmessage = messageref.current
-     if (tempmessage === "") {
-      sendJsonMessage({type: "delete", id: messages[i].ID})
-      deleteFromID(messages[i].ID)
-     } else if (message !== tempmessage) {
-      sendJsonMessage({type: "edit", id: messages[i].ID, message: tempmessage})
-      editFromID(messages[i].ID, tempmessage)
-    }
-   }}><TextareaAutosize
-                  onInput={(e: any) => {
-                    if (key.current === 13 && !shiftkey.current) {
-                      submitref.current.click();
-                    }else {
-                    const message = e.target.value.trim();
-                    messageref.current = message
+  const longmessage = messagecharlist && messagecharlist.length > 500;
+  const messageref = useRef(message);
+  return (
+    <>
+      <ContextMenuTrigger
+        id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}
+      >
+        <div
+          style={{ opacity: !messages[i].ID ? 0.5 : undefined }}
+          className={
+            onlyemojis || file
+              ? `message message-${
+                  messages[i].from === user.id ? "mine" : "yours"
+                } ${
+                  !messages[i + 1] ||
+                  messages[i + 1].from !== messages[i].from ||
+                  (messages[i + 1] &&
+                    messages[i + 1].time - messages[i].time > 300000)
+                    ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+                    : ""
+                }`
+              : `emojimessage-${
+                  messages[i].from === user.id ? "mine" : "yours"
+                }`
+          }
+        >
+          {message ? (
+            editing ? (
+              <>
+                <form
+                  onSubmit={(e: any) => {
+                    e.preventDefault();
+                    setediting(false);
+                    const tempmessage = messageref.current;
+                    if (tempmessage === "") {
+                      sendJsonMessage({ type: "delete", id: messages[i].ID });
+                      deleteFromID(messages[i].ID);
+                    } else if (message !== tempmessage) {
+                      sendJsonMessage({
+                        type: "edit",
+                        id: messages[i].ID,
+                        message: tempmessage,
+                      });
+                      editFromID(messages[i].ID, tempmessage);
+                    }
+                  }}
+                >
+                  <TextareaAutosize
+                    onInput={(e: any) => {
+                      if (key.current === 13 && !shiftkey.current) {
+                        submitref.current.click();
+                      } else {
+                        const message = e.target.value.trim();
+                        messageref.current = message;
                       }
                       const messagetoarray: string[] = Array.from(message);
-                        e.target.value = Array.from(e.target.value)
-                          .slice(0, 3000)
-                          .join("");
-                     if (messagetoarray.length <= 3000) {
                       e.target.value = Array.from(e.target.value)
                         .slice(0, 3000)
                         .join("");
-                    }
+                      if (messagetoarray.length <= 3000) {
+                        e.target.value = Array.from(e.target.value)
+                          .slice(0, 3000)
+                          .join("");
+                      }
+                    }}
+                    onKeyDown={(e: any) => {
+                      key.current = e.keyCode;
+                      shiftkey.current = e.shiftKey;
+                    }}
+                    autoFocus
+                    style={{
+                      backgroundColor: "var(--dark-bg-colour)",
+                      padding: "5px",
+                      borderRadius: "20px",
+                      border: "solid 1px var(--light-bg-colour)",
+                      color: "white",
+                      resize: "none",
+                      width: "100%",
+                    }}
+                    maxRows={10}
+                    placeholder="Type Something..."
+                    defaultValue={message}
+                  />
+                  <input
+                    type="submit"
+                    ref={submitref}
+                    style={{ display: "none" }}
+                  ></input>
+                </form>
+              </>
+            ) : (
+              <>
+                {onlyemojis ? (
+                  (longmessage && messagecharlist && !fullyopened
+                    ? messagecharlist.slice(0, 500).join("")
+                    : message
+                  )
+                    .split("```")
+                    .map((value: string, index: number) =>
+                      index % 2 === 0 ? (
+                        <React.Fragment key={index}>
+                          <Linkify
+                            componentDecorator={(
+                              decoratedHref,
+                              decoratedText,
+                              key
+                            ) => {
+                              if (!donekeys.includes(key)) {
+                                links.push({
+                                  decoratedHref,
+                                  decoratedText,
+                                  key,
+                                });
+                                donekeys.push(key);
+                              }
+                              return (
+                                <a
+                                  target="blank"
+                                  href={decoratedHref}
+                                  key={key}
+                                >
+                                  {decoratedText}
+                                </a>
+                              );
+                            }}
+                          >
+                            {value.trim()}
+                          </Linkify>
+                        </React.Fragment>
+                      ) : (
+                        <SyntaxHighlighter key={index}>
+                          {value.trim()}
+                        </SyntaxHighlighter>
+                      )
+                    )
+                ) : (
+                  <h1 className="emojimessage">{message}</h1>
+                )}
+                {!longmessage || fullyopened ? (
+                  <MessageFaviconOrVideoRenderer
+                    links={links}
+                    mine={messages[i].from === user.id}
+                  ></MessageFaviconOrVideoRenderer>
+                ) : (
+                  <></>
+                )}
+                {longmessage ? (
+                  <p
+                    onClick={() => setfullyopened(!fullyopened)}
+                    style={{
+                      color:
+                        messages[i].from === user.id ? "lightgray" : "gray",
+                      fontSize: "12px",
+                    }}
+                  >
+                    show {fullyopened ? "less" : "more"}
+                  </p>
+                ) : (
+                  <></>
+                )}
+                {messages[i].edited ? (
+                  <p
+                    style={{
+                      color:
+                        messages[i].from === user.id ? "lightgray" : "gray",
+                      fontSize: "10px",
+                      float: "right",
+                    }}
+                  >
+                    edited
+                  </p>
+                ) : (
+                  <></>
+                )}
+              </>
+            )
+          ) : file ? (
+            <div>
+              {mimetype ? (
+                mimetype.split("/")[0] === "image" ? (
+                  <img
+                    alt={file}
+                    src={`/files/${file}`}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "300px",
+                      borderRadius: "20px",
+                    }}
+                    loading="lazy"
+                    onLoad={() => {
+                      if (toscroll.current) {
+                        scrolltobottom();
+                      }
+                    }}
+                  ></img>
+                ) : mimetype.split("/")[0] === "video" ? (
+                  <video
+                    src={`/files/${file}`}
+                    style={{ width: "100%", maxHeight: "300px" }}
+                    controls
+                    playsInline
+                    onLoad={() => {
+                      if (toscroll.current) {
+                        scrolltobottom();
+                      }
+                    }}
+                  ></video>
+                ) : mimetype.split("/")[0] === "audio" ? (
+                  <audio
+                    src={`/files/${file}`}
+                    style={{ width: "100%", maxHeight: "300px" }}
+                    controls
+                    playsInline
+                    onLoad={() => {
+                      if (toscroll.current) {
+                        scrolltobottom();
+                      }
+                    }}
+                  ></audio>
+                ) : (
+                  <div
+                    onClick={() => {
+                      window.open(
+                        `/files/${file}`,
+                        file,
+                        "width=600,height=400"
+                      );
+                    }}
+                    style={{
+                      color: "var(--secondary-text-colour)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+                  </div>
+                )
+              ) : (
+                <div
+                  onClick={() => {
+                    window.open(`/files/${file}`, file, "width=600,height=400");
                   }}
-                  onKeyDown={(e: any) => {
-                    key.current = e.keyCode;
-                    shiftkey.current = e.shiftKey;
-                  }}
-                  autoFocus
                   style={{
-                    backgroundColor: "var(--dark-bg-colour)",
-                    padding: "5px",
-                    borderRadius: "20px",
-                    border: "solid 1px var(--light-bg-colour)",
-                    color: "white",
-                    resize: "none",
-                    width: "100%"
+                    color: "var(--secondary-text-colour)",
+                    cursor: "pointer",
                   }}
-                  maxRows={10}
-                  placeholder="Type Something..."
-                  defaultValue={message}
-                /><input type="submit" ref={submitref} style={{display: "none"}}></input></form></>:
-     <>
-       {onlyemojis ? (
-         message.split("```").map((value: string, index: number) =>
-           index % 2 === 0 ? (
-             <div key={index}>
-               <Linkify
-                 componentDecorator={(
-                   decoratedHref,
-                   decoratedText,
-                   key
-                 ) => {
-                   if (!donekeys.includes(key)) {
-                     links.push({ decoratedHref, decoratedText, key });
-                     donekeys.push(key);
-                   }
-                   return (
-                     <a target="blank" href={decoratedHref} key={key}>
-                       {decoratedText}
-                     </a>
-                   );
-                 }}
-               >
-                 {value.trim()}
-               </Linkify>
-             </div>
-           ) : (
-             <SyntaxHighlighter key={index}>
-               {value.trim()}
-             </SyntaxHighlighter>
-           )
-         )
-       ) : (
-         <h1 className="emojimessage">{message}</h1>
-       )}
-       <MessageFaviconOrVideoRenderer
-         links={links}
-         mine={messages[i].from === user.id}
-       ></MessageFaviconOrVideoRenderer>{messages[i].edited?<p style={{color: messages[i].from === user.id?"lightgray":"gray", fontSize: "10px", float: "right"}}>edited</p>:<></>}
-     </>
-   ) : file ? (
-     <div
-     >
-       {mimetype ? (
-         mimetype.split("/")[0] === "image" ? (
-           <img
-             alt={file}
-             src={`/files/${file}`}
-             style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "20px" }}
-             loading="lazy"
-             onLoad={() => {
-               if (toscroll.current) {
-                 scrolltobottom();
-               }
-             }}
-           ></img>
-         ) : mimetype.split("/")[0] === "video" ? (
-           <video
-             src={`/files/${file}`}
-             style={{ width: "100%", maxHeight: "300px" }}
-             controls
-             playsInline
-             onLoad={() => {
-               if (toscroll.current) {
-                 scrolltobottom();
-               }
-             }}
-           ></video>
-         ) : mimetype.split("/")[0] === "audio" ? (
-           <audio
-             src={`/files/${file}`}
-             style={{ width: "100%", maxHeight: "300px" }}
-             controls
-             playsInline
-             onLoad={() => {
-               if (toscroll.current) {
-                 scrolltobottom();
-               }
-             }}
-           ></audio>
-         ) : (
-           <div
-             onClick={() => {
-               window.open(
-                 `/files/${file}`,
-                 file,
-                 "width=600,height=400"
-               );
-             }}
-             style={{
-               color: "var(--secondary-text-colour)",
-               cursor: "pointer",
-             }}
-           >
-             <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
-           </div>
-         )
-       ) : (
-         <div
-           onClick={() => {
-             window.open(`/files/${file}`, file, "width=600,height=400");
-           }}
-           style={{
-             color: "var(--secondary-text-colour)",
-             cursor: "pointer",
-           }}
-         >
-           <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
-         </div>
-       )}
-     </div>
-   ) : (
-     <></>
-   )}
-</div></ContextMenuTrigger>
+                >
+                  <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+                </div>
+              )}
+            </div>
+          ) : (
+            <></>
+          )}
+        </div>
+      </ContextMenuTrigger>
 
-<ContextMenu id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}>
-   <p style={{textAlign: "center"}}>{new Date(messages[i].time).toLocaleString()}</p>
- <MenuItem onClick={()=>{navigator.clipboard.writeText(message?message:`${window.location.protocol}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
-? window.location.hostname + ":5000"
-: window.location.host
-}/files/${file}`);}}>
-   <span><FontAwesomeIcon icon={faCopy}/> Copy</span>
- </MenuItem>
- {messages[i].from === user.id && messages[i].ID?<>
- <MenuItem onClick={()=>{
-   sendJsonMessage({type: "delete", id: messages[i].ID})
-   deleteFromID(messages[i].ID)
- }}>
-   <span><FontAwesomeIcon icon={faTrash}/> Delete</span>
- </MenuItem>
- {message?
- <MenuItem onClick={()=>{
-   setediting(!editing)
- }}>
-   <span>{editing?<><FontAwesomeIcon icon={faTimes}/> Cancel Edit</>:<><FontAwesomeIcon icon={faPencilAlt}/> Edit</>}</span>
- </MenuItem>:<></>}</>
- :<></>}
-</ContextMenu></>
+      <ContextMenu
+        id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}
+      >
+        <p style={{ textAlign: "center" }}>
+          {new Date(messages[i].time).toLocaleString()}
+        </p>
+        <MenuItem
+          onClick={() => {
+            navigator.clipboard.writeText(
+              message
+                ? message
+                : `${window.location.protocol}://${
+                    !process.env.NODE_ENV ||
+                    process.env.NODE_ENV === "development"
+                      ? window.location.hostname + ":5000"
+                      : window.location.host
+                  }/files/${file}`
+            );
+          }}
+        >
+          <span>
+            <FontAwesomeIcon icon={faCopy} /> Copy
+          </span>
+        </MenuItem>
+        {messages[i].from === user.id && messages[i].ID ? (
+          <>
+            <MenuItem
+              onClick={() => {
+                sendJsonMessage({ type: "delete", id: messages[i].ID });
+                deleteFromID(messages[i].ID);
+              }}
+            >
+              <span>
+                <FontAwesomeIcon icon={faTrash} /> Delete
+              </span>
+            </MenuItem>
+            {message ? (
+              <MenuItem
+                onClick={() => {
+                  setediting(!editing);
+                }}
+              >
+                <span>
+                  {editing ? (
+                    <>
+                      <FontAwesomeIcon icon={faTimes} /> Cancel Edit
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faPencilAlt} /> Edit
+                    </>
+                  )}
+                </span>
+              </MenuItem>
+            ) : (
+              <></>
+            )}
+          </>
+        ) : (
+          <></>
+        )}
+      </ContextMenu>
+    </>
+  );
 }
 
 function MessageMaker({
@@ -487,7 +672,7 @@ function MessageMaker({
   scrolltobottom,
   deleteFromID,
   editFromID,
-  sendJsonMessage
+  sendJsonMessage,
 }: {
   messages: Array<messageWithText | messageWithFile>;
   typingdata: {
@@ -511,60 +696,85 @@ function MessageMaker({
   const output = useMemo(() => {
     console.time("chatrender");
     const output = [];
-    let lastmessage: messageWithText | messageWithFile |null = null
+    let lastmessage: messageWithText | messageWithFile | null = null;
     for (let i = 0; i < messages.length; i++) {
-      if ((!lastmessage && !canloadmore) || (lastmessage && messages[i].time-lastmessage.time>300000)) {
-        output.push(<p
-        key={messages[i].time}
-                style={{
-                  margin: "0",
-                  color: `lightgray`,
-                  fontSize: "10px",
-                  textAlign: "center",
-                }}
-              >
-                {new Date(messages[i].time).toLocaleString()}
-              </p>)
+      if (
+        (!lastmessage && !canloadmore) ||
+        (lastmessage && messages[i].time - lastmessage.time > 300000)
+      ) {
+        output.push(
+          <p
+            key={messages[i].time}
+            style={{
+              margin: "0",
+              color: `lightgray`,
+              fontSize: "10px",
+              textAlign: "center",
+            }}
+          >
+            {new Date(messages[i].time).toLocaleString()}
+          </p>
+        );
       }
       if (!lastmessage || messages[i].from !== lastmessage.from) {
-        output.push(messages[i].from === user.id || users[messages[i].from] ? (
-          <div key={messages[i].ID+"topname"} style={{alignSelf: messages[i].from === user.id?"flex-end":"flex-start"}}>
-            {messages[i].from === user.id ? (
-              <span style={{ marginRight: "5px" }}>{user.username}</span>
-            ) : (
-              <></>
-            )}
-            <img
-              src={`/files/${messages[i].from === user.id
-                ? user.profilePic
-                : users[messages[i].from].profilePic
-                }`}
+        output.push(
+          messages[i].from === user.id || users[messages[i].from] ? (
+            <div
+              key={messages[i].ID + "topname"}
               style={{
-                width: "25px",
-                height: "25px",
-                margin: "3px",
-                borderRadius: "50%",
+                alignSelf:
+                  messages[i].from === user.id ? "flex-end" : "flex-start",
               }}
-              alt=""
-            />
-            {users[messages[i].from] ? (
-              <span style={{ marginLeft: "5px" }}>
-                {users[messages[i].from].username}
-              </span>
-            ) : (
-              <></>
-            )}
-          </div>
-        ) : (
-          <></>
-        ))
+            >
+              {messages[i].from === user.id ? (
+                <span style={{ marginRight: "5px" }}>{user.username}</span>
+              ) : (
+                <></>
+              )}
+              <img
+                src={`/files/${
+                  messages[i].from === user.id
+                    ? user.profilePic
+                    : users[messages[i].from].profilePic
+                }`}
+                style={{
+                  width: "25px",
+                  height: "25px",
+                  margin: "3px",
+                  borderRadius: "50%",
+                }}
+                alt=""
+              />
+              {users[messages[i].from] ? (
+                <span style={{ marginLeft: "5px" }}>
+                  {users[messages[i].from].username}
+                </span>
+              ) : (
+                <></>
+              )}
+            </div>
+          ) : (
+            <></>
+          )
+        );
       }
       output.push(
-        <Message key={messages[i].ID ? messages[i].ID : messages[i].tempid} messages={messages} lastmessage={lastmessage} deleteFromID={deleteFromID} i={i} user={user} toscroll={toscroll} scrolltobottom={scrolltobottom} sendJsonMessage={sendJsonMessage} editFromID={editFromID}></Message>)
-      lastmessage = messages[i]
+        <Message
+          key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+          messages={messages}
+          deleteFromID={deleteFromID}
+          i={i}
+          user={user}
+          toscroll={toscroll}
+          scrolltobottom={scrolltobottom}
+          sendJsonMessage={sendJsonMessage}
+          editFromID={editFromID}
+        ></Message>
+      );
+      lastmessage = messages[i];
     }
-    console.timeEnd("chatrender")
-    return output
+    console.timeEnd("chatrender");
+    return output;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, canloadmore, loadingmore, chatUpdateID]);
   const { id: chattingto } = useParams<{ id: string }>();
@@ -585,8 +795,8 @@ function MessageMaker({
     if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
         document.documentElement.scrollHeight -
-        document.documentElement.scrollTop -
-        document.documentElement.clientHeight <=
+          document.documentElement.scrollTop -
+          document.documentElement.clientHeight <=
         200;
       if (canloadmore) {
         if (document.documentElement.scrollTop < 10) {
@@ -613,8 +823,12 @@ function MessageMaker({
       >
         {messages.length > 0 ? (
           <>
-         {(canloadmore && loadingmore)?<Loader key={"loader"}></Loader>: <></>}
-          {output}
+            {canloadmore && loadingmore ? (
+              <Loader key={"loader"}></Loader>
+            ) : (
+              <></>
+            )}
+            {output}
           </>
         ) : (
           <p style={{ color: "gray", textAlign: "center" }}>
@@ -622,16 +836,16 @@ function MessageMaker({
           </p>
         )}
         {typingdata.typing ? (
-            <div
-              className="message message-yours last-yours"
-              style={{
-                opacity: 0.5,
-                textShadow: "0 0 7px black",
-                color: "transparent",
-              }}
-            >
-              {faketext}
-            </div>
+          <div
+            className="message message-yours last-yours"
+            style={{
+              opacity: 0.5,
+              textShadow: "0 0 7px black",
+              color: "transparent",
+            }}
+          >
+            {faketext}
+          </div>
         ) : (
           <></>
         )}
@@ -733,9 +947,10 @@ function ChatPage() {
     specialchars: {},
   });
   const [socketUrl] = useState(
-    `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
-      ? window.location.hostname + ":5000"
-      : window.location.host
+    `ws${window.location.protocol === "https:" ? "s" : ""}://${
+      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
+        ? window.location.hostname + ":5000"
+        : window.location.host
     }/chat`
   );
   const size = useWindowSize();
@@ -795,7 +1010,7 @@ function ChatPage() {
           mimetype: file.type,
           tempid,
         });
-        setchats(chats =>
+        setchats((chats) =>
           chats.concat({
             from: user.id,
             message: undefined,
@@ -803,7 +1018,7 @@ function ChatPage() {
             file: resp.id,
             time,
             tempid,
-            edited: false
+            edited: false,
           })
         );
         notifications.removeNotification(id);
@@ -815,14 +1030,8 @@ function ChatPage() {
           type: "danger",
           insert: "top",
           container: "top-right",
-          animationIn: [
-            "animate__animated",
-            "animate__fadeIn",
-          ],
-          animationOut: [
-            "animate__animated",
-            "animate__fadeOut",
-          ],
+          animationIn: ["animate__animated", "animate__fadeIn"],
+          animationOut: ["animate__animated", "animate__fadeOut"],
         });
       }
     } catch (e) {
@@ -834,28 +1043,28 @@ function ChatPage() {
         insert: "top",
         container: "top-right",
         animationIn: ["animate__animated", "animate__fadeIn"],
-        animationOut: [
-          "animate__animated",
-          "animate__fadeOut",
-        ],
+        animationOut: ["animate__animated", "animate__fadeOut"],
       });
     }
   }
   useEffect(() => {
     localStorage.setItem("chattingto", JSON.stringify(chattingto));
     const listenerfunction = function (event: any) {
-      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      const items = (event.clipboardData || event.originalEvent.clipboardData)
+        .items;
       for (const index in items) {
         const item = items[index];
-        if (item.kind === 'file') {
+        if (item.kind === "file") {
           const blob = item.getAsFile();
-          console.log(blob)
-          sendFile(blob)
+          console.log(blob);
+          sendFile(blob);
         }
       }
-    }
+    };
     window.addEventListener("paste", listenerfunction);
-    return () => { window.removeEventListener("paste", listenerfunction); }
+    return () => {
+      window.removeEventListener("paste", listenerfunction);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [oldmessagsize, setoldmessagesize] = useState(chats.length > 0);
@@ -881,23 +1090,23 @@ function ChatPage() {
     }
   }
   function deleteFromID(id: string) {
-    for (let i=0; i<=chats.length; i++) {
+    for (let i = 0; i <= chats.length; i++) {
       if (chats[i].ID === id) {
-        chats.splice(i, 1)
-        setchats(chats)
-        setChatUpdateID(Math.random())
-        break
+        chats.splice(i, 1);
+        setchats(chats);
+        setChatUpdateID(Math.random());
+        break;
       }
     }
   }
   function editFromID(id: string, message: string) {
-    for (let i=0; i<=chats.length; i++) {
+    for (let i = 0; i <= chats.length; i++) {
       if (chats[i].ID === id) {
-        chats[i].message = message
-        chats[i].edited = true
-        setchats(chats)
-        setChatUpdateID(Math.random())
-        break
+        chats[i].message = message;
+        chats[i].edited = true;
+        setchats(chats);
+        setChatUpdateID(Math.random());
+        break;
       }
     }
   }
@@ -926,8 +1135,7 @@ function ChatPage() {
         if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
           playSound("/sounds/newmessage.mp3");
         }
-        setchats(
-          chats=>chats.concat(lastJsonMessage.message));
+        setchats((chats) => chats.concat(lastJsonMessage.message));
 
         settypingdata({
           typing: false,
@@ -939,8 +1147,7 @@ function ChatPage() {
             setcanloadmore(true);
             isLoadMore.current = false;
             setloadingchatmessages(false);
-            setchats(
-              chats=>
+            setchats((chats) =>
               chats.slice(Math.max(chats.length - StartMessagesLength, 0))
             );
             setTimeout(scrolltobottom, 0);
@@ -959,9 +1166,11 @@ function ChatPage() {
               );
             }
           } else if (lastJsonMessage.message.from !== user.id) {
-              NotificationAPI({
-                title: `${usersdata.users[lastJsonMessage.message.from].username
-                  }`,
+            NotificationAPI(
+              {
+                title: `${
+                  usersdata.users[lastJsonMessage.message.from].username
+                }`,
                 message: lastJsonMessage.message.message
                   ? truncate(lastJsonMessage.message.message, 25)
                   : "file",
@@ -981,22 +1190,24 @@ function ChatPage() {
                   duration: 5000,
                   onScreen: true,
                 },
-              }, ()=>{
+              },
+              () => {
                 history.push(`/chat/${chattingto}`);
                 scrolltobottom();
-              });
+              }
+            );
           }
         }
       } else if (lastJsonMessage.type === "delete") {
         if (lastJsonMessage.from !== user.id && ReceiveSound) {
-          playSound("/sounds/delete.mp3")
+          playSound("/sounds/delete.mp3");
         }
-        deleteFromID(lastJsonMessage.id)
+        deleteFromID(lastJsonMessage.id);
       } else if (lastJsonMessage.type === "edit") {
         if (lastJsonMessage.from !== user.id && ReceiveSound) {
-          playSound("/sounds/edit.mp3")
+          playSound("/sounds/edit.mp3");
         }
-        editFromID(lastJsonMessage.id, lastJsonMessage.message)
+        editFromID(lastJsonMessage.id, lastJsonMessage.message);
       } else if (lastJsonMessage.type === "start") {
         setcanloadmore(false);
         isLoadMore.current = true;
@@ -1057,9 +1268,9 @@ function ChatPage() {
         if (lastJsonMessage.messages.length > 0) {
           const lastheight = document.documentElement.offsetHeight;
           setTimeout(() => {
-              document.documentElement.scrollTop =
+            document.documentElement.scrollTop =
               document.documentElement.scrollHeight - lastheight;
-              isLoadMore.current = false;
+            isLoadMore.current = false;
 
             setloadingmore(false);
           }, 0);
@@ -1170,14 +1381,15 @@ function ChatPage() {
                   {usersdata.users[chattingto].username}{" "}
                   <FontAwesomeIcon
                     style={{
-                      color: isonline === "0" ? "var(--offline)" : "var(--online)",
+                      color:
+                        isonline === "0" ? "var(--offline)" : "var(--online)",
                     }}
                     icon={
                       isonline === "1"
                         ? faDesktop
                         : isonline === "M"
-                          ? faMobileAlt
-                          : faEyeSlash
+                        ? faMobileAlt
+                        : faEyeSlash
                     }
                   ></FontAwesomeIcon>
                 </p>
@@ -1235,8 +1447,8 @@ function ChatPage() {
                 onInput={async (e: any) => {
                   if (e.target.files.length > 0) {
                     const file = e.target.files[0];
-                    e.target.value = ""
-                    sendFile(file)
+                    e.target.value = "";
+                    sendFile(file);
                   }
                 }}
               />
@@ -1287,7 +1499,7 @@ function ChatPage() {
                           message,
                           time,
                           tempid,
-                          edited: false
+                          edited: false,
                         })
                     );
                     setTimeout(scrolltobottom, 0);

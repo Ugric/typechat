@@ -9,9 +9,10 @@ function NotificationComponent() {
   const isFocussed = useWindowFocus();
   const history = useHistory();
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(
-    `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
-      ? window.location.hostname + ":5000"
-      : window.location.host
+    `ws${window.location.protocol === "https:" ? "s" : ""}://${
+      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
+        ? window.location.hostname + ":5000"
+        : window.location.host
     }/notifications`,
     {
       shouldReconnect: () => true,
@@ -21,9 +22,6 @@ function NotificationComponent() {
 
   useEffect(() => {
     sendJsonMessage({ type: "setFocus", focus: isFocussed });
-    if (isFocussed) {
-      console.log("cool")
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocussed]);
   useEffect(() => {
@@ -40,13 +38,15 @@ function NotificationComponent() {
         }
         if (!isFocussed) {
         }
-        NotificationAPI({
+        NotificationAPI(
+          {
             title: lastJsonMessage.title,
             message: lastJsonMessage.message,
             type: "default",
             onRemoval: (_: string, type: any) => {
               if (type === "click") {
                 history.push(lastJsonMessage.to);
+                window.focus();
               }
             },
             insert: "top",
@@ -58,10 +58,12 @@ function NotificationComponent() {
               duration: 5000,
               onScreen: true,
             },
-          }, ()=>{
+          },
+          () => {
             history.push(lastJsonMessage.to);
-          });
-        }
+          }
+        );
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);

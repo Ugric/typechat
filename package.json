@@ -32,12 +32,14 @@
     "selfsigned": "^1.10.11",
     "sqlite": "^4.0.23",
     "sqlite3": "^5.0.2",
-    "url-metadata": "^2.5.0"
+    "url-metadata": "^2.5.0",
+    "web-push": "^3.4.5"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.0",
     "@types/node": "^15.12.2",
-    "@types/randomstring": "^1.1.7"
+    "@types/randomstring": "^1.1.7",
+    "@types/web-push": "^3.3.2"
   },
   "reactSnap": {
     "asyncScriptTags": true
