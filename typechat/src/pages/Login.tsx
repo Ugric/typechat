@@ -8,6 +8,7 @@ import cookies from "../cookies";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignInAlt } from "@fortawesome/free-solid-svg-icons";
 import { parse } from "querystring";
+import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 
 function validateEmail(email: string) {
   const re =
@@ -18,11 +19,18 @@ function validateEmail(email: string) {
 function Login() {
   const { rechecklogged, loggedin } = useData();
   const [error, seterror] = useState("");
+  const [recapToken, setRecapToken] = useState<null | string>(null);
   const history = useHistory();
-  const location = useLocation()
-  const query: { [key: string]: string | string[] } = parse(location.search.slice(1))
+  const location = useLocation();
+  const query: { [key: string]: string | string[] } = parse(
+    location.search.slice(1)
+  );
   const [loading, setloading] = useState(false);
-  const redirect = query.to ? Array.isArray(query.to) ? query.to[0] : query.to : "/"
+  const redirect = query.to
+    ? Array.isArray(query.to)
+      ? query.to[0]
+      : query.to
+    : "/";
   if (loggedin) {
     history.push(redirect);
     return <></>;
@@ -55,16 +63,24 @@ function Login() {
         <RouterForm
           action={"/login"}
           beforecallback={(e: any) => {
-            if (e.target[0].value !== "" && e.target[1].value !== "") {
-              if (validateEmail(e.target[0].value)) {
-                setloading(true);
-                return true;
+            if (recapToken) {
+              if (e.target[0].value !== "" && e.target[1].value !== "") {
+                if (validateEmail(e.target[0].value)) {
+                  setloading(true);
+                  return true;
+                } else {
+                  seterror("input a valid email!");
+                }
               } else {
-                seterror("input a valid email!");
+                seterror("input an email and password!");
               }
             } else {
-              seterror("input an email and password!");
+              seterror("waiting for recaptcha token... try again later.");
             }
+          }}
+          appendtoformdata={(fd) => {
+            if (recapToken) fd.append("g-recaptcha-response", recapToken);
+            return fd;
           }}
           style={{
             width: "fit-content",
@@ -84,6 +100,11 @@ function Login() {
             }
           }}
         >
+          <GoogleReCaptcha
+            onVerify={(token) => {
+              setRecapToken(token);
+            }}
+          />
           <p
             style={{
               textAlign: "end",

@@ -11,20 +11,21 @@ import Avatar from "react-avatar-edit";
 import useApi from "../hooks/useapi";
 import humanFileSize from "../bytesToHumanReadable";
 
-function ReactTimeago({date}: {date:number}) {
+function ReactTimeago({ date }: { date: number }) {
   const days = Math.floor(date / (1000 * 60 * 60 * 24));
   const hours = Math.floor((date % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((date % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((date % (1000 * 60)) / 1000);
 
-  return <p>{days + "d " + hours + "h "
-  + minutes + "m " + seconds + "s"} left</p>
+  return (
+    <p>{days + "d " + hours + "h " + minutes + "m " + seconds + "s"} left</p>
+  );
 }
 
 function Changebutton({
   name,
   children,
-  onClick = () => { },
+  onClick = () => {},
   clickable,
 }: {
   name: string;
@@ -62,7 +63,13 @@ function UserSettings() {
   const { loggedin, user, rechecklogged } = useData();
   const [error, seterror] = useState("");
   const backgroundinputref = useRef<any>(null);
-  const { data: uploadlimitdata, loading: uploadlimitloading, error: uploadlimiterror } = useApi<{ filelimit: number, limitused: number, timeleft: number }>("/api/uploadlimit")
+  const {
+    data: uploadlimitdata,
+    loading: uploadlimitloading,
+    error: uploadlimiterror,
+  } = useApi<{ filelimit: number; limitused: number; timeleft: number }>(
+    "/api/uploadlimit"
+  );
   const [uploading, setuploading] = useState(false);
   const [backgroundImage, setbackgroundImage] = useState<string | undefined>(
     undefined
@@ -91,9 +98,24 @@ function UserSettings() {
       >
         <h1 style={{ textAlign: "center" }}>User Settings</h1>
         <ProfilePage user={user} />
-        <Changebutton
-          name="Upload Limit" clickable={false}>
-          {uploadlimitloading || uploadlimiterror ? "loading" : <><p>{humanFileSize(Number(uploadlimitdata?.limitused), true)} / {humanFileSize(Number(uploadlimitdata?.filelimit), true, 0)} ({humanFileSize(Number(uploadlimitdata?.filelimit) - Number(uploadlimitdata?.limitused), true)} left)</p><ReactTimeago date={Number(uploadlimitdata?.timeleft)} /></>}
+        <Changebutton name="Upload Limit" clickable={false}>
+          {uploadlimitloading || uploadlimiterror ? (
+            "loading"
+          ) : (
+            <>
+              <p>
+                {humanFileSize(Number(uploadlimitdata?.limitused), true)} /{" "}
+                {humanFileSize(Number(uploadlimitdata?.filelimit), true, 0)} (
+                {humanFileSize(
+                  Number(uploadlimitdata?.filelimit) -
+                    Number(uploadlimitdata?.limitused),
+                  true
+                )}{" "}
+                left)
+              </p>
+              <ReactTimeago date={Number(uploadlimitdata?.timeleft)} />
+            </>
+          )}
         </Changebutton>
         <div style={{ textAlign: "center" }}>EDIT</div>
         <button

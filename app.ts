@@ -19,11 +19,16 @@ import { client, roleID, serverID, unlinkedroleID } from "./typechatbot";
 import { MessageEmbed } from "discord.js";
 import urlMetadata from "url-metadata";
 import greenlockexpress from "greenlock-express";
+import { RecaptchaV3 } from "express-recaptcha";
 console.time("express boot");
 
 const tempmetadata: { [key: string]: urlMetadata.Result } = {};
 
 const ev = new EmailValidation();
+const recaptcha = new RecaptchaV3(
+  "6LcHJdYcAAAAAHmOyGZbVAVkLNdeG0Pe2Rl3RVDV",
+  "6LcHJdYcAAAAAG2S8MePwtuTv0RqZLcJ2QG6zLfw"
+);
 
 const discordserver = "https://discord.gg/R6FnAaX8rC";
 
@@ -1286,49 +1291,61 @@ WHERE friends.accountID == :accountID
         });
       }
     });
-    app.post("/api/requestnewpassword", async (req, res) => {
-      const requestaccount = await db.get(
-        "SELECT * FROM accounts WHERE email=:email",
-        { ":email": req.body.email }
-      );
-      if (requestaccount) {
-        const passwordUpdateID = generate(30);
-        updatepassword[passwordUpdateID] = requestaccount.accountID;
-        PasswordEmail(req.body.email, passwordUpdateID).catch(() => {});
-        setTimeout(() => {
-          if (updatepassword[passwordUpdateID])
-            delete updatepassword[passwordUpdateID];
-        }, 3600000);
-      }
-      return res.send(true);
-    });
-    app.post("/api/changepassword", async (req, res) => {
-      const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=:accountID",
-        { ":accountID": updatepassword[req.body.updateID] }
-      );
-      if (accountdata) {
-        const salt = generate(150);
-        const password = hasher(req.body.pass + salt);
-        updateFromAccountID(accountdata.accountID);
-        await Promise.all([
-          db.run(
-            "UPDATE accounts SET password=:password, salt=:salt WHERE accountID=:accountID",
-            {
-              ":salt": salt,
-              ":password": password,
-              ":accountID": updatepassword[req.body.updateID],
-            }
-          ),
-          db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
-            ":accountID": accountdata.accountID,
-          }),
-        ]);
-        delete updatepassword[req.body.updateID];
+    app.post(
+      "/api/requestnewpassword",
+      recaptcha.middleware.verify,
+      async (req, res) => {
+        if (!req.recaptcha.error) {
+          const requestaccount = await db.get(
+            "SELECT * FROM accounts WHERE email=:email",
+            { ":email": req.body.email }
+          );
+          if (requestaccount) {
+            const passwordUpdateID = generate(30);
+            updatepassword[passwordUpdateID] = requestaccount.accountID;
+            PasswordEmail(req.body.email, passwordUpdateID).catch(() => {});
+            setTimeout(() => {
+              if (updatepassword[passwordUpdateID])
+                delete updatepassword[passwordUpdateID];
+            }, 3600000);
+          }
+        }
         return res.send(true);
       }
-      return res.send(false);
-    });
+    );
+    app.post(
+      "/api/changepassword",
+      recaptcha.middleware.verify,
+      async (req, res) => {
+        if (!req.recaptcha.error) {
+          const accountdata = await db.get(
+            "SELECT * FROM accounts WHERE accountID=:accountID",
+            { ":accountID": updatepassword[req.body.updateID] }
+          );
+          if (accountdata) {
+            const salt = generate(150);
+            const password = hasher(req.body.pass + salt);
+            updateFromAccountID(accountdata.accountID);
+            await Promise.all([
+              db.run(
+                "UPDATE accounts SET password=:password, salt=:salt WHERE accountID=:accountID",
+                {
+                  ":salt": salt,
+                  ":password": password,
+                  ":accountID": updatepassword[req.body.updateID],
+                }
+              ),
+              db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
+                ":accountID": accountdata.accountID,
+              }),
+            ]);
+            delete updatepassword[req.body.updateID];
+            return res.send(true);
+          }
+        }
+        return res.send(false);
+      }
+    );
     app.get("/api/getNotificationsOn", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1644,165 +1661,176 @@ WHERE friends.accountID == :accountID
         res.send({ resp: false, err: "invalid cookie" });
       }
     });
-    app.post("/login", async (req, res) => {
-      const accounts = await db.all("SELECT * FROM accounts");
-      let accountdata: any;
-      for (let i = 0; i < accounts.length; i++) {
-        const account = accounts[i];
-        if (
-          account.email == req.body.email &&
-          account.password == hasher(req.body.pass + account.salt)
-        ) {
-          accountdata = account;
-          break;
+    app.post("/login", recaptcha.middleware.verify, async (req, res) => {
+      if (!req.recaptcha.error) {
+        const accounts = await db.all("SELECT * FROM accounts");
+        let accountdata: any;
+        for (let i = 0; i < accounts.length; i++) {
+          const account = accounts[i];
+          if (
+            account.email == req.body.email &&
+            account.password == hasher(req.body.pass + account.salt)
+          ) {
+            accountdata = account;
+            break;
+          }
         }
-      }
-      if (accountdata) {
-        const token = generate(100);
-        await db.run(
-          "INSERT INTO tokens (accountID, token) VALUES  (:accountID, :token)",
-          { ":accountID": accountdata.accountID, ":token": token }
-        );
-        return res.send({ resp: true, token });
+        if (accountdata) {
+          const token = generate(100);
+          await db.run(
+            "INSERT INTO tokens (accountID, token) VALUES  (:accountID, :token)",
+            { ":accountID": accountdata.accountID, ":token": token }
+          );
+          return res.send({ resp: true, token });
+        } else {
+          return res.send({ resp: false, err: "invalid email or password!" });
+        }
       } else {
-        return res.send({ resp: false, err: "invalid email or password!" });
+        return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
-    app.post("/signup", async (req: any, res) => {
-      const emailInUse =
-        (await db.get("SELECT * FROM accounts WHERE email=:email", {
-          ":email": req.body.email,
-        })) != undefined;
-      if (ev.check(req.body.email).valid) {
-        return res.send({ resp: false, err: "Please use a valid email!" });
-      } else if (emailInUse) {
-        return res.send({ resp: false, err: "That email is already in use!" });
-      } else {
-        const token = generate(100);
-        const accountID = generate(20);
-        const salt = generate(150);
-        const password = hasher(req.body.pass + salt);
-        const tag = tagGenerator();
-        const {
-          id: profileID,
-          path: profilePath,
-          exists,
-        } = await createFileID(req.files.profile, accountID);
-        if (!exists) {
-          req.files.profile.mv(profilePath);
-        }
-        const time = new Date().getTime();
-        const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text us! 💬✅`;
-        await Promise.all([
-          db.run(
-            "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, joined, discordnotification, emailnotification) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :time, true, true)",
-            {
-              ":accountID": accountID,
-              ":email": req.body.email,
-              ":username": req.body.uname,
-              ":password": password,
-              ":salt": salt,
-              ":profilePic": profileID,
-              ":tag": tag,
-              ":time": time,
-            } // work on this next! // thanks lol
-          ),
-          db.run(
-            "INSERT INTO tokens (accountID, token) VALUES  (:accountID, :token)",
-            { ":accountID": accountID, ":token": token }
-          ),
-          db.run(
-            "INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)",
-            {
-              ":accountID": accountID,
-              ":toAccountID": defaultaccount.accountID,
-              ":time": time,
-            }
-          ),
-          db.run(
-            "INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)",
-            {
-              ":accountID": defaultaccount.accountID,
-              ":toAccountID": accountID,
-              ":time": time,
-            }
-          ),
-          db.run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
-            {
-              ":ID": generate(100),
-              ":accountID": defaultaccount.accountID,
-              ":toAccountID": accountID,
-              ":message": firstMessage,
-              ":time": time - 2000,
-            }
-          ),
-          db.run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
-            {
-              ":ID": generate(100),
-              ":accountID": defaultaccount.accountID,
-              ":toAccountID": accountID,
-              ":message":
-                "A verification email has been sent to your email, you have 1 hour to verify your account before your account is disabled. If your account is disabled before you verify, you can create a new one under the same email. 📧✅",
-              ":time": time - 1000,
-            }
-          ),
-          db.run(
-            `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
-            {
-              ":ID": generate(100),
-              ":accountID": defaultaccount.accountID,
-              ":toAccountID": accountID,
-              ":message":
-                "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.us.to/blast",
-              ":time": time,
-            }
-          ),
-        ]);
-        res.send({ resp: true, token });
-        const verificationID = generate(100);
-        toVerify[verificationID] = accountID;
-        VerificationEmail(req.body.email, verificationID);
-        await snooze(3600000);
-        if (toVerify[verificationID]) {
-          const newemail = generate(15) + "@typechat.us.to";
+    app.post("/signup", recaptcha.middleware.verify, async (req: any, res) => {
+      if (!req.recaptcha.error) {
+        const emailInUse =
+          (await db.get("SELECT * FROM accounts WHERE email=:email", {
+            ":email": req.body.email,
+          })) != undefined;
+        if (ev.check(req.body.email).valid) {
+          return res.send({ resp: false, err: "Please use a valid email!" });
+        } else if (emailInUse) {
+          return res.send({
+            resp: false,
+            err: "That email is already in use!",
+          });
+        } else {
+          const token = generate(100);
+          const accountID = generate(20);
           const salt = generate(150);
-          const password = hasher(autoaccountdetails.pass + salt);
-          const message = `lol, i did verify my email, my email is now ${newemail} and you already know what the password would be set to lol.`;
+          const password = hasher(req.body.pass + salt);
+          const tag = tagGenerator();
+          const {
+            id: profileID,
+            path: profilePath,
+            exists,
+          } = await createFileID(req.files.profile, accountID);
+          if (!exists) {
+            req.files.profile.mv(profilePath);
+          }
+          const time = new Date().getTime();
+          const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text us! 💬✅`;
           await Promise.all([
+            db.run(
+              "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, joined, discordnotification, emailnotification) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :time, true, true)",
+              {
+                ":accountID": accountID,
+                ":email": req.body.email,
+                ":username": req.body.uname,
+                ":password": password,
+                ":salt": salt,
+                ":profilePic": profileID,
+                ":tag": tag,
+                ":time": time,
+              } // work on this next! // thanks lol
+            ),
+            db.run(
+              "INSERT INTO tokens (accountID, token) VALUES  (:accountID, :token)",
+              { ":accountID": accountID, ":token": token }
+            ),
+            db.run(
+              "INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)",
+              {
+                ":accountID": accountID,
+                ":toAccountID": defaultaccount.accountID,
+                ":time": time,
+              }
+            ),
+            db.run(
+              "INSERT INTO friends (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)",
+              {
+                ":accountID": defaultaccount.accountID,
+                ":toAccountID": accountID,
+                ":time": time,
+              }
+            ),
             db.run(
               `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
               {
                 ":ID": generate(100),
-                ":accountID": accountID,
-                ":toAccountID": defaultaccount.accountID,
-                ":message": message,
-                ":time": new Date().getTime(),
+                ":accountID": defaultaccount.accountID,
+                ":toAccountID": accountID,
+                ":message": firstMessage,
+                ":time": time - 2000,
               }
             ),
-            db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
-              ":accountID": accountID,
-            }),
             db.run(
-              `UPDATE accounts
-            SET email = :email, salt = :salt, password = :password
-            WHERE accountID = :accountID;`,
+              `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
               {
-                ":email": newemail,
-                ":salt": salt,
-                ":password": password,
-                ":accountID": accountID,
+                ":ID": generate(100),
+                ":accountID": defaultaccount.accountID,
+                ":toAccountID": accountID,
+                ":message":
+                  "A verification email has been sent to your email, you have 1 hour to verify your account before your account is disabled. If your account is disabled before you verify, you can create a new one under the same email. 📧✅",
+                ":time": time - 1000,
+              }
+            ),
+            db.run(
+              `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
+              {
+                ":ID": generate(100),
+                ":accountID": defaultaccount.accountID,
+                ":toAccountID": accountID,
+                ":message":
+                  "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.us.to/blast",
+                ":time": time,
               }
             ),
           ]);
-          sendNotification(defaultaccount.accountID, {
-            title: "Not verified lol",
-            message: truncate(message, 25),
-            to: `/chat/${defaultaccount.accountID}`,
-          });
-          updateFromAccountID(accountID);
+          res.send({ resp: true, token });
+          const verificationID = generate(100);
+          toVerify[verificationID] = accountID;
+          VerificationEmail(req.body.email, verificationID);
+          await snooze(3600000);
+          if (toVerify[verificationID]) {
+            const newemail = generate(15) + "@typechat.us.to";
+            const salt = generate(150);
+            const password = hasher(autoaccountdetails.pass + salt);
+            const message = `lol, i did verify my email, my email is now ${newemail} and you already know what the password would be set to lol.`;
+            await Promise.all([
+              db.run(
+                `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
+                {
+                  ":ID": generate(100),
+                  ":accountID": accountID,
+                  ":toAccountID": defaultaccount.accountID,
+                  ":message": message,
+                  ":time": new Date().getTime(),
+                }
+              ),
+              db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
+                ":accountID": accountID,
+              }),
+              db.run(
+                `UPDATE accounts
+            SET email = :email, salt = :salt, password = :password
+            WHERE accountID = :accountID;`,
+                {
+                  ":email": newemail,
+                  ":salt": salt,
+                  ":password": password,
+                  ":accountID": accountID,
+                }
+              ),
+            ]);
+            sendNotification(defaultaccount.accountID, {
+              title: "Not verified lol",
+              message: truncate(message, 25),
+              to: `/chat/${defaultaccount.accountID}`,
+            });
+            updateFromAccountID(accountID);
+          }
         }
+      } else {
+        return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
     if (!(process.env.NODE_ENV === "development")) {
