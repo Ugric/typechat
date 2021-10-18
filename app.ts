@@ -149,10 +149,10 @@ function updateFromAccountID(accountID: string) {
       "SELECT * FROM discordAccountLink WHERE accountID=:accountID",
       { ":accountID": accoutID }
     );
-    if (discordlink) {
-      const discordAccount = client.users.cache.find(
-        (user) => user.id == discordlink.discordID
-      );
+    const discordAccount = client.users.cache.find(
+      (user) => user.id == discordlink.discordID
+    );
+    if (discordlink && discordAccount) {
       await discordAccount.send({
         embeds: [
           new MessageEmbed()
