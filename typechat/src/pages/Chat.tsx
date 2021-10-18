@@ -13,6 +13,7 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMinusCircle, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 import React, {
   useEffect,
   useMemo,
@@ -476,6 +477,7 @@ function Message({
                 ) : (
                   <h1 className="emojimessage">{message}</h1>
                 )}
+                {longmessage && !fullyopened ? "..." : ""}
                 {!longmessage || fullyopened ? (
                   <MessageFaviconOrVideoRenderer
                     links={links}
@@ -652,6 +654,22 @@ function Message({
               <></>
             )}
           </>
+        ) : (
+          <></>
+        )}
+        {longmessage ? (
+          <MenuItem
+            onClick={() => {
+              setfullyopened(!fullyopened);
+            }}
+          >
+            <span>
+              <FontAwesomeIcon
+                icon={fullyopened ? faMinusCircle : faPlusCircle}
+              />{" "}
+              Show {fullyopened ? "less" : "more"}
+            </span>
+          </MenuItem>
         ) : (
           <></>
         )}
@@ -1067,6 +1085,14 @@ function ChatPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (usersdata) {
+      document.title = `${usersdata.users[chattingto].username} - TypeChat`;
+    }
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, [chattingto, usersdata]);
   const [oldmessagsize, setoldmessagesize] = useState(chats.length > 0);
   const messagesize = chats.length > 0;
   useEffect(() => {
