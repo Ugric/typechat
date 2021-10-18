@@ -4,6 +4,7 @@ import useWebSocket from "react-use-websocket";
 import { useData } from "./hooks/datahook";
 import playSound from "./playsound";
 import useWindowFocus from "use-window-focus";
+import setIcon from "./setIcons";
 function NotificationComponent() {
   const { loggedin, NotificationAPI } = useData();
   const isFocussed = useWindowFocus();
@@ -22,6 +23,7 @@ function NotificationComponent() {
 
   useEffect(() => {
     sendJsonMessage({ type: "setFocus", focus: isFocussed });
+    setIcon("/favicon.ico");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocussed]);
   useEffect(() => {
@@ -37,6 +39,7 @@ function NotificationComponent() {
           );
         }
         if (!isFocussed) {
+          setIcon("/favicon notification.ico");
         }
         NotificationAPI(
           {
