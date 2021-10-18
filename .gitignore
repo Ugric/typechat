@@ -22,11 +22,7 @@ yarn-debug.log*
 yarn-error.log*
 database.db
 test.sql
-emailconfig.json
-autoaccountdetails.json
 typechat-electron-app
 ssl
 .greenlockrc
 greenlock.d
-discordtoken.json
-devdiscordtoken.json

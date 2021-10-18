@@ -20,10 +20,14 @@ html {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
 }
 
-input:focus, select:focus, textarea:focus, button:focus {
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
   outline: none;
 }
 
@@ -40,7 +44,8 @@ input:focus, select:focus, textarea:focus, button:focus {
   color: white;
 }
 
-p, pre {
+p,
+pre {
   margin: 0 !important;
 }
 
@@ -65,4 +70,8 @@ p, pre {
 
 .window-title {
   opacity: 0;
+}
+
+.grecaptcha-badge {
+  display: none !important;
 }

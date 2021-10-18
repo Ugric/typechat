@@ -1,6 +1,6 @@
 import { Database, open } from "sqlite";
 import express, { json } from "express";
-import { forceDomain } from 'forcedomain';
+import { forceDomain } from "forcedomain";
 import * as http from "http";
 import * as fs from "fs";
 import sqlite3 = require("sqlite3");
@@ -11,53 +11,60 @@ import mime = require("mime-types");
 const snooze = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
 import { generate } from "randomstring";
-import WebSocket = require('ws');
+import WebSocket = require("ws");
 import { NotificationEmail, PasswordEmail, VerificationEmail } from "./emailer";
 import autoaccountdetails from "./autoaccountdetails.json";
-import EmailValidation from 'emailvalid';
-import {client, roleID, serverID, unlinkedroleID} from "./typechatbot";
+import EmailValidation from "emailvalid";
+import { client, roleID, serverID, unlinkedroleID } from "./typechatbot";
 import { MessageEmbed } from "discord.js";
-import urlMetadata from 'url-metadata';
+import urlMetadata from "url-metadata";
 import greenlockexpress from "greenlock-express";
 console.time("express boot");
 
-const tempmetadata: {[key: string]: urlMetadata.Result} = {}
+const tempmetadata: { [key: string]: urlMetadata.Result } = {};
 
-const ev = new EmailValidation()
+const ev = new EmailValidation();
 
-const discordserver = "https://discord.gg/R6FnAaX8rC"
+const discordserver = "https://discord.gg/R6FnAaX8rC";
 
-interface linkurls {linkID:{[key: string]: string}, discordID: {[key: string]: string}};
-
-interface updatepassword {
-  [key: string]: string
+interface linkurls {
+  linkID: { [key: string]: string };
+  discordID: { [key: string]: string };
 }
 
-const updatepassword:updatepassword = {}
+interface updatepassword {
+  [key: string]: string;
+}
 
-const linkurls: linkurls = {linkID:{}, discordID: {}}
-let database: {db?:Database<sqlite3.Database, sqlite3.Statement>, linkurls: linkurls} = {linkurls}
-const normallimit = 100000000
-const blastlimit = 1000000000
+const updatepassword: updatepassword = {};
+
+const linkurls: linkurls = { linkID: {}, discordID: {} };
+let database: {
+  db?: Database<sqlite3.Database, sqlite3.Statement>;
+  linkurls: linkurls;
+} = { linkurls };
+const normallimit = 100000000;
+const blastlimit = 1000000000;
 
 function parseCookies(request: http.IncomingMessage) {
   const list: { [key: string]: any } = {},
     rc = request.headers.cookie;
 
-  rc && rc.split(';').forEach(function (cookie: string) {
-    const parts: string[] = cookie.split('=');
-    list[parts.shift().trim()] = decodeURI(parts.join('='))
-  });
+  rc &&
+    rc.split(";").forEach(function (cookie: string) {
+      const parts: string[] = cookie.split("=");
+      list[parts.shift().trim()] = decodeURI(parts.join("="));
+    });
 
   return list;
 }
 
 async function checkFileExists(file: fs.PathLike) {
   try {
-    await fs.promises.access(file, fs.constants.F_OK)
-    return true
+    await fs.promises.access(file, fs.constants.F_OK);
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 const truncate = (input: string, limit: number) =>
@@ -65,13 +72,13 @@ const truncate = (input: string, limit: number) =>
 
 const notificationsockets: {
   [key: string]: {
-    [key: string]: { focus: boolean;[key: string]: any }
-  }
+    [key: string]: { focus: boolean; [key: string]: any };
+  };
 } = {};
 
 const messagefunctions = {};
 
-const toVerify: { [key: string]: string } = {}
+const toVerify: { [key: string]: string } = {};
 
 const updateFunctions: { [key: string]: { [key: string]: Function } } = {};
 
@@ -79,10 +86,10 @@ function updateFromAccountID(accountID: string) {
   try {
     if (updateFunctions[accountID]) {
       for (const connectionID in updateFunctions[accountID]) {
-        updateFunctions[accountID][connectionID]()
+        updateFunctions[accountID][connectionID]();
       }
     }
-  } catch { }
+  } catch {}
 }
 
 (async () => {
@@ -93,16 +100,21 @@ function updateFromAccountID(accountID: string) {
     }
     return output.join("");
   };
-  const createFileID = async (file: { data: BinaryLike; mimetype: string; name: string; }, from?: string) => {
+  const createFileID = async (
+    file: { data: BinaryLike; mimetype: string; name: string },
+    from?: string
+  ) => {
     const hashed = createHash("md5").update(file.data).digest("hex");
     const existsindatabase = await db.get(
       "SELECT * FROM images WHERE hash=:hash LIMIT 1",
       { ":hash": hashed }
     );
     const id = generate(25);
-    const filename = !existsindatabase? generate(45) + "." + mime.extension(file.mimetype): existsindatabase.filename;
+    const filename = !existsindatabase
+      ? generate(45) + "." + mime.extension(file.mimetype)
+      : existsindatabase.filename;
     const paths = path.join(__dirname, "files", filename);
-    const originalfilename = file.name
+    const originalfilename = file.name;
     db.run(
       "INSERT INTO images (imageID, filename, hash, fromID, originalfilename, mimetype) VALUES  (:id, :filename, :hash, :fromID, :originalfilename, :mimetype)",
       {
@@ -111,7 +123,7 @@ function updateFromAccountID(accountID: string) {
         ":hash": hashed,
         ":fromID": from,
         ":originalfilename": originalfilename,
-        ":mimetype": file.mimetype
+        ":mimetype": file.mimetype,
       }
     );
     return {
@@ -124,12 +136,28 @@ function updateFromAccountID(accountID: string) {
   const hasher = (string: string) =>
     createHash("md5").update(string).digest("hex");
 
-
-  async function DiscordNotification(accoutID: string, data: { title: string; message: string; to: string; sound?: string }) {
-    const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accoutID })
+  async function DiscordNotification(
+    accoutID: string,
+    data: { title: string; message: string; to: string; sound?: string }
+  ) {
+    const discordlink = await db.get(
+      "SELECT * FROM discordAccountLink WHERE accountID=:accountID",
+      { ":accountID": accoutID }
+    );
     if (discordlink) {
-      const discordAccount = client.users.cache.find(user => user.id == discordlink.discordID)
-      await discordAccount.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("New Notification 🎉").addField(data.title, data.message).setURL(new URL(data.to, "https://tchat.us.to/").href).setThumbnail("https://tchat.us.to/logo.png")]})
+      const discordAccount = client.users.cache.find(
+        (user) => user.id == discordlink.discordID
+      );
+      await discordAccount.send({
+        embeds: [
+          new MessageEmbed()
+            .setColor("#5656ff")
+            .setTitle("New Notification 🎉")
+            .addField(data.title, data.message)
+            .setURL(new URL(data.to, "https://tchat.us.to/").href)
+            .setThumbnail("https://tchat.us.to/logo.png"),
+        ],
+      });
     }
   }
   const sendNotification = async (
@@ -157,9 +185,9 @@ function updateFromAccountID(accountID: string) {
         if (emailnotification) {
           NotificationEmail(email, data).catch(console.error);
         }
-        if (discordnotification){
-          DiscordNotification(to,data).catch(console.error);
-        } 
+        if (discordnotification) {
+          DiscordNotification(to, data).catch(console.error);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -169,7 +197,7 @@ function updateFromAccountID(accountID: string) {
     filename: "./database.db",
     driver: sqlite3.Database,
   });
-  database.db = db
+  database.db = db;
   await Promise.all([
     db.run(
       "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification)"
@@ -187,9 +215,7 @@ function updateFromAccountID(accountID: string) {
     db.run(
       "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID, originalfilename, mimetype)"
     ),
-    db.run(
-      "CREATE TABLE IF NOT EXISTS blast (accountID, expires)"
-    ),
+    db.run("CREATE TABLE IF NOT EXISTS blast (accountID, expires)"),
     db.run(
       "CREATE TABLE IF NOT EXISTS uploadlogs (accountID, size, time, fileID)"
     ),
@@ -197,15 +223,23 @@ function updateFromAccountID(accountID: string) {
       "CREATE TABLE IF NOT EXISTS discordAccountLink (accountID, discordID, time)"
     ),
   ]);
-  db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(() => { });
-  db.run("ALTER TABLE friendsChatMessages ADD edited DEFAULT false").catch(() => { });
-  db.run("ALTER TABLE images ADD mimetype").catch(() => { });
-  db.run("ALTER TABLE images ADD originalfilename").catch(() => { });
-  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
-  db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(() => { });
-  db.run("ALTER TABLE accounts ADD emailnotification DEFAULT true").catch(() => { });
-  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => { });
-  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => { });
+  db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(
+    () => {}
+  );
+  db.run("ALTER TABLE friendsChatMessages ADD edited DEFAULT false").catch(
+    () => {}
+  );
+  db.run("ALTER TABLE images ADD mimetype").catch(() => {});
+  db.run("ALTER TABLE images ADD originalfilename").catch(() => {});
+  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => {});
+  db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(
+    () => {}
+  );
+  db.run("ALTER TABLE accounts ADD emailnotification DEFAULT true").catch(
+    () => {}
+  );
+  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => {});
+  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => {});
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
@@ -224,32 +258,28 @@ function updateFromAccountID(accountID: string) {
         ":password": password,
         ":salt": salt,
         ":tag": "OFFICIAL",
-        ":time": new Date().getTime()
+        ":time": new Date().getTime(),
       }
     );
     defaultaccount = await db.get("SELECT * FROM accounts WHERE email=:email", {
       ":email": autoaccountdetails.email,
     });
   }
-  if (!(await db.get(
-    "SELECT * FROM blast WHERE accountID=:accountID",
-    {
+  if (
+    !(await db.get("SELECT * FROM blast WHERE accountID=:accountID", {
       ":accountID": defaultaccount.accountID,
-    }
-  ))) {
-    await db.run(
-      "INSERT INTO blast (accountID) VALUES (:accountID)",
-      {
-        ":accountID": defaultaccount.accountID,
-      }
-    );
+    }))
+  ) {
+    await db.run("INSERT INTO blast (accountID) VALUES (:accountID)", {
+      ":accountID": defaultaccount.accountID,
+    });
   }
-  const app = express()
+  const app = express();
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const getAllOnline = (sockets: {
-    [key: string]: { focus: boolean;[key: string]: any };
-  }): { focus: boolean;[key: string]: any }[] => {
+    [key: string]: { focus: boolean; [key: string]: any };
+  }): { focus: boolean; [key: string]: any }[] => {
     const online = [];
     for (const socket of Object.keys(sockets)) {
       if (sockets[socket].focus) {
@@ -258,14 +288,17 @@ function updateFromAccountID(accountID: string) {
     }
     return online;
   };
-  const serverboot = (glx: { httpsServer: any; httpServer: any; }) => {
-    console.log(glx)
+  const serverboot = (glx: { httpsServer: any; httpServer: any }) => {
+    console.log(glx);
     const httpsServer = glx.httpsServer(null, app);
 
-    httpsServer.listen(process.env.NODE_ENV === "development" ? 5000 : 443, "0.0.0.0", function () {
-      console.info("Listening on ", httpsServer.address());
-    });
-
+    httpsServer.listen(
+      process.env.NODE_ENV === "development" ? 5000 : 443,
+      "0.0.0.0",
+      function () {
+        console.info("Listening on ", httpsServer.address());
+      }
+    );
 
     const httpServer = glx.httpServer();
 
@@ -273,9 +306,9 @@ function updateFromAccountID(accountID: string) {
       console.info("Listening on ", httpServer.address());
     });
     const ws = new WebSocket.Server({
-      server: httpsServer
+      server: httpsServer,
     });
-    ws.on('connection', async (ws, req) => {
+    ws.on("connection", async (ws, req) => {
       let accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -299,16 +332,17 @@ function updateFromAccountID(accountID: string) {
         }
         ws.on("message", (data: string) => {
           try {
-          const msg = JSON.parse(data);
-          if (msg.type == "pong") {
-            lastping = new Date().getTime();
-            pingpong();
-          } else if (msg.type == "setFocus") {
-            notificationsockets[accountdata.accountID][connectionID].focus =
-              msg.focus;
-          }} catch (e) {
+            const msg = JSON.parse(data);
+            if (msg.type == "pong") {
+              lastping = new Date().getTime();
+              pingpong();
+            } else if (msg.type == "setFocus") {
+              notificationsockets[accountdata.accountID][connectionID].focus =
+                msg.focus;
+            }
+          } catch (e) {
             console.error(e, e.stack);
-        }
+          }
         });
         ws.on("close", () => {
           delete notificationsockets[accountdata.accountID][connectionID];
@@ -348,8 +382,8 @@ function updateFromAccountID(accountID: string) {
           if (to) {
             delete messagefunctions[accountdata.accountID][to][connectionID];
             if (
-              getAllOnline(messagefunctions[accountdata.accountID][to]).length <=
-              0 &&
+              getAllOnline(messagefunctions[accountdata.accountID][to])
+                .length <= 0 &&
               messagefunctions[to] &&
               messagefunctions[to][accountdata.accountID]
             ) {
@@ -368,35 +402,37 @@ function updateFromAccountID(accountID: string) {
         });
         ws.on("message", async (data: string) => {
           try {
-          const msg = JSON.parse(data);
-          if (msg.type === "start") {
-            if (msg.to === accountdata.accountID) {
-              return ws.close();
-            }
+            const msg = JSON.parse(data);
+            if (msg.type === "start") {
+              if (msg.to === accountdata.accountID) {
+                return ws.close();
+              }
 
-            if (to) {
-              delete messagefunctions[accountdata.accountID][to][connectionID];
-              if (
-                getAllOnline(messagefunctions[accountdata.accountID][to]).length <=
-                0 &&
-                messagefunctions[to] &&
-                messagefunctions[to][accountdata.accountID]
-              ) {
-                for (const ws of Object.keys(
+              if (to) {
+                delete messagefunctions[accountdata.accountID][to][
+                  connectionID
+                ];
+                if (
+                  getAllOnline(messagefunctions[accountdata.accountID][to])
+                    .length <= 0 &&
+                  messagefunctions[to] &&
                   messagefunctions[to][accountdata.accountID]
-                )) {
-                  messagefunctions[to][accountdata.accountID][ws].ws.send(
-                    JSON.stringify({
-                      type: "online",
-                      online: false,
-                    })
-                  );
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[to][accountdata.accountID]
+                  )) {
+                    messagefunctions[to][accountdata.accountID][ws].ws.send(
+                      JSON.stringify({
+                        type: "online",
+                        online: false,
+                      })
+                    );
+                  }
                 }
               }
-            }
-            const messages = (
-              await db.all(
-                `SELECT * 
+              const messages = (
+                await db.all(
+                  `SELECT * 
         FROM (SELECT
         ID, accountID as "from", message, time, file, mimetype, edited
         FROM friendsChatMessages
@@ -410,15 +446,15 @@ function updateFromAccountID(accountID: string) {
                 and toAccountID = :accountID
                 and deleted=false
             ) ORDER  BY time DESC) LIMIT :max`,
-                {
-                  ":accountID": accountdata.accountID,
-                  ":toUser": msg.to,
-                  ":max": msg.limit,
-                }
-              )
-            ).reverse();
-            const users = await db.get(
-              `WITH friendrequestlist as (
+                  {
+                    ":accountID": accountdata.accountID,
+                    ":toUser": msg.to,
+                    ":max": msg.limit,
+                  }
+                )
+              ).reverse();
+              const users = await db.get(
+                `WITH friendrequestlist as (
         SELECT accountID
         FROM friends
         WHERE toAccountID == :accountID
@@ -428,81 +464,48 @@ function updateFromAccountID(accountID: string) {
     JOIN accounts ON friends.toAccountID=accounts.accountID
     WHERE friends.accountID == :accountID and friends.toAccountID==:ID
         and toAccountID in friendrequestlist`,
-              {
-                ":accountID": accountdata.accountID,
-                ":ID": msg.to,
-              }
-            );
-            if (users) {
-              ws.send(
-                JSON.stringify({
-                  type: "setmessages",
-                  messages,
-                  users: {
-                    [msg.to]: {
-                      username: users.username,
-                      id: users.accountID,
-                      profilePic: users.profilePic,
-                      tag: users.tag,
-                      backgroundImage: users.backgroundImage,
-                    },
-                  },
-                })
+                {
+                  ":accountID": accountdata.accountID,
+                  ":ID": msg.to,
+                }
               );
-            }
-            to = String(msg.to);
-            const allonline = getAllOnline(
-              messagefunctions[to] && messagefunctions[to][accountdata.accountID]
-                ? messagefunctions[to][accountdata.accountID]
-                : []
-            );
-            ws.send(
-              JSON.stringify({
-                type: "online",
-                online:
-                  (messagefunctions[to] &&
-                    messagefunctions[to][accountdata.accountID] &&
-                    allonline.length > 0) === true,
-                mobile:
-                  allonline.length > 0
-                    ? allonline[allonline.length - 1].mobile
-                    : undefined,
-              })
-            );
-            if (
-              messagefunctions[to] &&
-              messagefunctions[to][accountdata.accountID]
-            ) {
-              for (const ws of Object.keys(
-                messagefunctions[to][accountdata.accountID]
-              )) {
-                messagefunctions[to][accountdata.accountID][ws].ws.send(
+              if (users) {
+                ws.send(
                   JSON.stringify({
-                    type: "online",
-                    online: true,
-                    mobile: msg.mobile,
+                    type: "setmessages",
+                    messages,
+                    users: {
+                      [msg.to]: {
+                        username: users.username,
+                        id: users.accountID,
+                        profilePic: users.profilePic,
+                        tag: users.tag,
+                        backgroundImage: users.backgroundImage,
+                      },
+                    },
                   })
                 );
               }
-            }
-            mobile = msg.mobile;
-            if (!messagefunctions[accountdata.accountID]) {
-              messagefunctions[accountdata.accountID] = {};
-            }
-            if (!messagefunctions[accountdata.accountID][msg.to]) {
-              messagefunctions[accountdata.accountID][msg.to] = {};
-            }
-            messagefunctions[accountdata.accountID][msg.to][connectionID] = {
-              connectionID,
-              ws,
-              mobile: msg.mobile,
-              focus: true,
-            };
-          } else if (msg.type == "delete") {
-            const id = msg.id;
-            const isowned = Boolean(await db.get("SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID}))
-            if (isowned) {
-              db.run("UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID})
+              to = String(msg.to);
+              const allonline = getAllOnline(
+                messagefunctions[to] &&
+                  messagefunctions[to][accountdata.accountID]
+                  ? messagefunctions[to][accountdata.accountID]
+                  : []
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "online",
+                  online:
+                    (messagefunctions[to] &&
+                      messagefunctions[to][accountdata.accountID] &&
+                      allonline.length > 0) === true,
+                  mobile:
+                    allonline.length > 0
+                      ? allonline[allonline.length - 1].mobile
+                      : undefined,
+                })
+              );
               if (
                 messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
@@ -512,85 +515,139 @@ function updateFromAccountID(accountID: string) {
                 )) {
                   messagefunctions[to][accountdata.accountID][ws].ws.send(
                     JSON.stringify({
-                      type: "delete",
-                      id,
-                      from: accountdata.accountID
+                      type: "online",
+                      online: true,
+                      mobile: msg.mobile,
                     })
                   );
                 }
               }
-              if (
-                messagefunctions[accountdata.accountID] &&
-                messagefunctions[accountdata.accountID][to]
-              ) {
-                for (const ws of Object.keys(
-                  messagefunctions[accountdata.accountID][to]
-                )) {
-                  if (
-                    messagefunctions[accountdata.accountID][to][ws].connectionID !==
-                    connectionID
-                  ) {
-                    messagefunctions[accountdata.accountID][to][ws].ws.send(
+              mobile = msg.mobile;
+              if (!messagefunctions[accountdata.accountID]) {
+                messagefunctions[accountdata.accountID] = {};
+              }
+              if (!messagefunctions[accountdata.accountID][msg.to]) {
+                messagefunctions[accountdata.accountID][msg.to] = {};
+              }
+              messagefunctions[accountdata.accountID][msg.to][connectionID] = {
+                connectionID,
+                ws,
+                mobile: msg.mobile,
+                focus: true,
+              };
+            } else if (msg.type == "delete") {
+              const id = msg.id;
+              const isowned = Boolean(
+                await db.get(
+                  "SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID",
+                  { ":id": id, ":accountID": accountdata.accountID }
+                )
+              );
+              if (isowned) {
+                db.run(
+                  "UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id and accountID=:accountID",
+                  { ":id": id, ":accountID": accountdata.accountID }
+                );
+                if (
+                  messagefunctions[to] &&
+                  messagefunctions[to][accountdata.accountID]
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[to][accountdata.accountID]
+                  )) {
+                    messagefunctions[to][accountdata.accountID][ws].ws.send(
                       JSON.stringify({
                         type: "delete",
                         id,
-                        from: accountdata.accountID
+                        from: accountdata.accountID,
                       })
                     );
                   }
                 }
-              }
-            }
-          } else if (msg.type == "edit") {
-            const id = msg.id;
-            const message = String(msg.message)
-            const isowned = Boolean(await db.get("SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID}))
-            if (isowned) {
-              db.run("UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id and accountID=:accountID", {":id": id, ":accountID": accountdata.accountID, ":message": message})
-              if (
-                messagefunctions[to] &&
-                messagefunctions[to][accountdata.accountID]
-              ) {
-                for (const ws of Object.keys(
-                  messagefunctions[to][accountdata.accountID]
-                )) {
-                  messagefunctions[to][accountdata.accountID][ws].ws.send(
-                    JSON.stringify({
-                      type: "edit",
-                      id,
-                      message,
-                      from: accountdata.accountID
-                    })
-                  );
+                if (
+                  messagefunctions[accountdata.accountID] &&
+                  messagefunctions[accountdata.accountID][to]
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[accountdata.accountID][to]
+                  )) {
+                    if (
+                      messagefunctions[accountdata.accountID][to][ws]
+                        .connectionID !== connectionID
+                    ) {
+                      messagefunctions[accountdata.accountID][to][ws].ws.send(
+                        JSON.stringify({
+                          type: "delete",
+                          id,
+                          from: accountdata.accountID,
+                        })
+                      );
+                    }
+                  }
                 }
               }
-              if (
-                messagefunctions[accountdata.accountID] &&
-                messagefunctions[accountdata.accountID][to]
-              ) {
-                for (const ws of Object.keys(
-                  messagefunctions[accountdata.accountID][to]
-                )) {
-                  if (
-                    messagefunctions[accountdata.accountID][to][ws].connectionID !==
-                    connectionID
-                  ) {
-                    messagefunctions[accountdata.accountID][to][ws].ws.send(
+            } else if (msg.type == "edit") {
+              const id = msg.id;
+              const message = String(msg.message);
+              const isowned = Boolean(
+                await db.get(
+                  "SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID",
+                  { ":id": id, ":accountID": accountdata.accountID }
+                )
+              );
+              if (isowned) {
+                db.run(
+                  "UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id and accountID=:accountID",
+                  {
+                    ":id": id,
+                    ":accountID": accountdata.accountID,
+                    ":message": message,
+                  }
+                );
+                if (
+                  messagefunctions[to] &&
+                  messagefunctions[to][accountdata.accountID]
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[to][accountdata.accountID]
+                  )) {
+                    messagefunctions[to][accountdata.accountID][ws].ws.send(
                       JSON.stringify({
                         type: "edit",
                         id,
                         message,
-                        from: accountdata.accountID
+                        from: accountdata.accountID,
                       })
                     );
                   }
                 }
+                if (
+                  messagefunctions[accountdata.accountID] &&
+                  messagefunctions[accountdata.accountID][to]
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[accountdata.accountID][to]
+                  )) {
+                    if (
+                      messagefunctions[accountdata.accountID][to][ws]
+                        .connectionID !== connectionID
+                    ) {
+                      messagefunctions[accountdata.accountID][to][ws].ws.send(
+                        JSON.stringify({
+                          type: "edit",
+                          id,
+                          message,
+                          from: accountdata.accountID,
+                        })
+                      );
+                    }
+                  }
+                }
               }
-            }
-          } else if (msg.type == "getmessages") {
-            const messages = (
-              await db.all(
-                `SELECT * FROM (SELECT
+            } else if (msg.type == "getmessages") {
+              const messages = (
+                await db.all(
+                  `SELECT * FROM (SELECT
         ID, accountID as "from", message, time, file, mimetype, edited
         FROM friendsChatMessages
         WHERE (
@@ -603,90 +660,64 @@ function updateFromAccountID(accountID: string) {
                 and toAccountID = :accountID
                 and deleted=false
             ) ORDER  BY time DESC) LIMIT :start, :max`,
-                {
-                  ":accountID": accountdata.accountID,
-                  ":toUser": to,
-                  ":start": msg.start,
-                  ":max": msg.max,
+                  {
+                    ":accountID": accountdata.accountID,
+                    ":toUser": to,
+                    ":start": msg.start,
+                    ":max": msg.max,
+                  }
+                )
+              ).reverse();
+              for (const message of messages) {
+                message.mine = message.mine === 1;
+              }
+              ws.send(
+                JSON.stringify({
+                  type: "prependmessages",
+                  messages,
+                })
+              );
+            } else if (
+              msg.type == "setFocus" &&
+              to &&
+              messagefunctions[accountdata.accountID][to][connectionID]
+            ) {
+              messagefunctions[accountdata.accountID][to][connectionID].focus =
+                msg.focus;
+              if (
+                (!msg.focus
+                  ? getAllOnline(messagefunctions[accountdata.accountID][to])
+                      .length <= 0
+                  : true) &&
+                messagefunctions[to] &&
+                messagefunctions[to][accountdata.accountID]
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[to][accountdata.accountID]
+                )) {
+                  messagefunctions[to][accountdata.accountID][ws].ws.send(
+                    JSON.stringify({
+                      type: "online",
+                      online: msg.focus,
+                      mobile: msg.focus ? mobile : undefined,
+                    })
+                  );
                 }
-              )
-            ).reverse();
-            for (const message of messages) {
-              message.mine = message.mine === 1;
-            }
-            ws.send(
-              JSON.stringify({
-                type: "prependmessages",
-                messages,
-              })
-            );
-          } else if (
-            msg.type == "setFocus" &&
-            to &&
-            messagefunctions[accountdata.accountID][to][connectionID]
-          ) {
-            messagefunctions[accountdata.accountID][to][connectionID].focus =
-              msg.focus;
-            if (
-              (!msg.focus
-                ? getAllOnline(messagefunctions[accountdata.accountID][to])
-                  .length <= 0
-                : true) &&
-              messagefunctions[to] &&
-              messagefunctions[to][accountdata.accountID]
-            ) {
-              for (const ws of Object.keys(
-                messagefunctions[to][accountdata.accountID]
-              )) {
-                messagefunctions[to][accountdata.accountID][ws].ws.send(
-                  JSON.stringify({
-                    type: "online",
-                    online: msg.focus,
-                    mobile: msg.focus ? mobile : undefined,
-                  })
-                );
               }
-            }
-          } else if (msg.type == "pong") {
-            lastping = new Date().getTime();
-            pingpong();
-          } else if (msg.type === "message" || msg.type === "file") {
-            const time = new Date().getTime();
-            const id = generate(100);
-            if (
-              messagefunctions[to] &&
-              messagefunctions[to][accountdata.accountID]
-            ) {
-              for (const ws of Object.keys(
+            } else if (msg.type == "pong") {
+              lastping = new Date().getTime();
+              pingpong();
+            } else if (msg.type === "message" || msg.type === "file") {
+              const time = new Date().getTime();
+              const id = generate(100);
+              if (
+                messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
-              )) {
-                messagefunctions[to][accountdata.accountID][ws].ws.send(
-                  JSON.stringify({
-                    type: "message",
-                    message: {
-                      from: accountdata.accountID,
-                      time,
-                      message: msg.message,
-                      file: msg.file,
-                      mimetype: msg.mimetype,
-                      ID: id,
-                    },
-                  })
-                );
-              }
-            }
-            if (
-              messagefunctions[accountdata.accountID] &&
-              messagefunctions[accountdata.accountID][to]
-            ) {
-              for (const ws of Object.keys(
-                messagefunctions[accountdata.accountID][to]
-              )) {
-                if (
-                  messagefunctions[accountdata.accountID][to][ws].connectionID !==
-                  connectionID
-                ) {
-                  messagefunctions[accountdata.accountID][to][ws].ws.send(
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[to][accountdata.accountID]
+                )) {
+                  messagefunctions[to][accountdata.accountID][ws].ws.send(
                     JSON.stringify({
                       type: "message",
                       message: {
@@ -701,62 +732,89 @@ function updateFromAccountID(accountID: string) {
                   );
                 }
               }
-            }
-            if (
-              !(
-                messagefunctions[to] &&
-                messagefunctions[to][accountdata.accountID] &&
-                getAllOnline(messagefunctions[to][accountdata.accountID]).length > 0
-              )
-            ) {
-              sendNotification(to, {
-                title: accountdata.username,
-                message: msg.message ? truncate(msg.message, 25) : "file",
-                to: `/chat/${accountdata.accountID}`,
-              });
-            }
-            await db
-              .run(
-                `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype, false)`,
-                {
-                  ":ID": id,
-                  ":accountID": accountdata.accountID,
-                  ":toAccountID": to,
-                  ":message": msg.message,
-                  ":file": msg.file,
-                  ":mimetype": msg.mimetype,
-                  ":time": time,
+              if (
+                messagefunctions[accountdata.accountID] &&
+                messagefunctions[accountdata.accountID][to]
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[accountdata.accountID][to]
+                )) {
+                  if (
+                    messagefunctions[accountdata.accountID][to][ws]
+                      .connectionID !== connectionID
+                  ) {
+                    messagefunctions[accountdata.accountID][to][ws].ws.send(
+                      JSON.stringify({
+                        type: "message",
+                        message: {
+                          from: accountdata.accountID,
+                          time,
+                          message: msg.message,
+                          file: msg.file,
+                          mimetype: msg.mimetype,
+                          ID: id,
+                        },
+                      })
+                    );
+                  }
                 }
-              )
-              .catch(console.error);
-            ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
-          } else if (msg.type === "typing") {
-            if (
-              messagefunctions[to] &&
-              messagefunctions[to][accountdata.accountID]
-            ) {
-              for (const ws of Object.keys(
+              }
+              if (
+                !(
+                  messagefunctions[to] &&
+                  messagefunctions[to][accountdata.accountID] &&
+                  getAllOnline(messagefunctions[to][accountdata.accountID])
+                    .length > 0
+                )
+              ) {
+                sendNotification(to, {
+                  title: accountdata.username,
+                  message: msg.message ? truncate(msg.message, 25) : "file",
+                  to: `/chat/${accountdata.accountID}`,
+                });
+              }
+              await db
+                .run(
+                  `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype, false)`,
+                  {
+                    ":ID": id,
+                    ":accountID": accountdata.accountID,
+                    ":toAccountID": to,
+                    ":message": msg.message,
+                    ":file": msg.file,
+                    ":mimetype": msg.mimetype,
+                    ":time": time,
+                  }
+                )
+                .catch(console.error);
+              ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
+            } else if (msg.type === "typing") {
+              if (
+                messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
-              )) {
-                messagefunctions[to][accountdata.accountID][ws].ws.send(
-                  JSON.stringify({
-                    type: "typing",
-                    typing: msg.typing,
-                    length: msg.length,
-                    specialchars: msg.specialchars,
-                  })
-                );
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[to][accountdata.accountID]
+                )) {
+                  messagefunctions[to][accountdata.accountID][ws].ws.send(
+                    JSON.stringify({
+                      type: "typing",
+                      typing: msg.typing,
+                      length: msg.length,
+                      specialchars: msg.specialchars,
+                    })
+                  );
+                }
               }
             }
-          }
-        } catch (e) {
+          } catch (e) {
             console.error(e, e.stack);
-        }
+          }
         });
         ws.send(JSON.stringify({ type: "start" }));
         pingpong();
       }
-    })
+    });
     90;
     app.get("/api/uploadlimit", async (req, res) => {
       const accountdata = await db.get(
@@ -765,7 +823,7 @@ function updateFromAccountID(accountID: string) {
           ":token": req.cookies.token,
         }
       );
-      const time = new Date().getTime()
+      const time = new Date().getTime();
       if (accountdata) {
         const blastdata = await db.get(
           "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
@@ -773,22 +831,26 @@ function updateFromAccountID(accountID: string) {
             ":accountID": accountdata.accountID,
             ":time": time,
           }
-        )
+        );
         const blast = Boolean(blastdata);
-        const startofmonth = (Math.trunc(time / 2629743000) * 2629743000) + ((blast ? blastdata.expires : accountdata.joined) % 2629743000)
-        const filelimit = blast ? blastlimit : normallimit
-        const limitused = (await db.get(
-          "SELECT SUM(size) as limitused FROM uploadlogs WHERE accountID=:accountID and time>=:startofmonth",
-          {
-            ":accountID": accountdata.accountID,
-            ":startofmonth": startofmonth
-          }
-        )).limitused;
-        const timeleft = 2629743000-(time - startofmonth)
-        return res.send({ filelimit, limitused, timeleft })
+        const startofmonth =
+          Math.trunc(time / 2629743000) * 2629743000 +
+          ((blast ? blastdata.expires : accountdata.joined) % 2629743000);
+        const filelimit = blast ? blastlimit : normallimit;
+        const limitused = (
+          await db.get(
+            "SELECT SUM(size) as limitused FROM uploadlogs WHERE accountID=:accountID and time>=:startofmonth",
+            {
+              ":accountID": accountdata.accountID,
+              ":startofmonth": startofmonth,
+            }
+          )
+        ).limitused;
+        const timeleft = 2629743000 - (time - startofmonth);
+        return res.send({ filelimit, limitused, timeleft });
       }
-      return res.send({ filelimit: 0, limitused: 0, timeleft: 0 })
-    })
+      return res.send({ filelimit: 0, limitused: 0, timeleft: 0 });
+    });
     app.post("/api/uploadfile", async (req: any, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -796,7 +858,7 @@ function updateFromAccountID(accountID: string) {
           ":token": req.cookies.token,
         }
       );
-      const time = new Date().getTime()
+      const time = new Date().getTime();
       if (accountdata) {
         const blastdata = await db.get(
           "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
@@ -804,18 +866,25 @@ function updateFromAccountID(accountID: string) {
             ":accountID": accountdata.accountID,
             ":time": time,
           }
-        )
+        );
         const blast = Boolean(blastdata);
-        const startofmonth = (Math.trunc(time / 2629743000) * 2629743000) + (Number(blast ? blastdata.expires : accountdata.joined) % 2629743000)
-        const filelimit = blast ? blastlimit : normallimit
-        const limitused = (await db.get(
-          "SELECT SUM(size) as limitused FROM uploadlogs WHERE accountID=:accountID and time>=:startofmonth",
-          {
-            ":accountID": accountdata.accountID,
-            ":startofmonth": startofmonth
-          }
-        )).limitused;
-        if ((filelimit >= limitused + req.files.file.size) || accountdata.accountID == defaultaccount.accountID) {
+        const startofmonth =
+          Math.trunc(time / 2629743000) * 2629743000 +
+          (Number(blast ? blastdata.expires : accountdata.joined) % 2629743000);
+        const filelimit = blast ? blastlimit : normallimit;
+        const limitused = (
+          await db.get(
+            "SELECT SUM(size) as limitused FROM uploadlogs WHERE accountID=:accountID and time>=:startofmonth",
+            {
+              ":accountID": accountdata.accountID,
+              ":startofmonth": startofmonth,
+            }
+          )
+        ).limitused;
+        if (
+          filelimit >= limitused + req.files.file.size ||
+          accountdata.accountID == defaultaccount.accountID
+        ) {
           const { id, path, exists } = await createFileID(
             req.files.file,
             accountdata.accountID
@@ -823,11 +892,21 @@ function updateFromAccountID(accountID: string) {
           if (!exists) {
             req.files.file.mv(path);
           }
-          await db.run("INSERT INTO uploadlogs (accountID, size, time, fileID) VALUES  (:accountID, :size, :time, :fileID)", { ":accountID": accountdata.accountID, ":size": req.files.file.size, ":time": time, ":fileID": id })
+          await db.run(
+            "INSERT INTO uploadlogs (accountID, size, time, fileID) VALUES  (:accountID, :size, :time, :fileID)",
+            {
+              ":accountID": accountdata.accountID,
+              ":size": req.files.file.size,
+              ":time": time,
+              ":fileID": id,
+            }
+          );
           res.send({ resp: true, id: id });
-        }
-        else {
-          res.send({ resp: false, err: "This file is too big and would exceed your monthly upload limit." });
+        } else {
+          res.send({
+            resp: false,
+            err: "This file is too big and would exceed your monthly upload limit.",
+          });
         }
       } else {
         res.send({ resp: false, err: "invalid token" });
@@ -883,7 +962,10 @@ function updateFromAccountID(accountID: string) {
             ":id": req.body.user,
           }
         );
-        if (toFriendUserData && accountdata.accountID != toFriendUserData.accountID) {
+        if (
+          toFriendUserData &&
+          accountdata.accountID != toFriendUserData.accountID
+        ) {
           const alreadyfriendrequest = await db.get(
             "SELECT * FROM friends WHERE accountID=:accountID and toAccountID=:toAccountID",
             {
@@ -955,8 +1037,8 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
           {
             ":accountID": toVerify[req.params.verificationID],
           }
-        )
-        delete toVerify[req.params.verificationID]
+        );
+        delete toVerify[req.params.verificationID];
         if (accountdata) {
           return res.send({
             verified: true,
@@ -967,13 +1049,13 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
               tag: accountdata.tag,
               backgroundImage: accountdata.backgroundImage,
             },
-          })
+          });
         }
       }
       return res.send({
         verified: false,
-      })
-    })
+      });
+    });
     app.get("/api/logout", async (req, res) => {
       await db.get("DELETE FROM tokens WHERE token=:token", {
         ":token": req.cookies.token,
@@ -1020,11 +1102,14 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         return res.send({ exists: false });
       }
     });
-    app.get("/api/getimagedata", async (req, res)=>{
-      const imagedata = await db.get("SELECT imageID as id, originalfilename as filename, mimetype FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE imageID=:id", {":id": req.query.id})
-      return res.send(imagedata)
-    })
-    app.get("/api/mydrive", async (req, res)=>{
+    app.get("/api/getimagedata", async (req, res) => {
+      const imagedata = await db.get(
+        "SELECT imageID as id, originalfilename as filename, mimetype FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE imageID=:id",
+        { ":id": req.query.id }
+      );
+      return res.send(imagedata);
+    });
+    app.get("/api/mydrive", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -1032,12 +1117,17 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
         }
       );
       if (accountdata) {
-        const fileslist = (await db.all("SELECT imageID as id, originalfilename as filename, mimetype FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE uploadlogs.accountID=:accountID and images.originalfilename is not NULL", {":accountID": accountdata.accountID})).reverse()
-        return res.send(fileslist)
+        const fileslist = (
+          await db.all(
+            "SELECT imageID as id, originalfilename as filename, mimetype FROM uploadlogs JOIN images ON uploadlogs.fileID=images.imageID WHERE uploadlogs.accountID=:accountID and images.originalfilename is not NULL",
+            { ":accountID": accountdata.accountID }
+          )
+        ).reverse();
+        return res.send(fileslist);
       } else {
-        return res.send(false)
+        return res.send(false);
       }
-    })
+    });
     app.get("/api/getallfriendrequests", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1111,9 +1201,11 @@ WHERE friends.accountID == :accountID
           ":token": req.cookies.token,
         }
       );
-      const connectionID = generate(16)
+      const connectionID = generate(16);
       async function update() {
-        if (updateFunctions[accountdata.accountID][connectionID]) { delete updateFunctions[accountdata.accountID][connectionID] }
+        if (updateFunctions[accountdata.accountID][connectionID]) {
+          delete updateFunctions[accountdata.accountID][connectionID];
+        }
         try {
           const newaccountdata = await db.get(
             "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1123,13 +1215,15 @@ WHERE friends.accountID == :accountID
           );
 
           if (newaccountdata) {
-            const blast = Boolean(await db.get(
-              "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
-              {
-                ":accountID": newaccountdata.accountID,
-                ":time": new Date().getTime(),
-              }
-            ));
+            const blast = Boolean(
+              await db.get(
+                "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+                {
+                  ":accountID": newaccountdata.accountID,
+                  ":time": new Date().getTime(),
+                }
+              )
+            );
             return res.send({
               loggedin: true,
               user: {
@@ -1138,7 +1232,7 @@ WHERE friends.accountID == :accountID
                 profilePic: newaccountdata.profilePic,
                 tag: newaccountdata.tag,
                 backgroundImage: newaccountdata.backgroundImage,
-                blast
+                blast,
               },
             });
           } else {
@@ -1146,16 +1240,16 @@ WHERE friends.accountID == :accountID
               loggedin: false,
             });
           }
-        } catch { }
+        } catch {}
       }
       if (accountdata) {
         if (!updateFunctions[accountdata.accountID]) {
-          updateFunctions[accountdata.accountID] = {}
+          updateFunctions[accountdata.accountID] = {};
         }
-        updateFunctions[accountdata.accountID][connectionID] = update
-        await snooze(30000)
+        updateFunctions[accountdata.accountID][connectionID] = update;
+        await snooze(30000);
         if (updateFunctions[accountdata.accountID][connectionID]) {
-          delete updateFunctions[accountdata.accountID][connectionID]
+          delete updateFunctions[accountdata.accountID][connectionID];
           return res.send({ reconnect: true });
         }
       }
@@ -1170,13 +1264,15 @@ WHERE friends.accountID == :accountID
       if (!accountdata) {
         return res.send({ loggedin: false });
       } else {
-        const blast = Boolean(await db.get(
-          "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
-          {
-            ":accountID": accountdata.accountID,
-            ":time": new Date().getTime(),
-          }
-        ));
+        const blast = Boolean(
+          await db.get(
+            "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+            {
+              ":accountID": accountdata.accountID,
+              ":time": new Date().getTime(),
+            }
+          )
+        );
         return res.send({
           loggedin: true,
           user: {
@@ -1185,40 +1281,54 @@ WHERE friends.accountID == :accountID
             profilePic: accountdata.profilePic,
             tag: accountdata.tag,
             backgroundImage: accountdata.backgroundImage,
-            blast
+            blast,
           },
         });
       }
     });
     app.post("/api/requestnewpassword", async (req, res) => {
-      const requestaccount = await db.get("SELECT * FROM accounts WHERE email=:email", {":email": req.body.email})
+      const requestaccount = await db.get(
+        "SELECT * FROM accounts WHERE email=:email",
+        { ":email": req.body.email }
+      );
       if (requestaccount) {
-        const passwordUpdateID = generate(30)
-        updatepassword[passwordUpdateID] = requestaccount.accountID
-        PasswordEmail(req.body.email, passwordUpdateID).catch(()=>{})
-        setTimeout(()=>{if (updatepassword[passwordUpdateID]) delete updatepassword[passwordUpdateID]}, 3600000)
+        const passwordUpdateID = generate(30);
+        updatepassword[passwordUpdateID] = requestaccount.accountID;
+        PasswordEmail(req.body.email, passwordUpdateID).catch(() => {});
+        setTimeout(() => {
+          if (updatepassword[passwordUpdateID])
+            delete updatepassword[passwordUpdateID];
+        }, 3600000);
       }
-      return res.send(true)
-    })
+      return res.send(true);
+    });
     app.post("/api/changepassword", async (req, res) => {
-      const accountdata = await db.get("SELECT * FROM accounts WHERE accountID=:accountID", {":accountID": updatepassword[req.body.updateID]})
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=:accountID",
+        { ":accountID": updatepassword[req.body.updateID] }
+      );
       if (accountdata) {
         const salt = generate(150);
         const password = hasher(req.body.pass + salt);
-        updateFromAccountID(accountdata.accountID)
+        updateFromAccountID(accountdata.accountID);
         await Promise.all([
-          db.run("UPDATE accounts SET password=:password, salt=:salt WHERE accountID=:accountID", {":salt": salt, ":password": password, ":accountID": updatepassword[req.body.updateID]}),
           db.run(
-          `DELETE FROM tokens WHERE accountID = :accountID`,
-          {
+            "UPDATE accounts SET password=:password, salt=:salt WHERE accountID=:accountID",
+            {
+              ":salt": salt,
+              ":password": password,
+              ":accountID": updatepassword[req.body.updateID],
+            }
+          ),
+          db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
             ":accountID": accountdata.accountID,
-          }
-        )])
-        delete updatepassword[req.body.updateID]
-        return res.send(true)
+          }),
+        ]);
+        delete updatepassword[req.body.updateID];
+        return res.send(true);
       }
-      return res.send(false)
-    })
+      return res.send(false);
+    });
     app.get("/api/getNotificationsOn", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1231,10 +1341,10 @@ WHERE friends.accountID == :accountID
       }
       return res.send({
         discord: Boolean(accountdata.discordnotification),
-        email: Boolean(accountdata.emailnotification)
+        email: Boolean(accountdata.emailnotification),
       });
     });
-    app.post("/api/togglediscord", async (req, res)=>{
+    app.post("/api/togglediscord", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -1249,12 +1359,12 @@ WHERE friends.accountID == :accountID
             ":accountID": accountdata.accountID,
           }
         );
-        return res.send(true)
+        return res.send(true);
       }
-      return res.send(false)
-    })
+      return res.send(false);
+    });
 
-    app.post("/api/toggleemail", async (req, res)=>{
+    app.post("/api/toggleemail", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -1269,10 +1379,10 @@ WHERE friends.accountID == :accountID
             ":accountID": accountdata.accountID,
           }
         );
-        return res.send(true)
+        return res.send(true);
       }
-      return res.send(false)
-    })
+      return res.send(false);
+    });
 
     app.get("/files/:id", async (req, res) => {
       const imagedata = await db.get(
@@ -1282,13 +1392,12 @@ WHERE friends.accountID == :accountID
         }
       );
       if (imagedata) {
-        const filepath = path.join(__dirname, "files", imagedata.filename)
-        if (imagedata && await checkFileExists(filepath)) {
+        const filepath = path.join(__dirname, "files", imagedata.filename);
+        if (imagedata && (await checkFileExists(filepath))) {
           return res.sendFile(filepath);
         }
       }
       return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
-
     });
     app.get("/getprofilepicfromid", async (req, res) => {
       const imagedata = await db.get(
@@ -1334,12 +1443,19 @@ WHERE friends.accountID == :accountID
               ":accountID": accountdata.accountID,
             }
           );
-          updateFromAccountID(accountdata.accountID)
-          const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accountdata.accountID })
+          updateFromAccountID(accountdata.accountID);
+          const discordlink = await db.get(
+            "SELECT * FROM discordAccountLink WHERE accountID=:accountID",
+            { ":accountID": accountdata.accountID }
+          );
           if (discordlink) {
-            const guild = client.guilds.cache.get(serverID)
-            const memberonguild = guild?.members?.cache?.get(discordlink.discordID)
-            memberonguild?.setNickname(req.body.username, "rename").catch(()=>{})
+            const guild = client.guilds.cache.get(serverID);
+            const memberonguild = guild?.members?.cache?.get(
+              discordlink.discordID
+            );
+            memberonguild
+              ?.setNickname(req.body.username, "rename")
+              .catch(() => {});
           }
           res.send({ resp: true });
         } else {
@@ -1374,76 +1490,133 @@ WHERE friends.accountID == :accountID
           "UPDATE accounts SET backgroundImage=:backgroundImage WHERE accountID=:accountID",
           { ":backgroundImage": id, ":accountID": accountdata.accountID }
         );
-        updateFromAccountID(accountdata.accountID)
+        updateFromAccountID(accountdata.accountID);
         res.send(true);
       } else {
         res.send(false);
       }
     });
-    app.get("/api/getmetadata", (req, res) =>{
-      const url = String(req.query.url)
+    app.get("/api/getmetadata", (req, res) => {
+      const url = String(req.query.url);
       if (tempmetadata[url]) {
-        return res.send(tempmetadata[url])
+        return res.send(tempmetadata[url]);
       }
       urlMetadata(url, {
-          maxRedirects: 10,
-          timeout: 10000,
-          ensureSecureImageRequest: true,
-        }).then(
-          function (metadata) {
-            tempmetadata[url] = metadata
-            res.send(metadata)
-            setTimeout(()=>{delete tempmetadata[url]}, 3600000)
-          },
-          function (error) {
-            res.sendStatus(404).send(false)
-          })
-    })
-    app.get("/api/link/:id", async (req, res)=>{
+        maxRedirects: 10,
+        timeout: 10000,
+        ensureSecureImageRequest: true,
+      }).then(
+        function (metadata) {
+          tempmetadata[url] = metadata;
+          res.send(metadata);
+          setTimeout(() => {
+            delete tempmetadata[url];
+          }, 3600000);
+        },
+        function (error) {
+          res.sendStatus(404).send(false);
+        }
+      );
+    });
+    app.get("/api/link/:id", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         { ":token": req.cookies.token }
       );
-      const time = new Date().getTime()
+      const time = new Date().getTime();
       if (accountdata) {
-        const discordID = linkurls.linkID[req.params.id]
+        const discordID = linkurls.linkID[req.params.id];
         if (discordID) {
-        if (!toVerify[accountdata.accountID]) {
-          const link = await db.get("SELECT * FROM discordAccountLink WHERE accountID=:accountID", { ":accountID": accountdata.accountID })
-          if (!link) {
-              const discordAccount = client.users.cache.find(user => user.id == discordID)
+          if (!toVerify[accountdata.accountID]) {
+            const link = await db.get(
+              "SELECT * FROM discordAccountLink WHERE accountID=:accountID",
+              { ":accountID": accountdata.accountID }
+            );
+            if (!link) {
+              const discordAccount = client.users.cache.find(
+                (user) => user.id == discordID
+              );
               if (discordAccount) {
-                const discordlink = await db.get("SELECT * FROM discordAccountLink WHERE discordID=:discordID", { ":discordID": discordAccount.id })
+                const discordlink = await db.get(
+                  "SELECT * FROM discordAccountLink WHERE discordID=:discordID",
+                  { ":discordID": discordAccount.id }
+                );
                 if (!discordlink) {
-                  await db.run("INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)", { ":accountID": accountdata.accountID, ":discordID": discordAccount.id, ":time": time })
-                  const guild = client.guilds.cache.get(serverID)
-                  const memberonguild = guild.members.cache.get(discordAccount.id)
-                  delete linkurls.discordID[linkurls.linkID[req.params.id]]
-                  delete linkurls.linkID[req.params.id]
-                  await memberonguild.setNickname(accountdata.username, "linked").catch(()=>{})
-                  await memberonguild.roles.add(roleID, "linked").catch(()=>{})
-                  await memberonguild.roles.remove(unlinkedroleID, "linked").catch(()=>{})
-                  discordAccount.dmChannel.send({embeds: [new MessageEmbed().setColor("#5656ff").setTitle("Linked 🔒").setDescription(`your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`).setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)]})
-                  return res.send({linked: true})
-                }else{
-                  return res.send({linked: false, error: "this discord account is already linked with a typechat account!"})
+                  await db.run(
+                    "INSERT INTO discordAccountLink (accountID, discordID, time) VALUES (:accountID, :discordID, :time)",
+                    {
+                      ":accountID": accountdata.accountID,
+                      ":discordID": discordAccount.id,
+                      ":time": time,
+                    }
+                  );
+                  const guild = client.guilds.cache.get(serverID);
+                  const memberonguild = guild.members.cache.get(
+                    discordAccount.id
+                  );
+                  delete linkurls.discordID[linkurls.linkID[req.params.id]];
+                  delete linkurls.linkID[req.params.id];
+                  await memberonguild
+                    .setNickname(accountdata.username, "linked")
+                    .catch(() => {});
+                  await memberonguild.roles
+                    .add(roleID, "linked")
+                    .catch(() => {});
+                  await memberonguild.roles
+                    .remove(unlinkedroleID, "linked")
+                    .catch(() => {});
+                  discordAccount.dmChannel.send({
+                    embeds: [
+                      new MessageEmbed()
+                        .setColor("#5656ff")
+                        .setTitle("Linked 🔒")
+                        .setDescription(
+                          `your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`
+                        )
+                        .setThumbnail(
+                          `https://tchat.us.to/files/${accountdata.profilePic}`
+                        ),
+                    ],
+                  });
+                  return res.send({ linked: true });
+                } else {
+                  return res.send({
+                    linked: false,
+                    error:
+                      "this discord account is already linked with a typechat account!",
+                  });
                 }
-              } else{
-                return res.send({linked: false, error: "invalid discord account or discord account not on server!"})
+              } else {
+                return res.send({
+                  linked: false,
+                  error:
+                    "invalid discord account or discord account not on server!",
+                });
               }
-            } else{
-              return res.send({linked: false, error: "this typechat account has already been linked with a discord account!"})
-              }
+            } else {
+              return res.send({
+                linked: false,
+                error:
+                  "this typechat account has already been linked with a discord account!",
+              });
+            }
           } else {
-            return res.send({linked: false, error: "Your account must be verified before you link your discord account!"})
+            return res.send({
+              linked: false,
+              error:
+                "Your account must be verified before you link your discord account!",
+            });
           }
-        } else{
-          return res.send({linked: false, error: "invaild link ID, maybe try create a new link url!"})
-          }
+        } else {
+          return res.send({
+            linked: false,
+            error: "invaild link ID, maybe try create a new link url!",
+          });
+        }
       } else {
-      return res.send({linked: false, error: "invalid token!"})
-    }
-    })
+        return res.send({ linked: false, error: "invalid token!" });
+      }
+    });
     app.post("/api/setprofilepic", async (req: any, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1462,7 +1635,7 @@ WHERE friends.accountID == :accountID
             "UPDATE accounts SET profilePic=:profilePic WHERE accountID=:accountID",
             { ":profilePic": id, ":accountID": accountdata.accountID }
           );
-          updateFromAccountID(accountdata.accountID)
+          updateFromAccountID(accountdata.accountID);
           res.send({ resp: true });
         } else {
           res.send({ resp: false, err: "no image!" });
@@ -1570,7 +1743,8 @@ WHERE friends.accountID == :accountID
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
               ":toAccountID": accountID,
-              ":message": "A verification email has been sent to your email, you have 1 hour to verify your account before your account is disabled. If your account is disabled before you verify, you can create a new one under the same email. 📧✅",
+              ":message":
+                "A verification email has been sent to your email, you have 1 hour to verify your account before your account is disabled. If your account is disabled before you verify, you can create a new one under the same email. 📧✅",
               ":time": time - 1000,
             }
           ),
@@ -1580,21 +1754,22 @@ WHERE friends.accountID == :accountID
               ":ID": generate(100),
               ":accountID": defaultaccount.accountID,
               ":toAccountID": accountID,
-              ":message": "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.us.to/blast",
+              ":message":
+                "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.us.to/blast",
               ":time": time,
             }
-          )
+          ),
         ]);
         res.send({ resp: true, token });
-        const verificationID = generate(100)
-        toVerify[verificationID] = accountID
-        VerificationEmail(req.body.email, verificationID)
-        await snooze(3600000)
+        const verificationID = generate(100);
+        toVerify[verificationID] = accountID;
+        VerificationEmail(req.body.email, verificationID);
+        await snooze(3600000);
         if (toVerify[verificationID]) {
-          const newemail = generate(15) + "@typechat.us.to"
+          const newemail = generate(15) + "@typechat.us.to";
           const salt = generate(150);
           const password = hasher(autoaccountdetails.pass + salt);
-          const message = `lol, i did verify my email, my email is now ${newemail} and you already know what the password would be set to lol.`
+          const message = `lol, i did verify my email, my email is now ${newemail} and you already know what the password would be set to lol.`;
           await Promise.all([
             db.run(
               `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
@@ -1606,46 +1781,59 @@ WHERE friends.accountID == :accountID
                 ":time": new Date().getTime(),
               }
             ),
+            db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
+              ":accountID": accountID,
+            }),
             db.run(
-              `DELETE FROM tokens WHERE accountID = :accountID`,
+              `UPDATE accounts
+            SET email = :email, salt = :salt, password = :password
+            WHERE accountID = :accountID;`,
               {
+                ":email": newemail,
+                ":salt": salt,
+                ":password": password,
                 ":accountID": accountID,
               }
             ),
-            db.run(`UPDATE accounts
-            SET email = :email, salt = :salt, password = :password
-            WHERE accountID = :accountID;`, { ":email": newemail, ":salt": salt, ":password": password, ":accountID": accountID })])
+          ]);
           sendNotification(defaultaccount.accountID, {
             title: "Not verified lol",
             message: truncate(message, 25),
             to: `/chat/${defaultaccount.accountID}`,
           });
-          updateFromAccountID(accountID)
+          updateFromAccountID(accountID);
         }
       }
     });
     if (!(process.env.NODE_ENV === "development")) {
       app.use(forceDomain({ hostname: "tchat.us.to" }));
     }
-    app.get("/logo.png", (_, res) => res.sendFile(path.join(__dirname, "logo.png")))
-    app.get("/invite", (_, res) => res.redirect(discordserver))
+    app.get("/logo.png", (_, res) =>
+      res.sendFile(path.join(__dirname, "logo.png"))
+    );
+    app.get("/invite", (_, res) => res.redirect(discordserver));
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
       res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
     });
-  }
-  console.log(process.env.NODE_ENV, "boot up")
+  };
+  console.log(process.env.NODE_ENV, "boot up");
   if (process.env.NODE_ENV === "development") {
-    serverboot({ httpsServer: () => http.createServer(app), httpServer: () => { return { listen: () => { } } } })
+    serverboot({
+      httpsServer: () => http.createServer(app),
+      httpServer: () => {
+        return { listen: () => {} };
+      },
+    });
   } else {
-
     greenlockexpress
       .init({
         packageRoot: __dirname,
         configDir: "./greenlock.d",
         maintainerEmail: "epicugric@gmail.com",
         cluster: false,
-      }).ready(serverboot)
+      })
+      .ready(serverboot);
   }
 })();
-export default database
+export default database;
