@@ -73,7 +73,7 @@ function mulberry32(a: number) {
 }
 
 function blastSaleOff(startofweek: number) {
-  return (5 * Math.round(mulberry32(startofweek)() * 15)) / 100;
+  return (5 * Math.round(mulberry32(startofweek + 99556484639)() * 15)) / 100;
 }
 
 async function checkFileExists(file: fs.PathLike) {
