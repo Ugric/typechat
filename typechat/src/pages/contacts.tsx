@@ -34,9 +34,6 @@ function Contact({
   const history = useHistory();
   const holdref = useRef<any>();
   const [UserModelIsOpen, setUserModelIsOpen] = useState(false);
-  useEffect(() => {
-    document.documentElement.scrollTop = 0;
-  }, []);
   return (
     <>
       <div
@@ -167,6 +164,9 @@ function Contacts() {
     "contacts",
     undefined
   );
+  useEffect(() => {
+    document.documentElement.scrollTop = 0;
+  }, []);
   useEffect(() => {
     if (data && data.contacts) {
       setlocalcontacts(data.contacts);

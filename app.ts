@@ -63,6 +63,18 @@ function parseCookies(request: http.IncomingMessage) {
 
   return list;
 }
+function mulberry32(a: number) {
+  return function () {
+    var t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function blastSaleOff(startofweek: number) {
+  return (5 * Math.round(mulberry32(startofweek)() * 15)) / 100;
+}
 
 async function checkFileExists(file: fs.PathLike) {
   try {
@@ -1484,6 +1496,14 @@ WHERE friends.accountID == :accountID
       } else {
         res.send({ resp: false, err: "incorrect password!" });
       }
+    });
+    app.get("/api/blastprices", (req, res) => {
+      const startofweek = Math.trunc(new Date().getTime() / 6.048e8) * 6.048e8;
+      return res.send({
+        price: 100,
+        startofweek,
+        sale: blastSaleOff(startofweek),
+      });
     });
     app.post("/api/setbackgroundimage", async (req: any, res: any) => {
       const accountdata = await db.get(

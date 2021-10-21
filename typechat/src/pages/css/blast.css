@@ -1,251 +1,372 @@
 @keyframes rocketanimation {
-    0% {
-        transform: translate(-15vw, 100vh);
-    }
-    45% {
-        transform: translate(100vw, -15vh);
-    }
-    100% {
-        transform: translate(100vw, -15vh);
-    }
+  0% {
+    transform: translate(-15vw, 100vh);
+  }
+  45% {
+    transform: translate(100vw, -15vh);
+  }
+  100% {
+    transform: translate(100vw, -15vh);
+  }
 }
 
 .BlastRocket {
-    position: fixed;
-    background-image: url(../images/Blast\ icon.svg);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 15vh;
-    height: 15vh;
-    z-index: 1;
-    animation: rocketanimation 7.5s ease-in-out;
-    animation-fill-mode: forwards;
+  position: fixed;
+  background-image: url(../images/Blast\ icon.svg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 15vh;
+  height: 15vh;
+  z-index: 4;
+  animation: rocketanimation 7.5s ease-in-out;
+  animation-fill-mode: forwards;
 }
 
 @keyframes meteoritesanimation {
-    0% {
-        transform: translate(-15vw, -15vh);
-    }
-    10% {
-        transform: translate(100vw, 100vw);
-    }
-    100% {
-        transform: translate(100vw, 100vw);
-    }
+  0% {
+    transform: translate(-15vw, -15vh);
+  }
+  10% {
+    transform: translate(100vw, 100vw);
+  }
+  100% {
+    transform: translate(100vw, 100vw);
+  }
 }
 
 .meteorites {
-    position: fixed;
-    background-image: url(../images/meteorites.svg);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 15vh;
-    height: 15vh;
-    z-index: 1;
-    animation: meteoritesanimation 20s ease-in-out infinite;
-    animation-delay: -27.5s;
-    animation-fill-mode: forwards;
+  position: fixed;
+  background-image: url(../images/meteorites.svg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 15vh;
+  height: 15vh;
+  z-index: 4;
+  animation: meteoritesanimation 20s ease-in-out infinite;
+  animation-delay: -27.5s;
+  animation-fill-mode: forwards;
 }
 
 @keyframes staranimation {
-    0% {
-        transform: rotate(-10deg);
-    }
-    50% {
-        transform: rotate(10deg);
-    }
-    100% {
-        transform: rotate(-10deg);
-    }
+  0% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(-10deg);
+  }
 }
 
 .star {
-    position: fixed;
-    background-image: url(../images/star.svg);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 25px;
-    height: 25px;
-    z-index: 0;
-    animation: staranimation 1s ease-in-out infinite;
+  position: fixed;
+  background-image: url(../images/star.svg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 25px;
+  height: 25px;
+  z-index: 0;
+  animation: staranimation 1s ease-in-out infinite;
 }
 
 @keyframes ufogalaxyanimation {
-    0% {
-        transform: rotate(-5deg);
-    }
-    50% {
-        transform: rotate(5deg);
-    }
-    100% {
-        transform: rotate(-5deg);
-    }
+  0% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+  100% {
+    transform: rotate(-5deg);
+  }
 }
 
 .Alien {
-    position: fixed;
-    background-image: url(../images/ufo.svg);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 15vh;
-    height: 15vh;
-    top: 25vh;
-    left: 25vh;
-    animation: ufogalaxyanimation 1s ease-in-out infinite;
+  position: fixed;
+  background-image: url(../images/ufo.svg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 15vh;
+  height: 15vh;
+  top: 25vh;
+  left: 25vh;
+  animation: ufogalaxyanimation 1s ease-in-out infinite;
 }
 
 .Galaxy {
-    position: fixed;
-    background-image: url(../images/galaxy.svg);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 15vh;
-    height: 15vh;
-    top: 25vh;
-    left: 25vh;
-    animation: ufogalaxyanimation 5s ease-in-out infinite;
+  position: fixed;
+  background-image: url(../images/galaxy.svg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 15vh;
+  height: 15vh;
+  top: 25vh;
+  left: 25vh;
+  animation: ufogalaxyanimation 5s ease-in-out infinite;
 }
 
 @keyframes menuanimation {
-    0% {
-        opacity: 0;
-        visibility: visible;
-    }
-    100% {
-        opacity: 1;
-        visibility: visible;
-    }
+  0% {
+    opacity: 0;
+    height: 100%;
+    overflow: auto;
+    visibility: visible;
+  }
+  100% {
+    opacity: 1;
+    height: 100%;
+    overflow: auto;
+    visibility: visible;
+  }
+}
+
+.BlastMenuAnimation {
+  animation: menuanimation 1s ease-in-out;
+  animation-delay: 1s;
+  animation-fill-mode: forwards;
+  overflow: hidden;
+  opacity: 0;
+  height: 0px;
+  visibility: hidden;
 }
 
 .BlastMenu {
-    animation: menuanimation 1s ease-in-out;
-    animation-delay: 1s;
-    opacity: 0;
-    visibility: hidden;
-    animation-fill-mode: forwards;
-    z-index: 3;
-    padding: 1rem;
+  z-index: 3;
+  padding: 1rem;
+  position: relative;
 }
 
 @keyframes planetanimation {
-    0% {
-        transform: translateY(10px);
-    }
-    50% {
-        transform: translateY(0px);
-    }
-    100% {
-        transform: translateY(10px);
-    }
+  0% {
+    transform: translateY(10px);
+  }
+  50% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(10px);
+  }
 }
 
 .Planet {
-    position: fixed;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 15vh;
-    height: 15vh;
-    top: 25vh;
-    left: 25vh;
-    animation: planetanimation 5s ease-in-out infinite;
+  position: fixed;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 15vh;
+  height: 15vh;
+  top: 25vh;
+  left: 25vh;
+  animation: planetanimation 5s ease-in-out infinite;
 }
 
 @keyframes satelliteanimation {
-    0% {
-        transform: translateY(10px) rotate(-10deg);
-    }
-    50% {
-        transform: translateY(0px) rotate(10deg);
-    }
-    100% {
-        transform: translateY(10px) rotate(-10deg);
-    }
+  0% {
+    transform: translateY(10px) rotate(-10deg);
+  }
+  50% {
+    transform: translateY(0px) rotate(10deg);
+  }
+  100% {
+    transform: translateY(10px) rotate(-10deg);
+  }
 }
 
 .Satellite {
-    position: fixed;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 15vh;
-    height: 15vh;
-    top: 25vh;
-    left: 25vh;
-    animation: satelliteanimation 5s ease-in-out infinite;
+  position: fixed;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 15vh;
+  height: 15vh;
+  top: 25vh;
+  left: 25vh;
+  animation: satelliteanimation 5s ease-in-out infinite;
 }
 
 .subbutton {
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .subbutton {
-    background: #333;
-    border: solid 1px #333 !important;
-    color: #ccc;
-    width: 200px;
-    height: 60px;
-    border: 0;
-    font-size: 18px;
-    border-radius: 4px;
-    transition: 0.6s;
-    overflow: hidden;
+  background: #333;
+  border: solid 1px #333 !important;
+  color: #ccc;
+  width: 200px;
+  height: 60px;
+  border: 0;
+  font-size: 18px;
+  border-radius: 4px;
+  transition: 0.6s;
+  overflow: hidden;
 }
 
 .subbutton:focus {
-    outline: 0;
+  outline: 0;
 }
 
 .subbutton:before {
-    content: "";
-    display: block;
-    position: absolute;
-    background: rgba(255, 255, 255, 0.5);
-    width: 60px;
-    height: 100%;
-    left: 0;
-    top: 0;
-    opacity: 0.5;
-    filter: blur(30px);
-    transform: translateX(-100px) skewX(-15deg);
+  content: "";
+  display: block;
+  position: absolute;
+  background: rgba(255, 255, 255, 0.5);
+  width: 60px;
+  height: 100%;
+  left: 0;
+  top: 0;
+  opacity: 0.5;
+  filter: blur(30px);
+  transform: translateX(-100px) skewX(-15deg);
 }
 
 .subbutton:after {
-    content: "";
-    display: block;
-    position: absolute;
-    background: rgba(255, 255, 255, 0.2);
-    width: 30px;
-    height: 100%;
-    left: 30px;
-    top: 0;
-    opacity: 0;
-    filter: blur(5px);
-    transform: translateX(-100px) skewX(-15deg);
+  content: "";
+  display: block;
+  position: absolute;
+  background: rgba(255, 255, 255, 0.2);
+  width: 30px;
+  height: 100%;
+  left: 30px;
+  top: 0;
+  opacity: 0;
+  filter: blur(5px);
+  transform: translateX(-100px) skewX(-15deg);
 }
 
 .subbutton:hover {
-    background: var(--main-bg-colour);
-    color: white;
-    border: solid 1px var(--light-bg-colour) !important;
-    cursor: pointer;
+  background: var(--main-bg-colour);
+  color: white;
+  border: solid 1px var(--light-bg-colour) !important;
+  cursor: pointer;
 }
 
 .subbutton:hover:before {
-    transform: translateX(300px) skewX(-15deg);
-    opacity: 0.6;
-    transition: 0.7s;
+  transform: translateX(300px) skewX(-15deg);
+  opacity: 0.6;
+  transition: 0.7s;
 }
 
 .subbutton:hover:after {
-    transform: translateX(300px) skewX(-15deg);
-    opacity: 1;
-    transition: 0.7s;
+  transform: translateX(300px) skewX(-15deg);
+  opacity: 1;
+  transition: 0.7s;
+}
+
+.wrapper {
+  display: flex;
+  transform: scale(0.75);
+  justify-content: center;
+}
+
+@keyframes StartButtonFlash {
+  0% {
+    background: #333;
+    box-shadow: 6px 6px 0 black;
+  }
+  90% {
+    background: #333;
+    box-shadow: 6px 6px 0 black;
+  }
+  95% {
+    background: var(--main-bg-colour);
+    box-shadow: 10px 10px 0 #fbc638;
+  }
+  100% {
+    background: #333;
+    box-shadow: 6px 6px 0 black;
+  }
+}
+
+.cta {
+  display: flex;
+  text-decoration: none !important;
+  cursor: pointer;
+  padding: 10px 45px;
+  font-family: "Poppins", sans-serif;
+  font-size: 40px;
+  color: white !important;
+  animation: StartButtonFlash 10s ease-in-out infinite;
+  background: #333;
+  transition: all 1s;
+  box-shadow: 6px 6px 0 black;
+  transform: skewX(-15deg);
+}
+
+.cta:focus {
+  outline: none;
+}
+
+.cta:hover {
+  transition: all 0.5s;
+  background: var(--main-bg-colour) !important;
+  box-shadow: 10px 10px 0 #fbc638 !important;
+}
+
+.cta span:nth-child(2) {
+  transition: 0.5s;
+  margin-right: 0px;
+}
+
+.cta:hover span:nth-child(2) {
+  transition: 0.5s;
+  margin-right: 45px;
+}
+
+span {
+  transform: skewX(15deg);
+}
+
+span:nth-child(2) {
+  width: 20px;
+  margin-left: 30px;
+  position: relative;
+  top: 12%;
+}
+
+/**************SVG****************/
+
+path.one {
+  transition: 0.4s;
+  transform: translateX(-60%);
+}
+
+path.two {
+  transition: 0.5s;
+  transform: translateX(-30%);
+}
+
+.cta:hover path.three {
+  animation: color_anim 1s infinite 0.2s;
+}
+
+.cta:hover path.one {
+  transform: translateX(0%);
+  animation: color_anim 1s infinite 0.6s;
+}
+
+.cta:hover path.two {
+  transform: translateX(0%);
+  animation: color_anim 1s infinite 0.4s;
+}
+
+/* SVG animations */
+
+@keyframes color_anim {
+  0% {
+    fill: white;
+  }
+  50% {
+    fill: #fbc638;
+  }
+  100% {
+    fill: white;
+  }
 }
