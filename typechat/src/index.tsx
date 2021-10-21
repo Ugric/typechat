@@ -36,11 +36,11 @@ import AddPeople from "./pages/addpeople";
 import NotificationComponent from "./notification";
 import LoadError from "./pages/error";
 import Settings from "./pages/settings";
-import Blast from "./pages/blast";
 import Verify from "./pages/Verify";
 import LinkDiscord from "./pages/LinkDiscord";
 import Drive from "./pages/Drive";
 import RequestNewPassword from "./pages/requestNewPassword";
+import Blast from "./pages/blast";
 
 if (!JSON.parse(String(localStorage.getItem("tabCount")))) {
   localStorage.setItem("tabCount", JSON.stringify(0));
@@ -167,8 +167,11 @@ function App() {
                   <Route path="/contacts" exact>
                     <Contacts />
                   </Route>
+                  <Route path="/blast/start" exact>
+                    <Blast.StartPage />
+                  </Route>
                   <Route path="/blast" exact>
-                    <Blast />
+                    <Blast.Blast />
                   </Route>
                   <Route path="/verify/:id" exact>
                     <Verify />
