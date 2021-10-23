@@ -167,9 +167,6 @@ function App() {
                   <Route path="/contacts" exact>
                     <Contacts />
                   </Route>
-                  <Route path="/blast/start" exact>
-                    <Blast.StartPage />
-                  </Route>
                   <Route path="/blast" exact>
                     <Blast.Blast />
                   </Route>

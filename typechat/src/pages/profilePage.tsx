@@ -2,6 +2,7 @@ import { SecureLink } from "react-secure-link";
 import Linkify from "react-linkify";
 import { useState } from "react";
 import ColorThief from "colorthief";
+import Badge from "./badges";
 
 function ProfilePage({
   user,
@@ -12,6 +13,7 @@ function ProfilePage({
     tag: string;
     backgroundImage: string | null;
     aboutme: string;
+    badges: { name: string }[];
     [key: string]: any;
   };
 }) {
@@ -111,6 +113,7 @@ function ProfilePage({
       ) : (
         <></>
       )}
+      <Badge badges={user.badges} />
     </div>
   );
 }

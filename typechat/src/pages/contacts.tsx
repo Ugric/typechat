@@ -11,6 +11,7 @@ import Modal from "react-modal";
 import ProfilePage from "./profilePage";
 import playSound from "../playsound";
 import useLocalStorage from "../hooks/useLocalStorage";
+import Badge from "./badges";
 const colorThief = new ColorThief();
 
 function Contact({
@@ -22,6 +23,8 @@ function Contact({
     id: string;
     tag: string;
     backgroundImage: string | null;
+
+    badges: { name: string }[];
     aboutme: string;
     [key: string]: any;
   };
@@ -119,6 +122,7 @@ function Contact({
         >
           Hold for Profile
         </div>
+        <Badge badges={user.badges}></Badge>
       </div>
       <Modal
         isOpen={UserModelIsOpen}
