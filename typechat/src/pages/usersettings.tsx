@@ -18,14 +18,14 @@ function ReactTimeago({ date }: { date: number }) {
   const seconds = Math.floor((date % (1000 * 60)) / 1000);
 
   return (
-    <p>{days + "d " + hours + "h " + minutes + "m " + seconds + "s"} left</p>
+    <p>{ days + "d " + hours + "h " + minutes + "m " + seconds + "s" } left</p>
   );
 }
 
 function Changebutton({
   name,
   children,
-  onClick = () => {},
+  onClick = () => { },
   clickable,
 }: {
   name: string;
@@ -35,26 +35,26 @@ function Changebutton({
 }) {
   return (
     <div
-      style={{
+      style={ {
         border: "solid 1px var(--light-bg-colour)",
         borderRadius: "10px",
         backgroundColor: "var(--main-bg-colour)",
         padding: "1rem",
         margin: "1rem",
-      }}
+      } }
     >
-      <p style={{ margin: "0", color: "lightgray" }}>{name}</p>
-      {clickable ? (
+      <p style={ { margin: "0", color: "lightgray" } }>{ name }</p>
+      { clickable ? (
         <div
-          onClick={onClick}
-          className={"changebutton"}
-          style={{ color: "white" }}
+          onClick={ onClick }
+          className={ "changebutton" }
+          style={ { color: "white" } }
         >
-          {children}
+          { children }
         </div>
       ) : (
-        <div>{children}</div>
-      )}
+        <div>{ children }</div>
+      ) }
     </div>
   );
 }
@@ -82,83 +82,83 @@ function UserSettings() {
   }
   return (
     <div
-      style={{
+      style={ {
         margin: "1rem",
-      }}
+      } }
     >
       <div
-        style={{
+        style={ {
           margin: "auto",
           border: "solid 1px var(--light-bg-colour)",
           borderRadius: "10px",
           backgroundColor: "var(--dark-bg-colour)",
           padding: "1rem",
           maxWidth: "700px",
-        }}
+        } }
       >
-        <h1 style={{ textAlign: "center" }}>User Settings</h1>
-        <ProfilePage user={user} />
-        <Changebutton name="Upload Limit" clickable={false}>
-          {uploadlimitloading || uploadlimiterror ? (
+        <h1 style={ { textAlign: "center" } }>User Settings</h1>
+        <ProfilePage user={ user } />
+        <Changebutton name="Upload Limit" clickable={ false }>
+          { uploadlimitloading || uploadlimiterror ? (
             "loading"
           ) : (
             <>
               <p>
-                {humanFileSize(Number(uploadlimitdata?.limitused), true)} /{" "}
-                {humanFileSize(Number(uploadlimitdata?.filelimit), true, 0)} (
-                {humanFileSize(
+                { humanFileSize(Number(uploadlimitdata?.limitused), true) } /{ " " }
+                { humanFileSize(Number(uploadlimitdata?.filelimit), true, 0) } (
+                { humanFileSize(
                   Number(uploadlimitdata?.filelimit) -
-                    Number(uploadlimitdata?.limitused),
+                  Number(uploadlimitdata?.limitused),
                   true
-                )}{" "}
+                ) }{ " " }
                 left)
               </p>
-              <ReactTimeago date={Number(uploadlimitdata?.timeleft)} />
+              <ReactTimeago date={ Number(uploadlimitdata?.timeleft) } />
             </>
-          )}
+          ) }
         </Changebutton>
-        <div style={{ textAlign: "center" }}>EDIT</div>
+        <div style={ { textAlign: "center" } }>EDIT</div>
         <button
-          style={{
+          style={ {
             color: "white",
             backgroundColor: "var(--dark-bg-colour)",
             border: "solid 2px var(--light-bg-colour)",
             borderRadius: "5px",
             margin: "0 1rem",
-          }}
-          onClick={() => {
+          } }
+          onClick={ () => {
             rechecklogged();
-          }}
+          } }
         >
           update
         </button>
         <Changebutton
           name="Profile Picture"
-          onClick={() => {
+          onClick={ () => {
             setProfileModelIsOpen(true);
-          }}
-          clickable={true}
+          } }
+          clickable={ true }
         >
           <img
             alt="profile"
-            src={"/files/" + user.profilePic}
-            style={{
+            src={ "/files/" + user.profilePic }
+            style={ {
               height: "75px",
               margin: "0 1rem 0 0",
               borderRadius: "50%",
-            }}
+            } }
           />
-          <FontAwesomeIcon icon={faPen} />
+          <FontAwesomeIcon icon={ faPen } />
         </Changebutton>
         <Modal
-          isOpen={ProfileModelIsOpen}
-          onRequestClose={() => {
+          isOpen={ ProfileModelIsOpen }
+          onRequestClose={ () => {
             setProfileModelIsOpen(false);
-          }}
-          onAfterOpen={() => {
+          } }
+          onAfterOpen={ () => {
             seterror("");
-          }}
-          style={{
+          } }
+          style={ {
             overlay: { backgroundColor: "rgb(18 18 18 / 50%)" },
             content: {
               backgroundColor: "var(--main-bg-colour)",
@@ -170,11 +170,11 @@ function UserSettings() {
               marginRight: "-50%",
               transform: "translate(-50%, -50%)",
             },
-          }}
+          } }
           contentLabel="Username Change"
         >
           <form
-            onSubmit={async (e: any) => {
+            onSubmit={ async (e: any) => {
               e.preventDefault();
               setuploading(true);
               if (profile) {
@@ -195,127 +195,127 @@ function UserSettings() {
                 seterror("input a profile picture!");
               }
               setuploading(false);
-            }}
+            } }
           >
             PROFILE PICTURE
             <Avatar
-              width={300}
-              height={0}
-              imageWidth={300}
-              onCrop={(dataURL) => {
+              width={ 300 }
+              height={ 0 }
+              imageWidth={ 300 }
+              onCrop={ (dataURL) => {
                 fetch(dataURL).then((fetched) =>
                   fetched.blob().then((blob) => setprofile(blob))
                 );
-              }}
-              labelStyle={{ color: "white" }}
-              onClose={() => {
+              } }
+              labelStyle={ { color: "white" } }
+              onClose={ () => {
                 setprofile(null);
-              }}
+              } }
               exportMimeType="image/jpeg"
-              exportSize={500}
-              exportQuality={0.75}
+              exportSize={ 500 }
+              exportQuality={ 0.75 }
               exportAsSquare
             />
-            <p style={{ color: "red" }}>{error}</p>
-            {!uploading ? (
+            <p style={ { color: "red" } }>{ error }</p>
+            { !uploading ? (
               <button
-                style={{
+                style={ {
                   float: "right",
                   marginTop: "1rem",
                   color: "white",
                   backgroundColor: "var(--dark-bg-colour)",
                   border: "solid 2px var(--light-bg-colour)",
                   borderRadius: "5px",
-                }}
+                } }
                 type="submit"
               >
                 Save
               </button>
             ) : (
               <></>
-            )}
+            ) }
           </form>
         </Modal>
-        <Changebutton name="Background Image" clickable={false}>
+        <Changebutton name="Background Image" clickable={ false }>
           <RouterForm
             action="/api/setbackgroundimage"
-            beforecallback={(e: any) => {
+            beforecallback={ (e: any) => {
               setuploading(true);
               return true;
-            }}
-            callback={() => {
+            } }
+            callback={ () => {
               if (backgroundinputref.current) {
                 backgroundinputref.current.value = "";
                 setbackgroundImage(undefined);
               }
               setuploading(false);
-            }}
+            } }
           >
-            {backgroundImage ? (
+            { backgroundImage ? (
               <img
-                src={backgroundImage}
+                src={ backgroundImage }
                 alt="background"
-                style={{
+                style={ {
                   maxHeight: "100px",
                   maxWidth: "100px",
-                }}
+                } }
               />
             ) : (
               <></>
-            )}
+            ) }
             <input
               type="file"
               name="backgroundImage"
-              style={{ maxWidth: "100%" }}
-              onChange={(e: any) => {
+              style={ { maxWidth: "100%" } }
+              onChange={ (e: any) => {
                 setbackgroundImage(
                   e.target.files[0]
                     ? URL.createObjectURL(e.target.files[0])
                     : undefined
                 );
-              }}
+              } }
               accept="image/*"
-              ref={backgroundinputref}
-            />{" "}
-            {!uploading ? (
+              ref={ backgroundinputref }
+            />{ " " }
+            { !uploading ? (
               <button
-                style={{
+                style={ {
                   color: "white",
                   backgroundColor: "var(--dark-bg-colour)",
                   border: "solid 2px var(--light-bg-colour)",
                   borderRadius: "5px",
-                }}
+                } }
                 type="submit"
               >
                 Save
               </button>
             ) : (
               <></>
-            )}
+            ) }
           </RouterForm>
         </Changebutton>
         <Changebutton
           name="Username"
-          onClick={() => {
+          onClick={ () => {
             setUsernameModelIsOpen(true);
-          }}
-          clickable={true}
+          } }
+          clickable={ true }
         >
-          <span style={{ color: "white" }}>
-            {user.username}
-            <span style={{ color: "lightgray" }}>#{user.tag}</span>
-            <FontAwesomeIcon icon={faPen} />
+          <span style={ { color: "white" } }>
+            { user.username }
+            <span style={ { color: "lightgray" } }>#{ user.tag }</span>
+            <FontAwesomeIcon icon={ faPen } />
           </span>
         </Changebutton>
         <Modal
-          isOpen={UsernameModelIsOpen}
-          onRequestClose={() => {
+          isOpen={ UsernameModelIsOpen }
+          onRequestClose={ () => {
             setUsernameModelIsOpen(false);
-          }}
-          onAfterOpen={() => {
+          } }
+          onAfterOpen={ () => {
             seterror("");
-          }}
-          style={{
+          } }
+          style={ {
             overlay: { backgroundColor: "rgb(18 18 18 / 50%)" },
             content: {
               backgroundColor: "var(--main-bg-colour)",
@@ -327,11 +327,11 @@ function UserSettings() {
               marginRight: "-50%",
               transform: "translate(-50%, -50%)",
             },
-          }}
+          } }
           contentLabel="Username Change"
         >
           <form
-            onSubmit={async (e: any) => {
+            onSubmit={ async (e: any) => {
               e.preventDefault();
               setuploading(true);
               if (
@@ -353,76 +353,76 @@ function UserSettings() {
                 seterror("input a username and password!");
               }
               setuploading(false);
-            }}
+            } }
           >
             Username
             <div
-              style={{
+              style={ {
                 border: "solid 1px gray",
                 backgroundColor: "var(--dark-mode)",
                 borderRadius: "5px",
                 width: "100%",
-              }}
+              } }
             >
               <input
-                onInput={(e: any) => {
+                onInput={ (e: any) => {
                   e.target.value = e.target.value.trimStart();
                   if (e.target.value.length > 30) {
                     e.target.value = e.target.value.substring(0, 30);
                   }
-                }}
-                style={{
+                } }
+                style={ {
                   color: "white",
                   backgroundColor: "transparent",
                   border: "none",
                   borderRight: "solid 1px white",
                   borderRadius: "0px",
-                }}
+                } }
                 placeholder="Username"
                 autoComplete="new-password"
                 type="text"
-                defaultValue={user.username}
+                defaultValue={ user.username }
               ></input>
               <span
-                style={{
+                style={ {
                   color: "lightgray",
                   padding: "0 1rem",
                   float: "right",
-                }}
+                } }
               >
-                #{user.tag}
+                #{ user.tag }
               </span>
             </div>
             <input
-              style={{
+              style={ {
                 width: "100%",
                 color: "white",
                 backgroundColor: "var(--dark-mode)",
                 border: "solid 1px gray",
                 borderRadius: "5px",
-              }}
+              } }
               placeholder="Current Password"
               autoComplete="new-password"
               type="password"
             />
-            <p style={{ color: "red" }}>{error}</p>
-            {!uploading ? (
+            <p style={ { color: "red" } }>{ error }</p>
+            { !uploading ? (
               <button
-                style={{
+                style={ {
                   float: "right",
                   marginTop: "1rem",
                   color: "white",
                   backgroundColor: "var(--dark-bg-colour)",
                   border: "solid 2px var(--light-bg-colour)",
                   borderRadius: "5px",
-                }}
+                } }
                 type="submit"
               >
                 Save
               </button>
             ) : (
               <></>
-            )}
+            ) }
           </form>
         </Modal>
       </div>

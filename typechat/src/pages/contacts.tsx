@@ -11,6 +11,7 @@ import Modal from "react-modal";
 import ProfilePage from "./profilePage";
 import playSound from "../playsound";
 import useLocalStorage from "../hooks/useLocalStorage";
+import Badge from "./badges";
 const colorThief = new ColorThief();
 
 function Contact({
@@ -22,6 +23,8 @@ function Contact({
     id: string;
     tag: string;
     backgroundImage: string | null;
+
+    badges: { name: string }[];
     aboutme: string;
     [key: string]: any;
   };
@@ -37,28 +40,28 @@ function Contact({
   return (
     <>
       <div
-        onPointerDown={(e: any) => {
+        onPointerDown={ (e: any) => {
           holdref.current = setTimeout(() => {
             holdref.current = undefined;
             playSound("/sounds/click1.mp3");
             setUserModelIsOpen(true);
           }, 500);
           playSound("/sounds/click3.mp3");
-        }}
-        onTouchMove={() => {
+        } }
+        onTouchMove={ () => {
           if (holdref.current) {
             clearInterval(holdref.current);
             holdref.current = undefined;
           }
-        }}
-        onClick={() => {
+        } }
+        onClick={ () => {
           if (holdref.current) {
             clearInterval(holdref.current);
             playSound("/sounds/click1.mp3");
             history.push(`/chat/${user.id}`);
           }
-        }}
-        style={{
+        } }
+        style={ {
           backgroundImage: user.backgroundImage
             ? `url(/files/${user.backgroundImage})`
             : "",
@@ -75,57 +78,50 @@ function Contact({
           cursor: "pointer",
 
           minHeight: "82px",
-        }}
-        className={"contactbutton noselect"}
+        } }
+        className={ "contactbutton noselect" }
       >
-        <img
-          alt="profile"
-          loading="lazy"
-          src={"/files/" + user.profilePic}
-          style={{
-            maxHeight: "50px",
-            maxWidth: "100%",
-            height: "auto",
-            width: "auto",
-            borderRadius: "50%",
-          }}
-          onLoad={(e: any) => {
-            const resp = colorThief.getColor(e.target);
-            setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
-          }}
-        />
-        <span>
+        <div style={ {
+          display: "flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          flexDirection: "row"
+        } }>
+          <img
+            alt="profile"
+            loading="lazy"
+            src={ "/files/" + user.profilePic }
+            style={ {
+              maxHeight: "50px",
+              maxWidth: "100%",
+              height: "auto",
+              width: "auto",
+              borderRadius: "50%",
+            } }
+            onLoad={ (e: any) => {
+              const resp = colorThief.getColor(e.target);
+              setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
+            } }
+          />
           <span
-            style={{
+            style={ {
               color: "white",
               WebkitTextStroke: "1px black",
               fontWeight: "bold",
               fontSize: "20px",
               marginLeft: "5px",
-            }}
+            } }
           >
-            {user.username}
-          </span>
-        </span>
-        <div
-          style={{
-            float: "right",
-            marginLeft: "3px",
-            background: "var(--main-bg-colour)",
-            padding: "5px",
-            borderRadius: "10px",
-            cursor: "pointer",
-          }}
-        >
-          Hold for Profile
-        </div>
+            { user.username }
+          </span></div>
+        <Badge badges={ user.badges } side="flex-end" size="25px"></Badge>
       </div>
       <Modal
-        isOpen={UserModelIsOpen}
-        onRequestClose={() => {
+        isOpen={ UserModelIsOpen }
+        onRequestClose={ () => {
           setUserModelIsOpen(false);
-        }}
-        style={{
+        } }
+        style={ {
           overlay: {
             backgroundColor: "rgb(18 18 18 / 50%)",
             zIndex: 10,
@@ -142,15 +138,14 @@ function Contact({
             padding: undefined,
             transform: "translate(-50%, -50%)",
             width: "75%",
-            height: "50%",
             maxWidth: "750px",
 
             maxHeight: "500px",
           },
-        }}
+        } }
         contentLabel="Username Change"
       >
-        <ProfilePage user={user}></ProfilePage>
+        <ProfilePage user={ user }></ProfilePage>
       </Modal>
     </>
   );
@@ -178,33 +173,33 @@ function Contacts() {
   }
   return (loading || error) && !localcontacts ? (
     error ? (
-      <LoadError error={String(error)}></LoadError>
+      <LoadError error={ String(error) }></LoadError>
     ) : (
       <Loader></Loader>
     )
   ) : (
     <div
-      style={{
+      style={ {
         margin: "1rem 0",
-      }}
+      } }
     >
       <div
-        style={{
+        style={ {
           margin: "auto",
           borderRadius: "10px",
           padding: "1rem",
           maxWidth: "700px",
-        }}
+        } }
       >
-        <h1 style={{ textAlign: "center" }}>Contacts</h1>
+        <h1 style={ { textAlign: "center" } }>Contacts</h1>
         <div>
-          {localcontacts || data.resp ? (
+          { localcontacts || data.resp ? (
             (data && data.contacts.length > 0) ||
-            (localcontacts && localcontacts.length > 0) ? (
+              (localcontacts && localcontacts.length > 0) ? (
               <>
                 <input
                   type="text"
-                  style={{
+                  style={ {
                     width: "100%",
                     backgroundColor: "var(--dark-bg-colour)",
                     padding: "5px",
@@ -212,39 +207,39 @@ function Contacts() {
                     border: "solid 1px var(--light-bg-colour)",
                     color: "white",
                     marginBottom: "1rem",
-                  }}
-                  placeholder={"search contacts"}
-                  onKeyUp={(e: any) => {
+                  } }
+                  placeholder={ "search contacts" }
+                  onKeyUp={ (e: any) => {
                     setsearch(e.target.value.trim());
-                  }}
+                  } }
                 ></input>
-                {(data ? data.contacts : localcontacts).map((contact: any) =>
+                { (data ? data.contacts : localcontacts).map((contact: any) =>
                   (contact.username + "#" + contact.tag)
                     .toUpperCase()
                     .includes(search.toUpperCase()) ? (
-                    <Contact key={contact.id} user={contact}></Contact>
+                    <Contact key={ contact.id } user={ contact }></Contact>
                   ) : (
                     <></>
                   )
-                )}
+                ) }
               </>
             ) : (
-              <p style={{ textAlign: "center" }}>
-                You have no contacts,{" "}
+              <p style={ { textAlign: "center" } }>
+                You have no contacts,{ " " }
                 <span>
                   <Link
-                    style={{ color: "var(--secondary-text-colour)" }}
+                    style={ { color: "var(--secondary-text-colour)" } }
                     to="/add"
                   >
                     add people
                   </Link>
-                </span>{" "}
+                </span>{ " " }
                 or wait for them to add you back!
               </p>
             )
           ) : (
-            <p style={{ color: "red", textAlign: "center" }}>{data.err}</p>
-          )}
+            <p style={ { color: "red", textAlign: "center" } }>{ data.err }</p>
+          ) }
         </div>
       </div>
     </div>

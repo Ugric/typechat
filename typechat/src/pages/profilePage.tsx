@@ -2,6 +2,7 @@ import { SecureLink } from "react-secure-link";
 import Linkify from "react-linkify";
 import { useState } from "react";
 import ColorThief from "colorthief";
+import Badge from "./badges";
 
 function ProfilePage({
   user,
@@ -12,6 +13,7 @@ function ProfilePage({
     tag: string;
     backgroundImage: string | null;
     aboutme: string;
+    badges: { name: string }[];
     [key: string]: any;
   };
 }) {
@@ -22,95 +24,97 @@ function ProfilePage({
   });
   return (
     <div
-      style={{
-        backgroundImage: user.backgroundImage
+      style={ {
+        background: user.backgroundImage
           ? `url(/files/${user.backgroundImage})`
-          : "",
+          : undefined,
         backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
         padding: "1rem",
         backgroundRepeat: user.backgroundImage ? "no-repeat" : "",
         backgroundSize: user.backgroundImage ? "cover" : "",
         borderRadius: "10px",
-        border: "solid 1px var(--light-bg-colour)",
+        border: `solid 1px rgb(${backgroundcolour.r + 25}, ${backgroundcolour.g + 25
+          }, ${backgroundcolour.b + 25})`,
         width: "100%",
         height: "100%",
         backgroundPosition: user.backgroundImage ? "center" : "",
-      }}
+      } }
     >
       <div
-        style={{
+        style={ {
           textAlign: "center",
-        }}
+        } }
       >
         <img
           alt="profile"
-          src={"/files/" + user.profilePic}
-          style={{
+          src={ "/files/" + user.profilePic }
+          style={ {
             maxHeight: "75px",
             maxWidth: "100%",
             height: "auto",
             width: "auto",
             borderRadius: "50%",
-          }}
-          onLoad={(e: any) => {
+          } }
+          onLoad={ (e: any) => {
             const colorThief = new ColorThief();
             const resp = colorThief.getColor(e.target);
             setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
-          }}
+          } }
         />
         <h4>
           <span
-            style={{
+            style={ {
               color: "white",
               WebkitTextStroke: "1px black",
               fontWeight: "bold",
-            }}
+            } }
           >
-            {user.username}
+            { user.username }
             <span
-              style={{
+              style={ {
                 color: "lightgray",
                 fontWeight: "normal",
-              }}
+              } }
             >
-              #{user.tag}
+              #{ user.tag }
             </span>
           </span>
         </h4>
       </div>
-      {user.aboutme ? (
+      { user.aboutme ? (
         <div
-          style={{
+          style={ {
             padding: "1rem",
             backgroundColor: "var(--dark-bg-colour)",
             borderRadius: "10px",
             border: "solid 1px var(--light-bg-colour)",
-          }}
+          } }
         >
           <b>About Me</b>
           <div>
             <Linkify
-              componentDecorator={(
+              componentDecorator={ (
                 decoratedHref: string,
                 decoratedText: string,
                 key: any
               ) => (
                 <SecureLink
-                  href={decoratedHref}
-                  key={key}
-                  style={{ color: "var(--secondary-text-colour)" }}
+                  href={ decoratedHref }
+                  key={ key }
+                  style={ { color: "var(--secondary-text-colour)" } }
                 >
-                  {decoratedText}
+                  { decoratedText }
                 </SecureLink>
-              )}
+              ) }
             >
-              {user.aboutme}
+              { user.aboutme }
             </Linkify>
           </div>
         </div>
       ) : (
         <></>
-      )}
+      ) }
+      <Badge badges={ user.badges } />
     </div>
   );
 }
