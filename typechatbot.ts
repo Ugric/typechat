@@ -181,5 +181,5 @@ client.on("guildMemberAdd", async (member) => {
   }
 });
 
-//client.login(process.env.NODE_ENV === "development"?require("./devdiscordtoken.json"):require("./discordtoken.json"));
+client.login(process.env.NODE_ENV === "development"?require("./devdiscordtoken.json"):require("./discordtoken.json"));
 export { serverID, client, roleID, unlinkedroleID };
