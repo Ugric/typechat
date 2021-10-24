@@ -25,15 +25,17 @@ function ProfilePage({
   return (
     <div
       style={{
-        backgroundImage: user.backgroundImage
+        background: user.backgroundImage
           ? `url(/files/${user.backgroundImage})`
-          : "",
+          : undefined,
         backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
         padding: "1rem",
         backgroundRepeat: user.backgroundImage ? "no-repeat" : "",
         backgroundSize: user.backgroundImage ? "cover" : "",
         borderRadius: "10px",
-        border: "solid 1px var(--light-bg-colour)",
+        border: `solid 1px rgb(${backgroundcolour.r + 25}, ${
+          backgroundcolour.g + 25
+        }, ${backgroundcolour.b + 25})`,
         width: "100%",
         height: "100%",
         backgroundPosition: user.backgroundImage ? "center" : "",

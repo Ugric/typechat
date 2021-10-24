@@ -9,6 +9,8 @@ import {
   faUserTie,
   faBrain,
   IconDefinition,
+  faCheck,
+  faBug,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMemo } from "react";
@@ -38,6 +40,12 @@ const badgestype: {
     color: "#ff7676",
   },
   {
+    name: "bug",
+    desc: "Bug Catcher!",
+    icon: faBug,
+    color: "#9c00a7",
+  },
+  {
     name: "new",
     desc: "A new user, say hi!",
     icon: faUserAstronaut,
@@ -56,14 +64,25 @@ const badgestype: {
     icon: faSuperpowers,
     color: "#e88158",
   },
-];
+  {
+    name: "verified",
+    desc: "Verified",
+    icon: faCheck,
+    color: "#9b9b9b",
+  },
+].reverse();
 
-function Badge({ badges }: { badges: { name: string }[] }) {
+function Badge({
+  badges,
+  side,
+}: {
+  badges: { name: string }[];
+  side?: string;
+}) {
   const badgerender = useMemo(() => {
     const output = [];
-    for (const i in badges) {
-      const badge = badges[i];
-      for (const badgetype of badgestype) {
+    for (const badgetype of badgestype) {
+      for (const badge of badges) {
         if (badge.name === badgetype.name) {
           output.push(
             <abbr
@@ -76,7 +95,7 @@ function Badge({ badges }: { badges: { name: string }[] }) {
               }}
             >
               <FontAwesomeIcon
-                key={i}
+                key={badgetype.name}
                 icon={badgetype.icon}
                 style={{ width: "15px", height: "15px" }}
               />
@@ -91,7 +110,7 @@ function Badge({ badges }: { badges: { name: string }[] }) {
     <div
       style={{
         display: "flex",
-        margin: "5px",
+        justifyContent: side ? side : "center",
       }}
     >
       {badgerender}

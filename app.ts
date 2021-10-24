@@ -288,6 +288,7 @@ function updateFromAccountID(accountID: string) {
       ":email": autoaccountdetails.email,
     });
   }
+  await db.run("DELETE FROM badges");
   if (!(await db.get("SELECT * FROM badges WHERE accountID='TypeChat'"))) {
     await db.run(
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'ceo')"
@@ -297,6 +298,9 @@ function updateFromAccountID(accountID: string) {
     );
     await db.run(
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'admin')"
+    );
+    await db.run(
+      "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'verified')"
     );
     await db.run(
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'Blast')"
@@ -898,11 +902,10 @@ function updateFromAccountID(accountID: string) {
             ":time": time,
           }
         );
-        const blast = Boolean(blastdata);
         const startofmonth =
           Math.trunc(time / 2629743000) * 2629743000 +
-          ((blast ? blastdata.expires : accountdata.joined) % 2629743000);
-        const filelimit = blast ? blastlimit * blastdata.fuel : normallimit;
+          ((blastdata ? blastdata.expires : accountdata.joined) % 2629743000);
+        const filelimit = blastdata ? blastlimit * blastdata.fuel : normallimit;
         const limitused = (
           await db.get(
             "SELECT SUM(size) as limitused FROM uploadlogs WHERE accountID=:accountID and time>=:startofmonth",

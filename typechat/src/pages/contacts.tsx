@@ -110,19 +110,7 @@ function Contact({
             {user.username}
           </span>
         </span>
-        <div
-          style={{
-            float: "right",
-            marginLeft: "3px",
-            background: "var(--main-bg-colour)",
-            padding: "5px",
-            borderRadius: "10px",
-            cursor: "pointer",
-          }}
-        >
-          Hold for Profile
-        </div>
-        <Badge badges={user.badges}></Badge>
+        <Badge badges={user.badges} side="end"></Badge>
       </div>
       <Modal
         isOpen={UserModelIsOpen}

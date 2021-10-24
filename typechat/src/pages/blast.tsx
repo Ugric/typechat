@@ -5,9 +5,9 @@ import "./css/blast.css";
 import { useState, useMemo, MouseEventHandler } from "react";
 import useWindowSize from "../hooks/usescreensize";
 import useApi from "../hooks/useapi";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import { parse } from "querystring";
-import { faAngleLeft, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import plant from "./images/planet.svg";
@@ -123,6 +123,7 @@ function Blast() {
   const { width, height } = useWindowSize();
   const location = useLocation();
   const { user } = useData();
+  const history = useHistory();
   const query: { [key: string]: string | string[] } = parse(
     location.search.slice(1)
   );
@@ -139,7 +140,11 @@ function Blast() {
       )),
     [width, height]
   );
-  const max = user.rocketFuel > 10 ? 10 : user.rocketFuel;
+  const max = user?.rocketFuel
+    ? user.rocketFuel > 10
+      ? 10
+      : user.rocketFuel
+    : 0;
   const ends = data
     ? new Date(data.startofweek + 6.048e8).getUTCDate()
     : undefined;
@@ -227,15 +232,28 @@ function Blast() {
                     <></>
                   )}
                 </div>
-                <h5 style={{ textAlign: "center" }}>
-                  you have {user.rocketFuel} Rocket Fuel{" "}
-                  <img src={fuelIcon} height="25px" alt="⛽" className="icon" />
-                </h5>
+                {user ? (
+                  <h5 style={{ textAlign: "center" }}>
+                    you have {user.rocketFuel} Rocket Fuel{" "}
+                    <img
+                      src={fuelIcon}
+                      height="25px"
+                      alt="⛽"
+                      className="icon"
+                    />
+                  </h5>
+                ) : (
+                  <></>
+                )}
                 <StartButton
                   onClick={() =>
-                    max > 0
-                      ? setmenupage("start")
-                      : window.location.replace("#fuel")
+                    user
+                      ? max > 0
+                        ? setmenupage("start")
+                        : window.location.replace("#fuel")
+                      : history.push(
+                          "/login?" + new URLSearchParams({ to: "/blast" })
+                        )
                   }
                 />
                 <div
@@ -334,9 +352,13 @@ function Blast() {
                   </h5>
                   <StartButton
                     onClick={() =>
-                      max > 0
-                        ? setmenupage("start")
-                        : window.location.replace("#fuel")
+                      user
+                        ? max > 0
+                          ? setmenupage("start")
+                          : window.location.replace("#fuel")
+                        : history.push(
+                            "/login?" + new URLSearchParams({ to: "/blast" })
+                          )
                     }
                   />
                 </div>
@@ -370,18 +392,18 @@ function Blast() {
                   }}
                 >
                   <label htmlFor="RF">
-                    How much Rocket Fuel do you want to spend? (max 10)
+                    How much Rocket Fuel do you want to spend? (max {max})
                   </label>
                   <input
                     id="RF"
                     type="number"
                     min="1"
-                    max="10"
+                    max={max}
                     defaultValue="1"
                     onBlur={(e: any) => {
                       e.target.value =
-                        e.target.value > 10
-                          ? 10
+                        e.target.value > max
+                          ? max
                           : e.target.value < 1
                           ? 1
                           : e.target.value;
