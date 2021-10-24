@@ -123,16 +123,16 @@ function App() {
   return (
     <GoogleReCaptchaProvider reCaptchaKey="6LcHJdYcAAAAAHmOyGZbVAVkLNdeG0Pe2Rl3RVDV">
       <Router>
-        <div style={{ overflowWrap: "anywhere" }}>
-          {error || loading ? (
+        <div style={ { overflowWrap: "anywhere" } }>
+          { error || loading ? (
             error ? (
-              <LoadError error={String(error)}></LoadError>
+              <LoadError error={ String(error) }></LoadError>
             ) : (
               <Loader></Loader>
             )
           ) : (
             <datahook.Provider
-              value={{
+              value={ {
                 loggedin: userdata.loggedin,
                 user: userdata.user,
                 rechecklogged: reload,
@@ -144,7 +144,7 @@ function App() {
                 catchedcontacts,
                 setcachedcontacts,
                 NotificationAPI,
-              }}
+              } }
             >
               <PageNav />
               <ReactNotification />
@@ -155,13 +155,13 @@ function App() {
                     <Home />
                   </Route>
                   <Route path="/chat" exact>
-                    <Redirect to={chattingto ? `/chat/${chattingto}` : "/"} />
+                    <Redirect to={ chattingto ? `/chat/${chattingto}` : "/" } />
                   </Route>
                   <Route
                     path="/chat/:id"
-                    render={({ match }) => (
-                      <Chat key={match.params.id} isGroupChat={false} />
-                    )}
+                    render={ ({ match }) => (
+                      <Chat key={ match.params.id } isGroupChat={ false } />
+                    ) }
                     exact
                   ></Route>
                   <Route path="/contacts" exact>
@@ -210,7 +210,7 @@ function App() {
                 </Switch>
               </div>
             </datahook.Provider>
-          )}
+          ) }
         </div>
       </Router>
     </GoogleReCaptchaProvider>

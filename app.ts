@@ -1,5 +1,5 @@
 import { Database, open } from "sqlite";
-import express, { json } from "express";
+import express, { application } from "express";
 import { forceDomain } from "forcedomain";
 import * as http from "http";
 import * as fs from "fs";
@@ -89,7 +89,7 @@ const truncate = (input: string, limit: number) =>
 
 const notificationsockets: {
   [key: string]: {
-    [key: string]: { focus: boolean; [key: string]: any };
+    [key: string]: { focus: boolean;[key: string]: any };
   };
 } = {};
 
@@ -106,7 +106,7 @@ function updateFromAccountID(accountID: string) {
         updateFunctions[accountID][connectionID]();
       }
     }
-  } catch {}
+  } catch { }
 }
 
 (async () => {
@@ -161,20 +161,22 @@ function updateFromAccountID(accountID: string) {
       "SELECT * FROM discordAccountLink WHERE accountID=:accountID",
       { ":accountID": accoutID }
     );
-    const discordAccount = client.users.cache.find(
-      (user) => user.id == discordlink.discordID
-    );
-    if (discordlink && discordAccount) {
-      await discordAccount.send({
-        embeds: [
-          new MessageEmbed()
-            .setColor("#5656ff")
-            .setTitle("New Notification 🎉")
-            .addField(data.title, data.message)
-            .setURL(new URL(data.to, "https://tchat.us.to/").href)
-            .setThumbnail("https://tchat.us.to/logo.png"),
-        ],
-      });
+    if (discordlink) {
+      const discordAccount = client.users.cache.find(
+        (user) => user.id == discordlink.discordID
+      );
+      if (discordAccount) {
+        await discordAccount.send({
+          embeds: [
+            new MessageEmbed()
+              .setColor("#5656ff")
+              .setTitle("New Notification 🎉")
+              .addField(data.title, data.message)
+              .setURL(new URL(data.to, "https://tchat.us.to/").href)
+              .setThumbnail("https://tchat.us.to/logo.png"),
+          ],
+        });
+      }
     }
   }
   const sendNotification = async (
@@ -245,30 +247,37 @@ function updateFromAccountID(accountID: string) {
     ),
   ]);
   db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(
-    () => {}
+    () => { }
   );
   db.run("ALTER TABLE friendsChatMessages ADD edited DEFAULT false").catch(
-    () => {}
+    () => { }
   );
-  db.run("ALTER TABLE images ADD mimetype").catch(() => {});
-  db.run("ALTER TABLE images ADD originalfilename").catch(() => {});
-  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => {});
-  db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => {});
-  db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => {});
+  db.run("ALTER TABLE images ADD mimetype").catch(() => { });
+  db.run("ALTER TABLE images ADD originalfilename").catch(() => { });
+  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
+  db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => { });
+  db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => { });
   db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(
-    () => {}
+    () => { }
   );
   db.run("ALTER TABLE accounts ADD emailnotification DEFAULT true").catch(
-    () => {}
+    () => { }
   );
-  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => {});
-  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => {});
+  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => { });
+  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => { });
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
       ":email": autoaccountdetails.email,
     }
   );
+  function getBadgesFromAccountID(accountID: string) {
+    return db.all(
+      "SELECT name FROM badges WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+      { ":accountID": accountID, ":time": new Date().getTime() }
+    )
+  }
+
   if (!defaultaccount) {
     const salt = generate(150);
     const password = hasher(autoaccountdetails.pass + salt);
@@ -288,19 +297,18 @@ function updateFromAccountID(accountID: string) {
       ":email": autoaccountdetails.email,
     });
   }
-  await db.run("DELETE FROM badges");
   if (!(await db.get("SELECT * FROM badges WHERE accountID='TypeChat'"))) {
-    await db.run(
-      "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'ceo')"
-    );
-    await db.run(
-      "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'dev')"
-    );
     await db.run(
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'admin')"
     );
     await db.run(
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'verified')"
+    );
+    await db.run(
+      "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'nodejs')"
+    );
+    await db.run(
+      "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'discord')"
     );
     await db.run(
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'Blast')"
@@ -310,17 +318,20 @@ function updateFromAccountID(accountID: string) {
     for (const user of await db.all(
       "SELECT * FROM accounts WHERE accountID!='TypeChat'"
     )) {
-      console.log(user);
       if (
         !(await db.get(
-          "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID",
+          "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
           { ":accountID": user.accountID }
         ))
       ) {
-        db.run(
-          "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
-          { ":accountID": user.accountID }
-        );
+        const topromise = []
+        for (let i = 0; i < 1; i++) {
+          topromise.push(db.run(
+            "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
+            { ":accountID": user.accountID }
+          ));
+        }
+        await Promise.all(topromise)
       }
       if (
         !(await db.get(
@@ -334,7 +345,7 @@ function updateFromAccountID(accountID: string) {
         );
       }
     }
-  })();
+  });
   if (
     !(await db.get("SELECT * FROM blast WHERE accountID=:accountID", {
       ":accountID": defaultaccount.accountID,
@@ -348,8 +359,8 @@ function updateFromAccountID(accountID: string) {
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const getAllOnline = (sockets: {
-    [key: string]: { focus: boolean; [key: string]: any };
-  }): { focus: boolean; [key: string]: any }[] => {
+    [key: string]: { focus: boolean;[key: string]: any };
+  }): { focus: boolean;[key: string]: any }[] => {
     const online = [];
     for (const socket of Object.keys(sockets)) {
       if (sockets[socket].focus) {
@@ -540,6 +551,8 @@ function updateFromAccountID(accountID: string) {
                 }
               );
               if (users) {
+
+                const badges = await getBadgesFromAccountID(users.accountID);
                 ws.send(
                   JSON.stringify({
                     type: "setmessages",
@@ -550,7 +563,7 @@ function updateFromAccountID(accountID: string) {
                         id: users.accountID,
                         profilePic: users.profilePic,
                         tag: users.tag,
-                        backgroundImage: users.backgroundImage,
+                        backgroundImage: users.backgroundImage, badges
                       },
                     },
                   })
@@ -757,7 +770,7 @@ function updateFromAccountID(accountID: string) {
               if (
                 (!msg.focus
                   ? getAllOnline(messagefunctions[accountdata.accountID][to])
-                      .length <= 0
+                    .length <= 0
                   : true) &&
                 messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
@@ -1230,6 +1243,54 @@ WHERE friends.toAccountID == :accountID
         });
       }
     });
+    app.post("/api/startrocketfuel", async (req, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      let rocketFuel: any = (
+        await db.all(
+          "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
+          {
+            ":accountID": accountdata.accountID,
+          }
+        )
+      ).length;
+      let blast = Number((
+        await db.get(
+          "SELECT fuel FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+          {
+            ":accountID": accountdata.accountID,
+            ":time": new Date().getTime(),
+          }
+        )
+      )?.fuel);
+      blast = blast ? blast : 0
+      const fuel = Number(JSON.parse(req.body.fuel))
+      if (accountdata && rocketFuel >= fuel && fuel + blast <= 10) {
+        const topromise = []
+        topromise.push(db.run("UPDATE rocketFuelPoints SET used=true WHERE rowid in (SELECT rowid FROM rocketFuelPoints WHERE accountID=:accountID and used=false LIMIT :limit)", { ":accountID": accountdata.accountID, ":limit": fuel }))
+        if (blast) {
+          console.log("adding to")
+          topromise.push(db.run("UPDATE blast SET fuel=:fuel WHERE accountID=:accountID and (expires is NULL or expires>=:time)", { ":fuel": blast + fuel, ":accountID": accountdata.accountID, ":time": new Date().getTime() }))
+        } else {
+          console.log("creating")
+          topromise.push(db.run("INSERT INTO blast (accountID, fuel, expires) VALUES (:accountID, :fuel, :expires)", { ":fuel": fuel, ":expires": new Date().getTime() + 2.628e+9, ":accountID": accountdata.accountID }))
+          if (!(await db.get("SELECT * FROM badges WHERE accountID=:accountID and name='Blast'", { ":accountID": accountdata.accountID }))) {
+            topromise.push(db.run(
+              "INSERT INTO badges (accountID, name) VALUES (:accountID, 'Blast')", { ":accountID": accountdata.accountID }
+            ));
+          }
+        }
+        await Promise.all(topromise)
+        updateFromAccountID(accountdata.accountID)
+        return res.send(true);
+      } else {
+        return res.send(false);
+      }
+    })
     app.get("/api/getallcontacts", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1253,10 +1314,7 @@ WHERE friends.accountID == :accountID
           { ":accountID": accountdata.accountID }
         );
         for (const contact of contacts) {
-          contact.badges = await db.all(
-            "SELECT name FROM badges WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
-            { ":accountID": contact.id, ":time": new Date().getTime() }
-          );
+          contact.badges = await getBadgesFromAccountID(contact.id);
         }
         res.send({
           resp: true,
@@ -1290,15 +1348,24 @@ WHERE friends.accountID == :accountID
           );
 
           if (newaccountdata) {
-            const blast = Boolean(
+            const blast = (
               await db.get(
-                "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+                "SELECT fuel FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
                 {
                   ":accountID": newaccountdata.accountID,
                   ":time": new Date().getTime(),
                 }
               )
-            );
+            )?.fuel;
+            const badges = await getBadgesFromAccountID(newaccountdata.accountID);
+            const rocketFuel = (
+              await db.all(
+                "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
+                {
+                  ":accountID": newaccountdata.accountID,
+                }
+              )
+            ).length;
             return res.send({
               loggedin: true,
               user: {
@@ -1308,6 +1375,8 @@ WHERE friends.accountID == :accountID
                 tag: newaccountdata.tag,
                 backgroundImage: newaccountdata.backgroundImage,
                 blast,
+                rocketFuel,
+                badges,
               },
             });
           } else {
@@ -1315,7 +1384,7 @@ WHERE friends.accountID == :accountID
               loggedin: false,
             });
           }
-        } catch {}
+        } catch { }
       }
       if (accountdata) {
         if (!updateFunctions[accountdata.accountID]) {
@@ -1349,13 +1418,10 @@ WHERE friends.accountID == :accountID
             }
           )
         )?.fuel;
-        const badges = await db.all(
-          "SELECT name FROM badges WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
-          { ":accountID": accountdata.accountID, ":time": new Date().getTime() }
-        );
+        const badges = await getBadgesFromAccountID(accountdata.accountID);
         const rocketFuel = (
           await db.all(
-            "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and not used",
+            "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
             {
               ":accountID": accountdata.accountID,
             }
@@ -1388,7 +1454,7 @@ WHERE friends.accountID == :accountID
           if (requestaccount) {
             const passwordUpdateID = generate(30);
             updatepassword[passwordUpdateID] = requestaccount.accountID;
-            PasswordEmail(req.body.email, passwordUpdateID).catch(() => {});
+            PasswordEmail(req.body.email, passwordUpdateID).catch(() => { });
             setTimeout(() => {
               if (updatepassword[passwordUpdateID])
                 delete updatepassword[passwordUpdateID];
@@ -1557,7 +1623,7 @@ WHERE friends.accountID == :accountID
             );
             memberonguild
               ?.setNickname(req.body.username, "rename")
-              .catch(() => {});
+              .catch(() => { });
           }
           res.send({ resp: true });
         } else {
@@ -1668,13 +1734,13 @@ WHERE friends.accountID == :accountID
                   delete linkurls.linkID[req.params.id];
                   await memberonguild
                     .setNickname(accountdata.username, "linked")
-                    .catch(() => {});
+                    .catch(() => { });
                   await memberonguild.roles
                     .add(roleID, "linked")
-                    .catch(() => {});
+                    .catch(() => { });
                   await memberonguild.roles
                     .remove(unlinkedroleID, "linked")
-                    .catch(() => {});
+                    .catch(() => { });
                   discordAccount.dmChannel.send({
                     embeds: [
                       new MessageEmbed()
@@ -1867,6 +1933,13 @@ WHERE friends.accountID == :accountID
               }
             ),
             db.run(
+              "INSERT INTO badges (accountID, name, expires) VALUES (:accountID, 'new', :expires)",
+              {
+                ":accountID": defaultaccount.accountID,
+                ":expires": new Date().getTime() + 6.048e+8
+              }
+            ),
+            db.run(
               `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
               {
                 ":ID": generate(100),
@@ -1943,7 +2016,7 @@ WHERE friends.accountID == :accountID
     serverboot({
       httpsServer: () => http.createServer(app),
       httpServer: () => {
-        return { listen: () => {} };
+        return { listen: () => { } };
       },
     });
   } else {

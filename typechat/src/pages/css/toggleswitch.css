@@ -47,7 +47,7 @@
   transform: translate3d(2px, 2px, 0);
 }
 
-.form-switch:active input:checked + i::after {
+.form-switch:active input:checked+i::after {
   transform: translate3d(16px, 2px, 0);
 }
 
@@ -55,14 +55,14 @@
   display: none;
 }
 
-.form-switch input:checked + i {
+.form-switch input:checked+i {
   background-color: var(--light-bg-colour);
 }
 
-.form-switch input:checked + i::before {
+.form-switch input:checked+i::before {
   transform: translate3d(18px, 2px, 0) scale3d(0, 0, 0);
 }
 
-.form-switch input:checked + i::after {
+.form-switch input:checked+i::after {
   transform: translate3d(22px, 2px, 0);
 }

@@ -21,8 +21,8 @@ export function RouterForm({
 }): JSX.Element {
   return (
     <form
-      style={style}
-      onSubmit={async (e: any) => {
+      style={ style }
+      onSubmit={ async (e: any) => {
         e.preventDefault();
         if (beforecallback(e)) {
           const fd = new FormData();
@@ -56,9 +56,9 @@ export function RouterForm({
             onerror(e);
           }
         }
-      }}
+      } }
     >
-      {children}
+      { children }
     </form>
   );
 }

@@ -23,47 +23,47 @@ function ChangePassword() {
   const [loading, setloading] = useState(false);
   return (
     <>
-      <div style={{ display: loading ? "" : "none" }}>
+      <div style={ { display: loading ? "" : "none" } }>
         <Loader></Loader>
       </div>
       <div
-        style={{
+        style={ {
           margin: "5rem 0",
           textAlign: "center",
           display: !loading ? "" : "none",
-        }}
+        } }
       >
         <img
-          src={logo}
+          src={ logo }
           alt="logo"
-          style={{ width: "150px", borderRadius: "10px" }}
+          style={ { width: "150px", borderRadius: "10px" } }
         ></img>
         <h1
-          style={{
+          style={ {
             fontSize: "20px",
             fontFamily: "'Source Sans Pro', sans-serif",
-          }}
+          } }
         >
-          <FontAwesomeIcon icon={faKey}></FontAwesomeIcon> Set Password
+          <FontAwesomeIcon icon={ faKey }></FontAwesomeIcon> Set Password
         </h1>
         <div>
           <RouterForm
-            action={"/api/changepassword"}
-            beforecallback={() => {
+            action={ "/api/changepassword" }
+            beforecallback={ () => {
               if (recapToken) {
                 setloading(true);
                 return true;
               } else {
                 seterror("waiting for recaptcha token... try again later.");
               }
-            }}
-            appendtoformdata={(fd) => {
+            } }
+            appendtoformdata={ (fd) => {
               fd.append("updateID", id);
               if (recapToken) fd.append("g-recaptcha-response", recapToken);
               return fd;
-            }}
-            style={{ width: "fit-content", margin: "auto", maxWidth: "300px" }}
-            callback={(resp: boolean) => {
+            } }
+            style={ { width: "fit-content", margin: "auto", maxWidth: "300px" } }
+            callback={ (resp: boolean) => {
               setloading(false);
               if (resp) {
                 history.push("/login");
@@ -72,18 +72,18 @@ function ChangePassword() {
                   "failed to change password, maybe the update password key has reset."
                 );
               }
-            }}
+            } }
           >
             <GoogleReCaptcha
-              onVerify={(token) => {
+              onVerify={ (token) => {
                 setRecapToken(token);
-              }}
+              } }
             />
             <p
-              style={{
+              style={ {
                 textAlign: "end",
                 margin: "0",
-              }}
+              } }
             >
               Password
             </p>
@@ -91,7 +91,7 @@ function ChangePassword() {
               type="password"
               placeholder="Password"
               name="pass"
-              style={{
+              style={ {
                 background: "transparent",
                 borderTop: "none",
                 borderRight: "none",
@@ -105,12 +105,12 @@ function ChangePassword() {
                 fontSize: "17px",
                 color: "white",
                 borderRadius: "0px",
-              }}
+              } }
             />
             <input
               type="submit"
               value="Change Password"
-              style={{
+              style={ {
                 padding: "1rem",
                 width: "100%",
                 border: "none",
@@ -121,9 +121,9 @@ function ChangePassword() {
                 fontFamily: '"Source Sans Pro", sans-serif',
                 fontSize: "20px",
                 boxShadow: "rgb(0, 0, 0) 0px 6px 5px 0px",
-              }}
+              } }
             />
-            <p style={{ margin: "1rem 0", color: "red" }}>{error}</p>
+            <p style={ { margin: "1rem 0", color: "red" } }>{ error }</p>
           </RouterForm>
         </div>
       </div>
@@ -152,33 +152,33 @@ function RequestNewPassword() {
   }
   return (
     <>
-      <div style={{ display: loading ? "" : "none" }}>
+      <div style={ { display: loading ? "" : "none" } }>
         <Loader></Loader>
       </div>
       <div
-        style={{
+        style={ {
           margin: "5rem 0",
           textAlign: "center",
           display: !loading ? "" : "none",
-        }}
+        } }
       >
         <img
-          src={logo}
+          src={ logo }
           alt="logo"
-          style={{ width: "150px", borderRadius: "10px" }}
+          style={ { width: "150px", borderRadius: "10px" } }
         ></img>
         <h1
-          style={{
+          style={ {
             fontSize: "20px",
             fontFamily: "'Source Sans Pro', sans-serif",
-          }}
+          } }
         >
-          <FontAwesomeIcon icon={faKey}></FontAwesomeIcon> Change Password
+          <FontAwesomeIcon icon={ faKey }></FontAwesomeIcon> Change Password
         </h1>
         <div>
           <RouterForm
-            action={"/api/requestnewpassword"}
-            beforecallback={(e: any) => {
+            action={ "/api/requestnewpassword" }
+            beforecallback={ (e: any) => {
               if (recapToken) {
                 if (e.target[0].value !== "") {
                   if (validateEmail(e.target[0].value)) {
@@ -193,34 +193,34 @@ function RequestNewPassword() {
               } else {
                 seterror("waiting for recaptcha token... try again later.");
               }
-            }}
-            appendtoformdata={(fd) => {
+            } }
+            appendtoformdata={ (fd) => {
               if (recapToken) fd.append("g-recaptcha-response", recapToken);
               return fd;
-            }}
-            style={{ width: "fit-content", margin: "auto", maxWidth: "300px" }}
-            callback={() => {
+            } }
+            style={ { width: "fit-content", margin: "auto", maxWidth: "300px" } }
+            callback={ () => {
               history.push("/login");
-            }}
+            } }
           >
             <GoogleReCaptcha
-              onVerify={(token) => {
+              onVerify={ (token) => {
                 setRecapToken(token);
-              }}
+              } }
             />
             <p
-              style={{
+              style={ {
                 textAlign: "end",
                 margin: "0",
-              }}
+              } }
             >
               Email
-            </p>{" "}
+            </p>{ " " }
             <input
               type="email"
               placeholder="Email"
               name="email"
-              style={{
+              style={ {
                 background: "transparent",
                 borderTop: "none",
                 borderRight: "none",
@@ -234,13 +234,13 @@ function RequestNewPassword() {
                 fontSize: "17px",
                 color: "white",
                 borderRadius: "0px",
-              }}
+              } }
               autoComplete="new-password"
             />
             <input
               type="submit"
               value="Request New Password"
-              style={{
+              style={ {
                 padding: "1rem",
                 width: "100%",
                 border: "none",
@@ -251,9 +251,9 @@ function RequestNewPassword() {
                 fontFamily: '"Source Sans Pro", sans-serif',
                 fontSize: "20px",
                 boxShadow: "rgb(0, 0, 0) 0px 6px 5px 0px",
-              }}
+              } }
             />
-            <p style={{ margin: "1rem 0", color: "red" }}>{error}</p>
+            <p style={ { margin: "1rem 0", color: "red" } }>{ error }</p>
           </RouterForm>
         </div>
       </div>

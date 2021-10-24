@@ -3,16 +3,19 @@
 }
 
 /* Track */
+
 ::-webkit-scrollbar-track {
   background: var(--dark-bg-colour);
 }
 
 /* Handle */
+
 ::-webkit-scrollbar-thumb {
   background: var(--main-bg-colour);
 }
 
 /* Handle on hover */
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--light-bg-colour);
 }

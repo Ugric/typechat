@@ -35,56 +35,56 @@ function FilePreview({
   const ext = name.substring(name.lastIndexOf("."));
   return (
     <Link
-      style={{
+      style={ {
         color: "white",
         textDecoration: "none",
         width: "100%",
         maxWidth: "150px",
-      }}
-      to={"/drive/" + id}
+      } }
+      to={ "/drive/" + id }
     >
       <div
-        style={{
+        style={ {
           margin: "5px",
           border: "solid 1px var(--light-bg-colour)",
           borderRadius: "10px",
           backgroundColor: "var(--main-bg-colour)",
           padding: "5px",
           cursor: "pointer",
-        }}
+        } }
       >
-        {!(mimetype && mimetype.startsWith("image")) ? (
+        { !(mimetype && mimetype.startsWith("image")) ? (
           <div
-            style={{
+            style={ {
               width: "100%",
               height: "75px",
               textAlign: "center",
               borderBottom: "solid 1px var(--light-bg-colour)",
               verticalAlign: "middle",
               lineHeight: "75px",
-            }}
+            } }
           >
-            <FontAwesomeIcon icon={faPhotoVideo} />
+            <FontAwesomeIcon icon={ faPhotoVideo } />
           </div>
         ) : (
           <img
-            src={"/files/" + id}
-            alt={name}
+            src={ "/files/" + id }
+            alt={ name }
             loading="lazy"
-            style={{ width: "100%", borderRadius: "10px" }}
+            style={ { width: "100%", borderRadius: "10px" } }
           ></img>
-        )}
-        <div style={{ padding: "1rem" }}>
+        ) }
+        <div style={ { padding: "1rem" } }>
           <p
-            style={{
+            style={ {
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-            }}
+            } }
           >
-            {fname}
+            { fname }
           </p>
-          <span>{ext}</span>
+          <span>{ ext }</span>
         </div>
       </div>
     </Link>
@@ -101,29 +101,29 @@ function Drive() {
   if (!loggedin) {
     return (
       <Redirect
-        to={"/login?" + new URLSearchParams({ to: "/user/drive" })}
+        to={ "/login?" + new URLSearchParams({ to: "/user/drive" }) }
       ></Redirect>
     );
   }
   return (
-    <div style={{ textAlign: "center", padding: "1rem" }}>
+    <div style={ { textAlign: "center", padding: "1rem" } }>
       <h1>My Drive</h1>
-      {data ? (
+      { data ? (
         <div
-          style={{
+          style={ {
             margin: "auto",
             border: "solid 1px var(--light-bg-colour)",
             borderRadius: "10px",
             backgroundColor: "var(--dark-bg-colour)",
             padding: "1rem",
             maxWidth: "700px",
-          }}
+          } }
         >
           <input
             type="file"
-            style={{ display: "none" }}
-            ref={fileref}
-            onInput={async (e: any) => {
+            style={ { display: "none" } }
+            ref={ fileref }
+            onInput={ async (e: any) => {
               if (e.target.files.length > 0) {
                 const file = e.target.files[0];
                 e.target.value = "";
@@ -191,11 +191,11 @@ function Drive() {
                   });
                 }
               }
-            }}
+            } }
           />
 
           <button
-            style={{
+            style={ {
               marginRight: "5px",
               backgroundColor: "var(--dark-bg-colour)",
               padding: "5px",
@@ -203,36 +203,36 @@ function Drive() {
               border: "solid 1px var(--light-bg-colour)",
               color: "white",
               textAlign: "center",
-            }}
-            onClick={() => {
+            } }
+            onClick={ () => {
               if (fileref.current) fileref.current.click();
-            }}
+            } }
           >
-            <FontAwesomeIcon icon={faPlus} /> add file
+            <FontAwesomeIcon icon={ faPlus } /> add file
           </button>
           <div
-            style={{
+            style={ {
               display: "flex",
               justifyContent: "space-around",
               alignItems: "center",
               flexDirection: "row",
               flexWrap: "wrap",
               alignContent: "center",
-            }}
+            } }
           >
-            {data.map((value) => (
+            { data.map((value) => (
               <FilePreview
-                key={value.id}
-                mimetype={value.mimetype}
-                id={value.id}
-                name={value.filename}
+                key={ value.id }
+                mimetype={ value.mimetype }
+                id={ value.id }
+                name={ value.filename }
               ></FilePreview>
-            ))}
+            )) }
           </div>
         </div>
       ) : (
         <Loader></Loader>
-      )}
+      ) }
     </div>
   );
 }
@@ -246,57 +246,57 @@ function Image() {
   const file = data?.id;
 
   return data ? (
-    <div style={{ margin: "1rem" }}>
+    <div style={ { margin: "1rem" } }>
       <div
-        style={{
+        style={ {
           margin: "1rem auto",
           border: "solid 1px var(--light-bg-colour)",
           borderRadius: "10px",
           backgroundColor: "var(--dark-bg-colour)",
           padding: "1rem",
           maxWidth: "700px",
-        }}
+        } }
       >
-        <h1>{data.filename}</h1>
+        <h1>{ data.filename }</h1>
         <div
-          onClick={() => {
+          onClick={ () => {
             downloadURI("/files/" + file, data.filename);
-          }}
-          style={{
+          } }
+          style={ {
             color: "var(--secondary-text-colour)",
             cursor: "pointer",
             fontSize: "25px",
-          }}
+          } }
         >
-          <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon> Download
+          <FontAwesomeIcon icon={ faDownload }></FontAwesomeIcon> Download
         </div>
         <div
-          style={{
+          style={ {
             height: "1px",
             backgroundColor: "var(--light-bg-colour)",
             width: "100%",
             margin: "1rem 0",
-          }}
+          } }
         ></div>
-        {mimetype ? (
+        { mimetype ? (
           mimetype.split("/")[0] === "image" ? (
             <img
-              alt={file}
-              src={`/files/${file}`}
-              style={{ width: "100%", borderRadius: "20px" }}
+              alt={ file }
+              src={ `/files/${file}` }
+              style={ { width: "100%", borderRadius: "20px" } }
               loading="lazy"
             ></img>
           ) : mimetype.split("/")[0] === "video" ? (
             <video
-              src={`/files/${file}`}
-              style={{ width: "100%" }}
+              src={ `/files/${file}` }
+              style={ { width: "100%" } }
               controls
               playsInline
             ></video>
           ) : mimetype.split("/")[0] === "audio" ? (
             <audio
-              src={`/files/${file}`}
-              style={{ width: "100%" }}
+              src={ `/files/${file}` }
+              style={ { width: "100%" } }
               controls
               playsInline
             ></audio>
@@ -305,7 +305,7 @@ function Image() {
           )
         ) : (
           <p>No Preview!</p>
-        )}
+        ) }
       </div>
     </div>
   ) : (

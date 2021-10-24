@@ -2,7 +2,7 @@ import blastIcon from "./images/Blast icon.svg";
 import fuelIcon from "./images/fuel-pump.svg";
 import meteorites from "./images/meteorites.svg";
 import "./css/blast.css";
-import { useState, useMemo, MouseEventHandler } from "react";
+import { useState, useMemo, MouseEventHandler, useRef } from "react";
 import useWindowSize from "../hooks/usescreensize";
 import useApi from "../hooks/useapi";
 import { useLocation, useHistory } from "react-router-dom";
@@ -35,13 +35,13 @@ function StartButton({
   return (
     <div
       className="btnMain"
-      onClick={!disabled ? onClick : undefined}
-      onPointerDown={() => {
+      onClick={ !disabled ? onClick : undefined }
+      onPointerDown={ () => {
         playSound("/sounds/click2.mp3");
-      }}
-      onPointerUp={() => {
+      } }
+      onPointerUp={ () => {
         playSound("/sounds/click1.mp3");
-      }}
+      } }
     >
       <div className="btnBox">BLAST OFF</div>
       <div className="btnBottom"></div>
@@ -58,7 +58,7 @@ function Star() {
   return (
     <div
       className="star"
-      style={{ top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s` }}
+      style={ { top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s` } }
     ></div>
   );
 }
@@ -72,7 +72,7 @@ function Galaxy() {
   return (
     <div
       className="Galaxy"
-      style={{ top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s` }}
+      style={ { top: `${y}vh`, left: `${x}vw`, animationDelay: `-${delay}s` } }
     ></div>
   );
 }
@@ -86,12 +86,12 @@ function Planet({ file }: { file: string }) {
   return (
     <div
       className="Planet"
-      style={{
+      style={ {
         top: `${y}vh`,
         left: `${x}vw`,
         animationDelay: `-${delay}s`,
         backgroundImage: `url(${file})`,
-      }}
+      } }
     ></div>
   );
 }
@@ -105,12 +105,12 @@ function Satellite({ file }: { file: string }) {
   return (
     <div
       className="Satellite"
-      style={{
+      style={ {
         top: `${y}vh`,
         left: `${x}vw`,
         animationDelay: `-${delay}s`,
         backgroundImage: `url(${file})`,
-      }}
+      } }
     ></div>
   );
 }
@@ -122,7 +122,7 @@ function Blast() {
     );
   const { width, height } = useWindowSize();
   const location = useLocation();
-  const { user } = useData();
+  const { user, notifications } = useData();
   const history = useHistory();
   const query: { [key: string]: string | string[] } = parse(
     location.search.slice(1)
@@ -133,16 +133,17 @@ function Blast() {
     xalien: 15 + Math.random() * 30 + "vw",
     yalien: 15 + Math.random() * 30 + "vh",
   });
+  const fuel = useRef(1)
   const stars = useMemo(
     () =>
       range(Math.round((width * height) / 10000)).map((value) => (
-        <Star key={value}></Star>
+        <Star key={ value }></Star>
       )),
     [width, height]
   );
   const max = user?.rocketFuel
     ? user.rocketFuel > 10
-      ? 10
+      ? 10 - user.blast
       : user.rocketFuel
     : 0;
   const ends = data
@@ -152,91 +153,91 @@ function Blast() {
   return (
     <div>
       <div>
-        <div className="stars">{stars}</div>
+        <div className="stars">{ stars }</div>
         <Galaxy></Galaxy>
 
-        <Planet file={plant} />
-        <Planet file={plant1} />
-        <Planet file={plant2} />
-        <Planet file={solarsystem} />
+        <Planet file={ plant } />
+        <Planet file={ plant1 } />
+        <Planet file={ plant2 } />
+        <Planet file={ solarsystem } />
 
-        <Satellite file={satellite} />
-        <Satellite file={satellite1} />
-        <Satellite file={satellite2} />
+        <Satellite file={ satellite } />
+        <Satellite file={ satellite1 } />
+        <Satellite file={ satellite2 } />
 
-        <div className="Alien" style={{ top: yalien, left: xalien }}></div>
+        <div className="Alien" style={ { top: yalien, left: xalien } }></div>
       </div>
 
-      {data && skip ? <div className="BlastRocket"></div> : <></>}
+      { data && skip ? <div className="BlastRocket"></div> : <></> }
       <div className="meteorites"></div>
-      {data ? (
-        <div className={`BlastMenu ${skip ? "BlastMenuAnimation" : ""}`}>
+      { data ? (
+        <div className={ `BlastMenu ${skip ? "BlastMenuAnimation" : ""}` }>
           <div
-            style={{
+            style={ {
               margin: "auto",
               border: "solid 1px var(--light-bg-colour)",
               borderRadius: "10px",
               backgroundColor: "var(--dark-glass-bg-colour)",
               padding: "1rem",
               maxWidth: "700px",
-            }}
+            } }
           >
-            {menupage === "main" ? (
+            { menupage === "main" ? (
               <>
-                <h1 style={{ textAlign: "center" }}>
-                  Blast{" "}
+                <h1 style={ { textAlign: "center" } }>
+                  Blast{ " " }
                   <img
-                    src={blastIcon}
+                    src={ blastIcon }
                     height="35px"
                     alt="🚀"
                     className="icon"
                   />
                 </h1>
-                <div style={{ textAlign: "end" }}>
+                <div style={ { textAlign: "end" } }>
                   <h3>
-                    £{((data.price * (1 - data.sale)) / 100).toFixed(2)} /
-                    Rocket Fuel{" "}
+                    £{ ((data.price * (1 - data.sale)) / 100).toFixed(2) } /
+                    Rocket Fuel{ " " }
                     <img
-                      src={fuelIcon}
+                      src={ fuelIcon }
                       height="35px"
                       alt="⛽"
                       className="icon"
                     />
                   </h3>
-                  {data.sale ? (
+                  { data.sale ? (
                     <h4>
                       <p>
-                        {Math.round(data.sale * 100)}% off{" "}
+                        { Math.round(data.sale * 100) }% off{ " " }
                         <img
-                          src={meteorites}
+                          src={ meteorites }
                           height="35px"
                           alt="☄"
                           className="icon"
                         />
                       </p>
-                      <p style={{ fontSize: "15px" }}>
-                        ends on the {ends}
-                        {String(ends).endsWith("1")
+                      <p style={ { fontSize: "15px" } }>
+                        ends on the { ends }
+                        { String(ends).endsWith("1")
                           ? "st"
                           : String(ends).endsWith("2")
-                          ? "nd"
-                          : String(ends).endsWith("1")
-                          ? "rd"
-                          : "th"}
+                            ? "nd"
+                            : String(ends).endsWith("1")
+                              ? "rd"
+                              : "th" }
                       </p>
-                      <p style={{ fontSize: "10px" }}>
-                        (was £{(data.price / 100).toFixed(2)})
+                      <p style={ { fontSize: "10px" } }>
+                        (was £{ (data.price / 100).toFixed(2) })
                       </p>
                     </h4>
                   ) : (
                     <></>
-                  )}
+                  ) }
                 </div>
-                {user ? (
-                  <h5 style={{ textAlign: "center" }}>
-                    you have {user.rocketFuel} Rocket Fuel{" "}
+                { user ? (
+                  <h5 style={ { textAlign: "center" } }>
+                    you have { user.rocketFuel } Rocket Fuel{ " " }
                     <img
-                      src={fuelIcon}
+                      src={ fuelIcon }
                       height="25px"
                       alt="⛽"
                       className="icon"
@@ -244,45 +245,59 @@ function Blast() {
                   </h5>
                 ) : (
                   <></>
-                )}
+                ) }
                 <StartButton
-                  onClick={() =>
+                  onClick={ () =>
                     user
                       ? max > 0
                         ? setmenupage("start")
-                        : window.location.replace("#fuel")
+                        : user?.rocketFuel > 0 ?
+                          notifications.addNotification({
+                            title: "Unable to Add More Fuel!",
+                            message: "Sorry, you have reached the monthly Blast limit, you may add Rocket Fuel when this months Rocket Fuel has ran out.",
+                            type: "danger",
+                            insert: "top",
+                            container: "top-right",
+                            animationIn: ["animate__animated", "animate__fadeIn"],
+                            animationOut: ["animate__animated", "animate__fadeOut"],
+                            dismiss: {
+                              pauseOnHover: true,
+                              duration: 5000,
+                              onScreen: true,
+                            },
+                          }) : window.location.replace("#fuel")
                       : history.push(
-                          "/login?" + new URLSearchParams({ to: "/blast" })
-                        )
+                        "/login?" + new URLSearchParams({ to: "/blast" })
+                      )
                   }
                 />
                 <div
-                  style={{
+                  style={ {
                     border: "solid 1px var(--light-bg-colour)",
                     borderRadius: "10px",
                     backgroundColor: "var(--dark-bg-colour)",
                     padding: "1rem",
                     margin: "1rem",
-                  }}
+                  } }
                 >
                   <h5>Features</h5>
                   <div
-                    style={{
+                    style={ {
                       width: "100%",
                       height: "1px",
                       backgroundColor: "var(--light-bg-colour)",
-                    }}
+                    } }
                   ></div>
                   <ul
-                    style={{
+                    style={ {
                       margin: "1rem",
-                    }}
+                    } }
                   >
                     <li>unlimied sized messages</li>
                     <li>
-                      Bigger monthly upload limit (1 GB / Rocket Fuel{" "}
+                      Bigger monthly upload limit (1 GB / Rocket Fuel{ " " }
                       <img
-                        src={fuelIcon}
+                        src={ fuelIcon }
                         height="15px"
                         alt="⛽"
                         className="icon"
@@ -295,18 +310,18 @@ function Blast() {
                   </ul>
                 </div>
                 <div
-                  style={{
+                  style={ {
                     border: "solid 1px var(--light-bg-colour)",
                     borderRadius: "10px",
                     backgroundColor: "var(--dark-bg-colour)",
                     padding: "1rem",
                     margin: "1rem",
-                  }}
+                  } }
                 >
                   <h5>
-                    Need fuel?{" "}
+                    Need fuel?{ " " }
                     <img
-                      src={fuelIcon}
+                      src={ fuelIcon }
                       height="20px"
                       alt="⛽"
                       className="icon"
@@ -316,49 +331,63 @@ function Blast() {
                     id="fuel"
                     className="subbutton"
                     disabled
-                    style={{ opacity: 0.25, cursor: "not-allowed" }}
+                    style={ { opacity: 0.25, cursor: "not-allowed" } }
                   >
-                    Buy Rocket Fuel{" "}
+                    Buy Rocket Fuel{ " " }
                     <img
-                      src={fuelIcon}
+                      src={ fuelIcon }
                       height="25px"
                       alt="⛽"
                       className="icon"
                     />
                   </button>
-                  <p style={{ textAlign: "center" }}>
+                  <p style={ { textAlign: "center" } }>
                     Sorry, Rocket Fuel is unable to be bought at the moment.
                     When TypeChat leaves beta, all beta testing account will get
                     1 free Rocket Fuel!
                   </p>
                 </div>
                 <div
-                  style={{
+                  style={ {
                     border: "solid 1px var(--light-bg-colour)",
                     borderRadius: "10px",
                     backgroundColor: "var(--dark-glass-bg-colour)",
                     padding: "1rem",
                     margin: "1rem",
-                  }}
+                  } }
                 >
                   <h5>
-                    Ready to go to space?{" "}
+                    Ready to go to space?{ " " }
                     <img
-                      src={blastIcon}
+                      src={ blastIcon }
                       height="20px"
                       alt="🚀"
                       className="icon"
                     />
                   </h5>
                   <StartButton
-                    onClick={() =>
+                    onClick={ () =>
                       user
                         ? max > 0
                           ? setmenupage("start")
-                          : window.location.replace("#fuel")
+                          : user?.rocketFuel > 0 ?
+                            notifications.addNotification({
+                              title: "Unable to Add More Fuel!",
+                              message: "Sorry, you have reached the monthly Blast limit, you may add Rocket Fuel when this months Rocket Fuel has ran out.",
+                              type: "danger",
+                              insert: "top",
+                              container: "top-right",
+                              animationIn: ["animate__animated", "animate__fadeIn"],
+                              animationOut: ["animate__animated", "animate__fadeOut"],
+                              dismiss: {
+                                pauseOnHover: true,
+                                duration: 5000,
+                                onScreen: true,
+                              },
+                            }) : window.location.replace("#fuel")
                         : history.push(
-                            "/login?" + new URLSearchParams({ to: "/blast" })
-                          )
+                          "/login?" + new URLSearchParams({ to: "/blast" })
+                        )
                     }
                   />
                 </div>
@@ -366,81 +395,96 @@ function Blast() {
             ) : menupage === "start" ? (
               <>
                 <FontAwesomeIcon
-                  icon={faTimes}
-                  onClick={() => setmenupage("main")}
-                  style={{
+                  icon={ faTimes }
+                  onClick={ () => setmenupage("main") }
+                  style={ {
                     cursor: "pointer",
                     fontSize: "30px",
                     float: "right",
-                  }}
+                  } }
                 />
-                <h1 style={{ textAlign: "center" }}>
-                  Start Blast{" "}
+                <h1 style={ { textAlign: "center" } }>
+                  Start Blast{ " " }
                   <img
-                    src={blastIcon}
+                    src={ blastIcon }
                     height="35px"
                     alt="🚀"
                     className="icon"
                   />
                 </h1>
                 <div
-                  style={{
+                  style={ {
                     display: "grid",
                     alignItems: "center",
                     justifyContent: "center",
                     alignContent: "space-evenly",
-                  }}
+                  } }
                 >
                   <label htmlFor="RF">
-                    How much Rocket Fuel do you want to spend? (max {max})
+                    How much Rocket Fuel do you want to spend? (max { max })
                   </label>
                   <input
                     id="RF"
                     type="number"
                     min="1"
-                    max={max}
+                    max={ max }
                     defaultValue="1"
-                    onBlur={(e: any) => {
+                    onBlur={ (e: any) => {
                       e.target.value =
                         e.target.value > max
                           ? max
                           : e.target.value < 1
+                            ? 1
+                            : e.target.value;
+                    } }
+                    onChange={ (e: any) => {
+                      fuel.current = e.target.value > max
+                        ? max
+                        : e.target.value < 1
                           ? 1
-                          : e.target.value;
-                    }}
+                          : e.target.value
+                    } }
                   ></input>
-                  <StartButton onClick={() => setmenupage("TY")}></StartButton>
+                  <StartButton onClick={ () => {
+                    setmenupage("TY")
+                    const formdata = new FormData()
+                    formdata.append("fuel", JSON.stringify(fuel.current))
+                    fetch("/api/startrocketfuel", {
+                      method: "POST",
+                      body: formdata
+                    }).then(console.log);
+                  } }></StartButton>
                 </div>
               </>
             ) : (
               <>
                 <FontAwesomeIcon
-                  icon={faTimes}
-                  onClick={() => setmenupage("main")}
-                  style={{
+                  icon={ faTimes }
+                  onClick={ () => setmenupage("main") }
+                  style={ {
                     cursor: "pointer",
                     fontSize: "30px",
                     float: "right",
-                  }}
+                  } }
                 />
-                <h1 style={{ textAlign: "center" }}>Thank you</h1>
+                <h1 style={ { textAlign: "center" } }>Thank you</h1>
                 <div
-                  style={{
+                  style={ {
                     border: "solid 1px var(--light-bg-colour)",
                     borderRadius: "10px",
                     backgroundColor: "var(--dark-bg-colour)",
                     padding: "1rem",
                     margin: "1rem",
-                  }}
+                  } }
                 >
-                  <p style={{ textAlign: "center" }}>
-                    Thank you {user.username}, the TypeChat team hope you like
+                  <p style={ { textAlign: "center" } }>
+                    Thank you { user.username }, the TypeChat team hope you like
                     Blast. If there are any suggestions, issues or complains,
-                    please contact{" "}
+                    please contact{ " " }
                     <a
                       target="blank_"
                       href="/chat/TypeChat"
-                      style={{ color: "var(--secondary-text-colour)" }}
+                      style={ { color: "var(--secondary-text-colour)" } }
                     >
                       the offical TypeChat account
                     </a>
@@ -448,12 +492,12 @@ function Blast() {
                   </p>
                 </div>
               </>
-            )}
+            ) }
           </div>
         </div>
       ) : (
         <></>
-      )}
+      ) }
     </div>
   );
 }

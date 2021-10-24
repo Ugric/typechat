@@ -77,11 +77,11 @@ client.on("messageCreate", async (message) => {
           const member = client.guilds.cache
             .get(serverID)
             .members.cache.get(message.author.id);
-          await member.setNickname("", "unlink account").catch(() => {});
-          await member.roles.remove(roleID, "unlink account").catch(() => {});
+          await member.setNickname("", "unlink account").catch(() => { });
+          await member.roles.remove(roleID, "unlink account").catch(() => { });
           await member.roles
             .add(unlinkedroleID, "unlink account")
-            .catch(() => {});
+            .catch(() => { });
           message.reply({
             embeds: [
               new discord.MessageEmbed()
@@ -151,7 +151,7 @@ client.on("guildMemberAdd", async (member) => {
         linkaccount(member),
       ],
     });
-    member.roles.add(unlinkedroleID, "not linked").catch(() => {});
+    member.roles.add(unlinkedroleID, "not linked").catch(() => { });
   } else {
     const accountdata = await db.db.get(
       "SELECT * FROM accounts WHERE accountID=:accountID",
@@ -175,11 +175,11 @@ client.on("guildMemberAdd", async (member) => {
           .setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`),
       ],
     });
-    await member.setNickname(accountdata.username, "rejoin").catch(() => {});
-    await member.roles.add(roleID, "rejoin").catch(() => {});
-    await member.roles.remove(unlinkedroleID, "rejoin").catch(() => {});
+    await member.setNickname(accountdata.username, "rejoin").catch(() => { });
+    await member.roles.add(roleID, "rejoin").catch(() => { });
+    await member.roles.remove(unlinkedroleID, "rejoin").catch(() => { });
   }
 });
 
-//client.login(process.env.NODE_ENV === "development"?require("./devdiscordtoken.json"):require("./discordtoken.json"));
+client.login(process.env.NODE_ENV === "development" ? require("./devdiscordtoken.json") : require("./discordtoken.json"));
 export { serverID, client, roleID, unlinkedroleID };

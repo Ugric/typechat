@@ -47,6 +47,7 @@ import Linkify from "react-linkify";
 import ReactPlayer from "react-player/lazy";
 import useApi from "../hooks/useapi";
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
+import Badge from "./badges";
 
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
@@ -172,81 +173,81 @@ function MetaPage({
   }>("/api/getmetadata?" + new URLSearchParams({ url }));
   return data ? (
     <div
-      style={{
+      style={ {
         padding: "1rem",
         border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"}`,
         backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
         borderRadius: "10px",
         maxWidth: "350px",
         margin: "auto",
-      }}
+      } }
     >
       <a
-        href={decoratedHref}
+        href={ decoratedHref }
         target="blank"
-        style={{
+        style={ {
           fontSize: "24px",
-        }}
+        } }
       >
         <img
-          alt={urldata.hostname}
-          style={{
+          alt={ urldata.hostname }
+          style={ {
             marginRight: "5px",
             aspectRatio: "1/1",
             height: "100%",
             minHeight: "24px",
-          }}
-          src={`https://www.google.com/s2/favicons?${new URLSearchParams({
+          } }
+          src={ `https://www.google.com/s2/favicons?${new URLSearchParams({
             size: "24",
             domain: urldata.hostname,
-          })}`}
+          })}` }
         />
-        {data.title ? data.title : decoratedText}
+        { data.title ? data.title : decoratedText }
       </a>
-      <p>{data.description}</p>
-      {data.image.length > 0 ? (
+      <p>{ data.description }</p>
+      { data.image.length > 0 ? (
         <img
-          src={new URL(data.image, url).href}
-          style={{ width: "100%", borderRadius: "10px" }}
-          alt={data.title ? data.title : decoratedText}
+          src={ new URL(data.image, url).href }
+          style={ { width: "100%", borderRadius: "10px" } }
+          alt={ data.title ? data.title : decoratedText }
         ></img>
       ) : (
         <></>
-      )}
+      ) }
     </div>
   ) : (
     <div
-      style={{
+      style={ {
         padding: "1rem",
         border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"}`,
         backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
         borderRadius: "10px",
         margin: "5px",
-      }}
+      } }
     >
       <a
-        href={decoratedHref}
+        href={ decoratedHref }
         target="blank"
-        style={{
+        style={ {
           display: "flex",
           justifyContent: "space-between",
           margin: 0,
-        }}
+        } }
       >
         <img
-          alt={urldata.hostname}
-          style={{
+          alt={ urldata.hostname }
+          style={ {
             marginRight: "5px",
             aspectRatio: "1/1",
             height: "100%",
             minHeight: "24px",
-          }}
-          src={`https://www.google.com/s2/favicons?${new URLSearchParams({
+          } }
+          src={ `https://www.google.com/s2/favicons?${new URLSearchParams({
             size: "24",
             domain: urldata.hostname,
-          })}`}
+          })}` }
         />
-        <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
+        <p style={ { maxWidth: "90%" } }>{ decoratedText }</p>
       </a>
     </div>
   );
@@ -265,7 +266,7 @@ function MessageFaviconOrVideoRenderer({
 }) {
   return (
     <>
-      {links.map(
+      { links.map(
         ({
           decoratedHref,
           decoratedText,
@@ -277,27 +278,27 @@ function MessageFaviconOrVideoRenderer({
         }) => {
           const url = new URL(decoratedHref);
           return (
-            <React.Fragment key={key}>
-              {videoSites.includes(url.hostname) ? (
+            <React.Fragment key={ key }>
+              { videoSites.includes(url.hostname) ? (
                 <ReactPlayer
-                  url={decoratedHref}
+                  url={ decoratedHref }
                   width="100%"
                   height="100%"
-                  controls={true}
-                  style={{ aspectRatio: "16/9" }}
+                  controls={ true }
+                  style={ { aspectRatio: "16/9" } }
                 />
               ) : (
                 <MetaPage
-                  url={decoratedHref}
-                  decoratedText={decoratedText}
-                  decoratedHref={decoratedHref}
-                  mine={mine}
+                  url={ decoratedHref }
+                  decoratedText={ decoratedText }
+                  decoratedHref={ decoratedHref }
+                  mine={ mine }
                 ></MetaPage>
-              )}
+              ) }
             </React.Fragment>
           );
         }
-      )}
+      ) }
     </>
   );
 }
@@ -344,32 +345,29 @@ function Message({
   return (
     <>
       <ContextMenuTrigger
-        id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}
+        id={ String(messages[i].ID ? messages[i].ID : messages[i].tempid) }
       >
         <div
-          style={{ opacity: !messages[i].ID ? 0.5 : undefined }}
+          style={ { opacity: !messages[i].ID ? 0.5 : undefined } }
           className={
             onlyemojis || file
-              ? `message message-${
-                  messages[i].from === user.id ? "mine" : "yours"
-                } ${
-                  !messages[i + 1] ||
-                  messages[i + 1].from !== messages[i].from ||
-                  (messages[i + 1] &&
-                    messages[i + 1].time - messages[i].time > 300000)
-                    ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
-                    : ""
-                }`
-              : `emojimessage-${
-                  messages[i].from === user.id ? "mine" : "yours"
-                }`
+              ? `message message-${messages[i].from === user.id ? "mine" : "yours"
+              } ${!messages[i + 1] ||
+                messages[i + 1].from !== messages[i].from ||
+                (messages[i + 1] &&
+                  messages[i + 1].time - messages[i].time > 300000)
+                ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+                : ""
+              }`
+              : `emojimessage-${messages[i].from === user.id ? "mine" : "yours"
+              }`
           }
         >
-          {message ? (
+          { message ? (
             editing ? (
               <>
                 <form
-                  onSubmit={(e: any) => {
+                  onSubmit={ (e: any) => {
                     e.preventDefault();
                     setediting(false);
                     const tempmessage = messageref.current;
@@ -384,10 +382,10 @@ function Message({
                       });
                       editFromID(messages[i].ID, tempmessage);
                     }
-                  }}
+                  } }
                 >
                   <TextareaAutosize
-                    onInput={(e: any) => {
+                    onInput={ (e: any) => {
                       if (key.current === 13 && !shiftkey.current) {
                         submitref.current.click();
                       } else {
@@ -403,13 +401,13 @@ function Message({
                           .slice(0, 3000)
                           .join("");
                       }
-                    }}
-                    onKeyDown={(e: any) => {
+                    } }
+                    onKeyDown={ (e: any) => {
                       key.current = e.keyCode;
                       shiftkey.current = e.shiftKey;
-                    }}
+                    } }
                     autoFocus
-                    style={{
+                    style={ {
                       backgroundColor: "var(--dark-bg-colour)",
                       padding: "5px",
                       borderRadius: "20px",
@@ -417,21 +415,21 @@ function Message({
                       color: "white",
                       resize: "none",
                       width: "100%",
-                    }}
-                    maxRows={10}
+                    } }
+                    maxRows={ 10 }
                     placeholder="Type Something..."
-                    defaultValue={message}
+                    defaultValue={ message }
                   />
                   <input
                     type="submit"
-                    ref={submitref}
-                    style={{ display: "none" }}
+                    ref={ submitref }
+                    style={ { display: "none" } }
                   ></input>
                 </form>
               </>
             ) : (
               <>
-                {onlyemojis ? (
+                <p>{ onlyemojis ? (
                   (longmessage && messagecharlist && !fullyopened
                     ? messagecharlist.slice(0, 500).join("")
                     : message
@@ -439,9 +437,9 @@ function Message({
                     .split("```")
                     .map((value: string, index: number) =>
                       index % 2 === 0 ? (
-                        <React.Fragment key={index}>
+                        <React.Fragment key={ index }>
                           <Linkify
-                            componentDecorator={(
+                            componentDecorator={ (
                               decoratedHref,
                               decoratedText,
                               key
@@ -457,222 +455,221 @@ function Message({
                               return (
                                 <a
                                   target="blank"
-                                  href={decoratedHref}
-                                  key={key}
+                                  href={ decoratedHref }
+                                  key={ key }
                                 >
-                                  {decoratedText}
+                                  { decoratedText }
                                 </a>
                               );
-                            }}
+                            } }
                           >
-                            {value.trim()}
+                            { value.trim() }
                           </Linkify>
                         </React.Fragment>
                       ) : (
-                        <SyntaxHighlighter key={index}>
-                          {value.trim()}
+                        <SyntaxHighlighter key={ index }>
+                          { value.trim() }
                         </SyntaxHighlighter>
                       )
                     )
                 ) : (
-                  <h1 className="emojimessage">{message}</h1>
-                )}
-                {longmessage && !fullyopened ? "..." : ""}
-                {!longmessage || fullyopened ? (
+                  <h1 className="emojimessage">{ message }</h1>
+                ) }</p>
+                { longmessage && !fullyopened ? "..." : "" }
+                { !longmessage || fullyopened ? (
                   <MessageFaviconOrVideoRenderer
-                    links={links}
-                    mine={messages[i].from === user.id}
+                    links={ links }
+                    mine={ messages[i].from === user.id }
                   ></MessageFaviconOrVideoRenderer>
                 ) : (
                   <></>
-                )}
-                {longmessage ? (
+                ) }
+                { longmessage ? (
                   <p
-                    onClick={() => setfullyopened(!fullyopened)}
-                    style={{
+                    onClick={ () => setfullyopened(!fullyopened) }
+                    style={ {
                       color:
                         messages[i].from === user.id ? "lightgray" : "gray",
                       fontSize: "12px",
-                    }}
+                    } }
                   >
-                    show {fullyopened ? "less" : "more"}
+                    show { fullyopened ? "less" : "more" }
                   </p>
                 ) : (
                   <></>
-                )}
-                {messages[i].edited ? (
+                ) }
+                { messages[i].edited ? (
                   <p
-                    style={{
+                    style={ {
                       color:
                         messages[i].from === user.id ? "lightgray" : "gray",
                       fontSize: "10px",
                       float: "right",
-                    }}
+                    } }
                   >
                     edited
                   </p>
                 ) : (
                   <></>
-                )}
+                ) }
               </>
             )
           ) : file ? (
             <div>
-              {mimetype ? (
+              { mimetype ? (
                 mimetype.split("/")[0] === "image" ? (
                   <img
-                    alt={file}
-                    src={`/files/${file}`}
-                    style={{
+                    alt={ file }
+                    src={ `/files/${file}` }
+                    style={ {
                       maxWidth: "100%",
                       maxHeight: "300px",
                       borderRadius: "20px",
-                    }}
+                    } }
                     loading="lazy"
-                    onLoad={() => {
+                    onLoad={ () => {
                       if (toscroll.current) {
                         scrolltobottom();
                       }
-                    }}
+                    } }
                   ></img>
                 ) : mimetype.split("/")[0] === "video" ? (
                   <video
-                    src={`/files/${file}`}
-                    style={{ width: "100%", maxHeight: "300px" }}
+                    src={ `/files/${file}` }
+                    style={ { width: "100%", maxHeight: "300px" } }
                     controls
                     playsInline
-                    onLoad={() => {
+                    onLoad={ () => {
                       if (toscroll.current) {
                         scrolltobottom();
                       }
-                    }}
+                    } }
                   ></video>
                 ) : mimetype.split("/")[0] === "audio" ? (
                   <audio
-                    src={`/files/${file}`}
-                    style={{ width: "100%", maxHeight: "300px" }}
+                    src={ `/files/${file}` }
+                    style={ { width: "100%", maxHeight: "300px" } }
                     controls
                     playsInline
-                    onLoad={() => {
+                    onLoad={ () => {
                       if (toscroll.current) {
                         scrolltobottom();
                       }
-                    }}
+                    } }
                   ></audio>
                 ) : (
                   <div
-                    onClick={() => {
+                    onClick={ () => {
                       window.open(
                         `/files/${file}`,
                         file,
                         "width=600,height=400"
                       );
-                    }}
-                    style={{
+                    } }
+                    style={ {
                       color: "var(--secondary-text-colour)",
                       cursor: "pointer",
-                    }}
+                    } }
                   >
-                    <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+                    <FontAwesomeIcon icon={ faFile }></FontAwesomeIcon> File
                   </div>
                 )
               ) : (
                 <div
-                  onClick={() => {
+                  onClick={ () => {
                     window.open(`/files/${file}`, file, "width=600,height=400");
-                  }}
-                  style={{
+                  } }
+                  style={ {
                     color: "var(--secondary-text-colour)",
                     cursor: "pointer",
-                  }}
+                  } }
                 >
-                  <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+                  <FontAwesomeIcon icon={ faFile }></FontAwesomeIcon> File
                 </div>
-              )}
+              ) }
             </div>
           ) : (
             <></>
-          )}
+          ) }
         </div>
       </ContextMenuTrigger>
 
       <ContextMenu
-        id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}
+        id={ String(messages[i].ID ? messages[i].ID : messages[i].tempid) }
       >
-        <p style={{ textAlign: "center" }}>
-          {new Date(messages[i].time).toLocaleString()}
+        <p style={ { textAlign: "center" } }>
+          { new Date(messages[i].time).toLocaleString() }
         </p>
         <MenuItem
-          onClick={() => {
+          onClick={ () => {
             navigator.clipboard.writeText(
               message
                 ? message
-                : `${window.location.protocol}://${
-                    !process.env.NODE_ENV ||
-                    process.env.NODE_ENV === "development"
-                      ? window.location.hostname + ":5000"
-                      : window.location.host
-                  }/files/${file}`
+                : `${window.location.protocol}://${!process.env.NODE_ENV ||
+                  process.env.NODE_ENV === "development"
+                  ? window.location.hostname + ":5000"
+                  : window.location.host
+                }/files/${file}`
             );
-          }}
+          } }
         >
           <span>
-            <FontAwesomeIcon icon={faCopy} /> Copy
+            <FontAwesomeIcon icon={ faCopy } /> Copy
           </span>
         </MenuItem>
-        {messages[i].from === user.id && messages[i].ID ? (
+        { messages[i].from === user.id && messages[i].ID ? (
           <>
             <MenuItem
-              onClick={() => {
+              onClick={ () => {
                 sendJsonMessage({ type: "delete", id: messages[i].ID });
                 deleteFromID(messages[i].ID);
-              }}
+              } }
             >
               <span>
-                <FontAwesomeIcon icon={faTrash} /> Delete
+                <FontAwesomeIcon icon={ faTrash } /> Delete
               </span>
             </MenuItem>
-            {message ? (
+            { message ? (
               <MenuItem
-                onClick={() => {
+                onClick={ () => {
                   setediting(!editing);
-                }}
+                } }
               >
                 <span>
-                  {editing ? (
+                  { editing ? (
                     <>
-                      <FontAwesomeIcon icon={faTimes} /> Cancel Edit
+                      <FontAwesomeIcon icon={ faTimes } /> Cancel Edit
                     </>
                   ) : (
                     <>
-                      <FontAwesomeIcon icon={faPencilAlt} /> Edit
+                      <FontAwesomeIcon icon={ faPencilAlt } /> Edit
                     </>
-                  )}
+                  ) }
                 </span>
               </MenuItem>
             ) : (
               <></>
-            )}
+            ) }
           </>
         ) : (
           <></>
-        )}
-        {longmessage ? (
+        ) }
+        { longmessage ? (
           <MenuItem
-            onClick={() => {
+            onClick={ () => {
               setfullyopened(!fullyopened);
-            }}
+            } }
           >
             <span>
               <FontAwesomeIcon
-                icon={fullyopened ? faMinusCircle : faPlusCircle}
-              />{" "}
-              Show {fullyopened ? "less" : "more"}
+                icon={ fullyopened ? faMinusCircle : faPlusCircle }
+              />{ " " }
+              Show { fullyopened ? "less" : "more" }
             </span>
           </MenuItem>
         ) : (
           <></>
-        )}
+        ) }
       </ContextMenu>
     </>
   );
@@ -722,15 +719,15 @@ function MessageMaker({
       ) {
         output.push(
           <p
-            key={messages[i].time}
-            style={{
+            key={ messages[i].time }
+            style={ {
               margin: "0",
               color: `lightgray`,
               fontSize: "10px",
               textAlign: "center",
-            }}
+            } }
           >
-            {new Date(messages[i].time).toLocaleString()}
+            { new Date(messages[i].time).toLocaleString() }
           </p>
         );
       }
@@ -738,38 +735,37 @@ function MessageMaker({
         output.push(
           messages[i].from === user.id || users[messages[i].from] ? (
             <div
-              key={messages[i].ID + "topname"}
-              style={{
+              key={ messages[i].ID + "topname" }
+              style={ {
                 alignSelf:
                   messages[i].from === user.id ? "flex-end" : "flex-start",
-              }}
+              } }
             >
-              {messages[i].from === user.id ? (
-                <span style={{ marginRight: "5px" }}>{user.username}</span>
+              { messages[i].from === user.id ? (
+                <span style={ { marginRight: "5px" } }>{ user.username }</span>
               ) : (
                 <></>
-              )}
+              ) }
               <img
-                src={`/files/${
-                  messages[i].from === user.id
-                    ? user.profilePic
-                    : users[messages[i].from].profilePic
-                }`}
-                style={{
+                src={ `/files/${messages[i].from === user.id
+                  ? user.profilePic
+                  : users[messages[i].from].profilePic
+                  }` }
+                style={ {
                   width: "25px",
                   height: "25px",
                   margin: "3px",
                   borderRadius: "50%",
-                }}
+                } }
                 alt=""
               />
-              {users[messages[i].from] ? (
-                <span style={{ marginLeft: "5px" }}>
-                  {users[messages[i].from].username}
+              { users[messages[i].from] ? (
+                <span style={ { marginLeft: "5px" } }>
+                  { users[messages[i].from].username }
                 </span>
               ) : (
                 <></>
-              )}
+              ) }
             </div>
           ) : (
             <></>
@@ -778,15 +774,15 @@ function MessageMaker({
       }
       output.push(
         <Message
-          key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-          messages={messages}
-          deleteFromID={deleteFromID}
-          i={i}
-          user={user}
-          toscroll={toscroll}
-          scrolltobottom={scrolltobottom}
-          sendJsonMessage={sendJsonMessage}
-          editFromID={editFromID}
+          key={ messages[i].ID ? messages[i].ID : messages[i].tempid }
+          messages={ messages }
+          deleteFromID={ deleteFromID }
+          i={ i }
+          user={ user }
+          toscroll={ toscroll }
+          scrolltobottom={ scrolltobottom }
+          sendJsonMessage={ sendJsonMessage }
+          editFromID={ editFromID }
         ></Message>
       );
       lastmessage = messages[i];
@@ -813,8 +809,8 @@ function MessageMaker({
     if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
         document.documentElement.scrollHeight -
-          document.documentElement.scrollTop -
-          document.documentElement.clientHeight <=
+        document.documentElement.scrollTop -
+        document.documentElement.clientHeight <=
         200;
       if (canloadmore) {
         if (document.documentElement.scrollTop < 10) {
@@ -825,48 +821,48 @@ function MessageMaker({
   };
   return (
     <div
-      style={{
+      style={ {
         width: "100%",
         height: `100%`,
         overflow: "overlay",
-      }}
-      ref={scrollref}
+      } }
+      ref={ scrollref }
     >
       <div
         className="chat"
-        style={{
+        style={ {
           margin: `90px auto 3rem auto`,
           maxWidth: "900px",
-        }}
+        } }
       >
-        {messages.length > 0 ? (
+        { messages.length > 0 ? (
           <>
-            {canloadmore && loadingmore ? (
-              <Loader key={"loader"}></Loader>
+            { canloadmore && loadingmore ? (
+              <Loader key={ "loader" }></Loader>
             ) : (
               <></>
-            )}
-            {output}
+            ) }
+            { output }
           </>
         ) : (
-          <p style={{ color: "gray", textAlign: "center" }}>
+          <p style={ { color: "gray", textAlign: "center" } }>
             this chat is empty... say hi!
           </p>
-        )}
-        {typingdata.typing ? (
+        ) }
+        { typingdata.typing ? (
           <div
             className="message message-yours last-yours"
-            style={{
+            style={ {
               opacity: 0.5,
               textShadow: "0 0 7px black",
               color: "transparent",
-            }}
+            } }
           >
-            {faketext}
+            { faketext }
           </div>
         ) : (
           <></>
-        )}
+        ) }
       </div>
     </div>
   );
@@ -875,26 +871,26 @@ function MessageMaker({
 function ChatNotFound() {
   return (
     <div
-      style={{
+      style={ {
         position: "absolute",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
         textAlign: "center",
         color: "gray",
-      }}
+      } }
     >
-      <div style={{ fontSize: "50px" }}>
-        <FontAwesomeIcon icon={faSadCry} />
-        <FontAwesomeIcon icon={faCommentSlash} />
+      <div style={ { fontSize: "50px" } }>
+        <FontAwesomeIcon icon={ faSadCry } />
+        <FontAwesomeIcon icon={ faCommentSlash } />
       </div>
       <h1>No Chat Found!</h1>
       <p>
-        go to{" "}
+        go to{ " " }
         <span>
           <Link
             to="/contacts"
-            style={{ color: "var(--secondary-text-colour)" }}
+            style={ { color: "var(--secondary-text-colour)" } }
           >
             contacts
           </Link>
@@ -965,10 +961,9 @@ function ChatPage() {
     specialchars: {},
   });
   const [socketUrl] = useState(
-    `ws${window.location.protocol === "https:" ? "s" : ""}://${
-      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
-        ? window.location.hostname + ":5000"
-        : window.location.host
+    `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
+      ? window.location.hostname + ":5000"
+      : window.location.host
     }/chat`
   );
   const size = useWindowSize();
@@ -1194,9 +1189,8 @@ function ChatPage() {
           } else if (lastJsonMessage.message.from !== user.id) {
             NotificationAPI(
               {
-                title: `${
-                  usersdata.users[lastJsonMessage.message.from].username
-                }`,
+                title: `${usersdata.users[lastJsonMessage.message.from].username
+                  }`,
                 message: lastJsonMessage.message.message
                   ? truncate(lastJsonMessage.message.message, 25)
                   : "file",
@@ -1368,12 +1362,12 @@ function ChatPage() {
   }
   return (
     <usersContext.Provider
-      value={usersdata ? usersdata : { exists: false, users: {} }}
+      value={ usersdata ? usersdata : { exists: false, users: {} } }
     >
       <div>
         <div>
           <div
-            style={{
+            style={ {
               position: "fixed",
               width: "100%",
               height: "90px",
@@ -1381,11 +1375,11 @@ function ChatPage() {
               zIndex: 10,
               background:
                 "linear-gradient(0deg, transparent, var(--dark-mode))",
-            }}
+            } }
           >
-            {usersdata && readyState === ReadyState.OPEN ? (
+            { usersdata && readyState === ReadyState.OPEN ? (
               <>
-                {" "}
+                { " " }
                 <img
                   src={
                     "/files/" +
@@ -1395,60 +1389,62 @@ function ChatPage() {
                         : usersdata.users[chattingto].profilePic
                     )
                   }
-                  style={{
+                  style={ {
                     display: "block",
                     height: "65%",
                     margin: "auto",
-                    borderRadius: "100%",
-                  }}
-                  alt={usersdata.users[chattingto].username}
+                    borderRadius: "100%", aspectRatio: "1/1",
+                  } }
+                  alt={ usersdata.users[chattingto].username }
                 />
-                <p style={{ textAlign: "center" }}>
-                  {usersdata.users[chattingto].username}{" "}
+                <p style={ { textAlign: "center" } }>
+                  { usersdata.users[chattingto].username }{ " " }
                   <FontAwesomeIcon
-                    style={{
+                    style={ {
                       color:
                         isonline === "0" ? "var(--offline)" : "var(--online)",
-                    }}
+                    } }
                     icon={
                       isonline === "1"
                         ? faDesktop
                         : isonline === "M"
-                        ? faMobileAlt
-                        : faEyeSlash
+                          ? faMobileAlt
+                          : faEyeSlash
                     }
                   ></FontAwesomeIcon>
                 </p>
+                <Badge badges={ usersdata.users[chattingto].badges }
+                  size="20px"></Badge>
               </>
             ) : (
-              <p style={{ margin: "1rem", textAlign: "center" }}>
-                {ReadyState[readyState]}
+              <p style={ { margin: "1rem", textAlign: "center" } }>
+                { ReadyState[readyState] }
               </p>
-            )}
+            ) }
           </div>
           <KeyboardEventHandler
-            handleKeys={["alphanumeric", "space", "shift", "cap"]}
-            onKeyEvent={() => {
+            handleKeys={ ["alphanumeric", "space", "shift", "cap"] }
+            onKeyEvent={ () => {
               inputref.current.focus();
-            }}
+            } }
           />
           <MessageMaker
-            deleteFromID={deleteFromID}
-            editFromID={editFromID}
-            scrolltobottom={scrolltobottom}
-            scrollref={scrollerref}
-            messages={loadingchatmessages ? localchats[chattingto] : chats}
-            typingdata={typingdata}
-            toscroll={toscroll}
-            canloadmore={canloadmore && readyState === ReadyState.OPEN}
-            loadingmore={loadingmore}
-            loadmore={loadmore}
-            chatUpdateID={chatUpdateID}
-            sendJsonMessage={sendJsonMessage}
+            deleteFromID={ deleteFromID }
+            editFromID={ editFromID }
+            scrolltobottom={ scrolltobottom }
+            scrollref={ scrollerref }
+            messages={ loadingchatmessages ? localchats[chattingto] : chats }
+            typingdata={ typingdata }
+            toscroll={ toscroll }
+            canloadmore={ canloadmore && readyState === ReadyState.OPEN }
+            loadingmore={ loadingmore }
+            loadmore={ loadmore }
+            chatUpdateID={ chatUpdateID }
+            sendJsonMessage={ sendJsonMessage }
           />
-          <div ref={bottomref}></div>
+          <div ref={ bottomref }></div>
           <div
-            style={{
+            style={ {
               position: "fixed",
               padding: "1rem",
               width: "100%",
@@ -1456,31 +1452,31 @@ function ChatPage() {
               background:
                 "linear-gradient(180deg, transparent, var(--dark-mode))",
               display: "flex",
-            }}
+            } }
           >
             <div
-              style={{
+              style={ {
                 margin: "auto",
                 width: "100%",
                 maxWidth: "800px",
                 display: "flex",
-              }}
+              } }
             >
               <input
                 type="file"
-                style={{ display: "none" }}
-                ref={fileref}
-                onInput={async (e: any) => {
+                style={ { display: "none" } }
+                ref={ fileref }
+                onInput={ async (e: any) => {
                   if (e.target.files.length > 0) {
                     const file = e.target.files[0];
                     e.target.value = "";
                     sendFile(file);
                   }
-                }}
+                } }
               />
 
               <button
-                style={{
+                style={ {
                   width: "37px",
                   marginRight: "5px",
                   backgroundColor: "var(--dark-bg-colour)",
@@ -1489,15 +1485,15 @@ function ChatPage() {
                   border: "solid 1px var(--light-bg-colour)",
                   color: "white",
                   textAlign: "center",
-                }}
-                onClick={() => {
+                } }
+                onClick={ () => {
                   if (fileref.current) fileref.current.click();
-                }}
+                } }
               >
-                <FontAwesomeIcon icon={faPlus} />
+                <FontAwesomeIcon icon={ faPlus } />
               </button>
               <form
-                onSubmit={(e: any) => {
+                onSubmit={ (e: any) => {
                   e.preventDefault();
                   const message = e.target[0].value.trim();
                   if (message !== "") {
@@ -1537,24 +1533,26 @@ function ChatPage() {
                       specialchars: {},
                     });
                   }
-                }}
-                ref={formref}
-                style={{
+                } }
+                ref={ formref }
+                style={ {
                   width: "100%",
                   display: "flex",
-                }}
+                } }
               >
                 <TextareaAutosize
-                  ref={inputref}
-                  onInput={(e: any) => {
+                  ref={ inputref }
+                  onInput={ (e: any) => {
                     if (key.current === 13 && !shiftkey.current) {
                       submitref.current.click();
                       inputref.current.value = "";
                     }
                     const message = e.target.value.trim();
                     const messagetoarray: string[] = Array.from(message);
+                    const maxlength = 3000 + (1000 * (user.blast ? user.blast : 0))
+                    console.log(messagetoarray.length)
                     if (
-                      messagetoarray.length <= 3000 &&
+                      messagetoarray.length <= maxlength &&
                       !(key.current === 13 && !shiftkey.current)
                     ) {
                       if (personaltyping) {
@@ -1595,17 +1593,17 @@ function ChatPage() {
                       }
                     } else {
                       e.target.value = Array.from(e.target.value)
-                        .slice(0, 3000)
+                        .slice(0, maxlength)
                         .join("");
                     }
-                  }}
-                  onKeyDown={(e: any) => {
+                  } }
+                  onKeyDown={ (e: any) => {
                     key.current = e.keyCode;
                     shiftkey.current = e.shiftKey;
                     clearTimeout(typingTimer.current);
-                  }}
+                  } }
                   autoFocus
-                  style={{
+                  style={ {
                     backgroundColor: "var(--dark-bg-colour)",
                     padding: "5px",
                     borderRadius: "20px",
@@ -1613,13 +1611,13 @@ function ChatPage() {
                     border: "solid 1px var(--light-bg-colour)",
                     color: "white",
                     resize: "none",
-                  }}
-                  maxRows={10}
+                  } }
+                  maxRows={ 10 }
                   placeholder="Type Something..."
                 />
                 <button
-                  ref={submitref}
-                  style={{
+                  ref={ submitref }
+                  style={ {
                     width: "60px",
                     marginLeft: "5px",
                     backgroundColor: "var(--dark-bg-colour)",
@@ -1628,13 +1626,13 @@ function ChatPage() {
                     border: "solid 1px var(--light-bg-colour)",
                     color: "white",
                     textAlign: "center",
-                  }}
+                  } }
                   type="submit"
-                  onClick={() => {
+                  onClick={ () => {
                     inputref.current.focus();
-                  }}
+                  } }
                 >
-                  <FontAwesomeIcon icon={faPaperPlane} />
+                  <FontAwesomeIcon icon={ faPaperPlane } />
                 </button>
               </form>
             </div>
@@ -1653,7 +1651,7 @@ function Chat({ isGroupChat }: { isGroupChat: boolean }) {
     return <Redirect to="/"></Redirect>;
   } else if (chattingto && chattingto !== user.id) {
     return (
-      <chatSettings.Provider value={{ isGroupChat, time }}>
+      <chatSettings.Provider value={ { isGroupChat, time } }>
         <ChatPage />
       </chatSettings.Provider>
     );

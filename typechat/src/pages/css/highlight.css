@@ -1,6 +1,7 @@
 ::selection {
   background: var(--secondary-text-colour);
 }
+
 ::-moz-selection {
   background: var(--secondary-text-colour);
 }
