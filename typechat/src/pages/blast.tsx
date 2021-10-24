@@ -343,8 +343,6 @@ function Blast() {
                   </button>
                   <p style={ { textAlign: "center" } }>
                     Sorry, Rocket Fuel is unable to be bought at the moment.
-                    When TypeChat leaves beta, all beta testing account will get
-                    1 free Rocket Fuel!
                   </p>
                 </div>
                 <div
