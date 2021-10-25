@@ -10,6 +10,7 @@ import { RouterForm } from "./RouterForm";
 import Avatar from "react-avatar-edit";
 import useApi from "../hooks/useapi";
 import humanFileSize from "../bytesToHumanReadable";
+import Background from "./CustomBackground";
 
 function ReactTimeago({ date }: { date: number }) {
   const days = Math.floor(date / (1000 * 60 * 60 * 24));
@@ -95,7 +96,7 @@ function UserSettings() {
           padding: "1rem",
           maxWidth: "700px",
         } }
-      >
+      ><Background />
         <h1 style={ { textAlign: "center" } }>User Settings</h1>
         <ProfilePage user={ user } />
         <Changebutton name="Upload Limit" clickable={ false }>
@@ -236,7 +237,7 @@ function UserSettings() {
             ) }
           </form>
         </Modal>
-        <Changebutton name="Background Image" clickable={ false }>
+        <Changebutton name="Profile Background Image" clickable={ false }>
           <RouterForm
             action="/api/setbackgroundimage"
             beforecallback={ (e: any) => {

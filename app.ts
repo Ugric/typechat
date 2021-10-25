@@ -1,5 +1,5 @@
 import { Database, open } from "sqlite";
-import express, { application } from "express";
+import express from "express";
 import { forceDomain } from "forcedomain";
 import * as http from "http";
 import * as fs from "fs";
@@ -72,9 +72,7 @@ function mulberry32(a: number) {
   };
 }
 
-function blastSaleOff(startofweek: number) {
-  return (5 * Math.round(mulberry32(startofweek + 99556484639)() * 15)) / 100;
-}
+const blastSaleOff = (startofweek: number = (Math.trunc(new Date().getTime() / 2629743000) * 2629743000)) => ((5 * Math.round(mulberry32(startofweek + 99556484639)() * 5)) / 100)
 
 async function checkFileExists(file: fs.PathLike) {
   try {
@@ -1848,6 +1846,27 @@ WHERE friends.accountID == :accountID
         return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
+    app.post("/api/paypal-buy-rocket-fuel", recaptcha.middleware.verify, async (req, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        { ":token": req.cookies.token }
+      );
+      if ((!req.recaptcha.error || process.env.NODE_ENV === "development") && accountdata) {
+        const topromise = []
+        for (let i = 0; i < req.body.quantity; i++) {
+          topromise.push(db.run(
+            "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
+            { ":accountID": accountdata.accountID }
+          ));
+        }
+        await Promise.all(topromise)
+        updateFromAccountID(accountdata.accountID)
+        console.log("added")
+        res.status(200).send()
+      } else {
+        res.status(403).send()
+      }
+    })
     app.post("/signup", recaptcha.middleware.verify, async (req: any, res) => {
       if (!req.recaptcha.error || process.env.NODE_ENV === "development") {
         const emailInUse =

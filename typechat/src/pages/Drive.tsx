@@ -8,6 +8,7 @@ import { useRef } from "react";
 import { Link, Redirect, useParams } from "react-router-dom";
 import { useData } from "../hooks/datahook";
 import useApi from "../hooks/useapi";
+import Background from "./CustomBackground";
 import Loader from "./loader";
 
 function downloadURI(url: string, filename: string) {
@@ -106,8 +107,8 @@ function Drive() {
     );
   }
   return (
-    <div style={ { textAlign: "center", padding: "1rem" } }>
-      <h1>My Drive</h1>
+    <div style={ { textAlign: "center", padding: "1rem" } }><Background />
+      <h1 style={ { WebkitTextStroke: "1px black" } }>My Drive</h1>
       { data ? (
         <div
           style={ {

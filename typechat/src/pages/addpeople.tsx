@@ -9,6 +9,7 @@ import { useHistory } from "react-router-dom";
 import { useData } from "../hooks/datahook";
 import QRCode from "qrcode.react";
 import QrReader from "react-qr-reader";
+import Background from "./CustomBackground";
 
 const colorThief = new ColorThief();
 
@@ -145,7 +146,7 @@ function AddPeople() {
       style={ {
         margin: "1rem",
       } }
-    >
+    ><Background />
       <div
         style={ {
           margin: "auto",

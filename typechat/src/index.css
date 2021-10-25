@@ -4,7 +4,7 @@ body {
   font-family: helvetica !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--dark-mode) !important;
+  background-color: transparent !important;
   color: white !important;
   overflow: overlay;
   -webkit-touch-callout: none;

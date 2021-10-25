@@ -1550,7 +1550,6 @@ function ChatPage() {
                     const message = e.target.value.trim();
                     const messagetoarray: string[] = Array.from(message);
                     const maxlength = 3000 + (1000 * (user.blast ? user.blast : 0))
-                    console.log(messagetoarray.length)
                     if (
                       messagetoarray.length <= maxlength &&
                       !(key.current === 13 && !shiftkey.current)
