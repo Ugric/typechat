@@ -70,3 +70,7 @@ p, pre {
 .grecaptcha-badge {
   display: none !important;
 }
+
+.paypal-checkout-sandbox-iframe {
+  border: none;
+}
