@@ -331,9 +331,6 @@ function Blast() {
                       className="icon"
                     />
                   </button>
-                  <p style={ { textAlign: "center" } }>
-                    Sorry, Rocket Fuel is unable to be bought at the moment.
-                  </p>
                 </div>
                 <div
                   style={ {
