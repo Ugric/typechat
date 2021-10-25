@@ -62,13 +62,49 @@ client.on("ready", () => {
 
 client.on("messageCreate", async (message) => {
   if (message.author.id == client.user.id || message.author.bot) return;
+  const link = await db.db.get(
+    "SELECT * FROM discordAccountLink WHERE discordID=:discordID",
+    { ":discordID": message.author.id }
+  );
+  const msg = message.content.trim()
+  const command = msg.split(" ")
+  if (command[0] === "!profile") {
+    command.shift()
+    let account = link
+    if (command[0]) {
+      console.log(command[0], command[0].replace(/[\\<>@#&!]/g, ""))
+      account = await db.db.get(
+        "SELECT * FROM discordAccountLink WHERE discordID=:discordID",
+        { ":discordID": command[0].replace(/[\\<>@#&!]/g, "") }
+      );
+    }
+    if (account) {
+      const accountdata = await db.db.get(
+        "SELECT * FROM accounts WHERE accountID=:accountID",
+        {
+          ":accountID": account.accountID,
+        }
+      );
+      const embed = new discord.MessageEmbed().setTitle(accountdata.username + "#" + accountdata.tag).setColor("#5656ff").setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)
+      if (accountdata.backgroundImage) {
+        embed.setImage(`https://tchat.us.to/files/${accountdata.backgroundImage}`)
+      }
+      message.reply({ embeds: [embed] });
+
+    }
+    else {
+      message.reply({
+        embeds: [
+          new discord.MessageEmbed()
+            .setColor("#5656ff")
+            .setTitle(command[0] ? "Requested Discord account not linked to TypeChat" : "Not Linked").setDescription(command[0] ? "You must link your account to a typechat account to access the profile command. do `!link`" : "Please type in an account that is linked with TypeChat.")
+        ],
+      });
+    }
+  }
   if (!message.guild) {
-    const link = await db.db.get(
-      "SELECT * FROM discordAccountLink WHERE discordID=:discordID",
-      { ":discordID": message.author.id }
-    );
-    if (["!unlink", "!link"].includes(message.content)) {
-      if (message.content === "!unlink") {
+    if (["!unlink", "!link"].includes(msg)) {
+      if (msg === "!unlink") {
         if (link) {
           await db.db.run(
             "DELETE FROM discordAccountLink WHERE discordID=:discordID",
@@ -98,7 +134,7 @@ client.on("messageCreate", async (message) => {
             ],
           });
         }
-      } else if (message.content === "!link") {
+      } else if (msg === "!link") {
         if (!link) {
           message.reply({ embeds: [linkaccount(message.author)] });
         } else {
@@ -111,7 +147,7 @@ client.on("messageCreate", async (message) => {
           });
         }
       }
-    } else if (message.content === "!help") {
+    } else if (msg === "!help") {
       message.reply({
         embeds: [
           new discord.MessageEmbed()
@@ -122,7 +158,7 @@ client.on("messageCreate", async (message) => {
       });
     }
   } else {
-    if (message.content === "!help") {
+    if (msg === "!help") {
       message.reply({
         embeds: [
           new discord.MessageEmbed()
