@@ -6,6 +6,7 @@ interface userApiInterface<T> {
   setData: Function;
   error: string | undefined;
   reload: Function;
+  reloadSilent: Function;
 }
 
 function useApi<T>(url: string | null): userApiInterface<T> {
@@ -19,6 +20,9 @@ function useApi<T>(url: string | null): userApiInterface<T> {
     setLoading(true);
     setError(undefined);
     setData(undefined);
+  }
+  function reloadSilent() {
+    setrequest(request + 1);
   }
   useEffect(() => {
     if (url) {
@@ -38,7 +42,7 @@ function useApi<T>(url: string | null): userApiInterface<T> {
     }
   }, [url, request]);
 
-  return { loading, data, setData, error, reload };
+  return { loading, data, setData, error, reload, reloadSilent };
 }
 
 export default useApi;

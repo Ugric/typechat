@@ -12,6 +12,7 @@ import ProfilePage from "./profilePage";
 import playSound from "../playsound";
 import useLocalStorage from "../hooks/useLocalStorage";
 import Badge from "./badges";
+import Background from "./CustomBackground";
 const colorThief = new ColorThief();
 
 function Contact({
@@ -68,10 +69,10 @@ function Contact({
           backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
           padding: "1rem",
           marginBottom: "1rem",
-          backgroundRepeat: user.backgroundImage ? "no-repeat" : "",
-          backgroundSize: user.backgroundImage ? "cover" : "",
+          backgroundRepeat: user.backgroundImage ? "no-repeat" : undefined,
+          backgroundSize: user.backgroundImage ? "cover" : undefined,
+          backgroundPosition: user.backgroundImage ? "center" : undefined,
           borderRadius: "10px",
-          backgroundPosition: user.backgroundImage ? "center" : "",
           textOverflow: "ellipsis",
           overflow: "hidden",
           whiteSpace: "nowrap",
@@ -182,7 +183,7 @@ function Contacts() {
       style={ {
         margin: "1rem 0",
       } }
-    >
+    ><Background />
       <div
         style={ {
           margin: "auto",
@@ -191,7 +192,7 @@ function Contacts() {
           maxWidth: "700px",
         } }
       >
-        <h1 style={ { textAlign: "center" } }>Contacts</h1>
+        <h1 style={ { textAlign: "center", WebkitTextStroke: "1px black" } }>Contacts</h1>
         <div>
           { localcontacts || data.resp ? (
             (data && data.contacts.length > 0) ||

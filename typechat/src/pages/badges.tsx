@@ -42,7 +42,7 @@ const badgestype: {
   },
   {
     name: "brain",
-    desc: "This given to a big brain person, who gave a big brain idea!",
+    desc: "This is given to a big brain person, who gave a big brain idea!",
     icon: faBrain,
     color: "#ff7676",
   },

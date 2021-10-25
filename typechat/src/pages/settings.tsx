@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import useApi from "../hooks/useapi";
 import useLocalStorage from "../hooks/useLocalStorage";
+import Background from "./CustomBackground";
 import ToggleSwitch from "./switch";
 
 function Setting({ children }: { children: any }) {
@@ -66,7 +67,7 @@ function Settings() {
           padding: "1rem",
           maxWidth: "700px",
         } }
-      >
+      ><Background />
         <h1 style={ { textAlign: "center" } }>Settings</h1>
 
         <div>

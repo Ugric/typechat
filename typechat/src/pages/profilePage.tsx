@@ -27,17 +27,17 @@ function ProfilePage({
       style={ {
         background: user.backgroundImage
           ? `url(/files/${user.backgroundImage})`
-          : undefined,
+          : "",
         backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
         padding: "1rem",
-        backgroundRepeat: user.backgroundImage ? "no-repeat" : "",
-        backgroundSize: user.backgroundImage ? "cover" : "",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
         borderRadius: "10px",
-        border: `solid 1px rgb(${backgroundcolour.r + 25}, ${backgroundcolour.g + 25
+        border: `solid 5px rgb(${backgroundcolour.r + 25}, ${backgroundcolour.g + 25
           }, ${backgroundcolour.b + 25})`,
         width: "100%",
         height: "100%",
-        backgroundPosition: user.backgroundImage ? "center" : "",
+        backgroundPosition: "center",
       } }
     >
       <div
