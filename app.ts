@@ -20,7 +20,15 @@ import { MessageEmbed } from "discord.js";
 import urlMetadata from "url-metadata";
 import greenlockexpress from "greenlock-express";
 import { RecaptchaV3 } from "express-recaptcha";
+import paypal from '@paypal/checkout-server-sdk';
 console.time("express boot");
+
+const environment = process.env.NODE_ENV === "development" ?
+  new paypal.core.SandboxEnvironment("AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0",
+    "EAmkLLRgEYRvV7-3ijZry_bQPK82UwkKrKT9SQjTZJGHkb7Lu9sVDVUjJJWFUt5l-4v8ejCyU2LRhlur")
+  : new paypal.core.LiveEnvironment("Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
+    "EA87J47CS97x5ThWeC332UEkgh1voNVc4uQJA5vNXvFpJ1tKIkispLVuzWiFM5X03cNUpwI14ztYK44K")
+const PPclient = new paypal.core.PayPalHttpClient(environment);
 
 const tempmetadata: { [key: string]: urlMetadata.Result } = {};
 
@@ -49,7 +57,7 @@ let database: {
   linkurls: linkurls;
 } = { linkurls };
 const normallimit = 100000000;
-const blastlimit = 1000000000;
+const blastlimit = 500000000;
 
 function parseCookies(request: http.IncomingMessage) {
   const list: { [key: string]: any } = {},
@@ -72,7 +80,7 @@ function mulberry32(a: number) {
   };
 }
 
-const blastSaleOff = (startofweek: number = (Math.trunc(new Date().getTime() / 2629743000) * 2629743000)) => ((5 * Math.round(mulberry32(startofweek + 99556484639)() * 5)) / 100)
+const blastSaleOff = (startofweek: number = (Math.trunc(new Date().getTime() / 6.048e8) * 6.048e8)) => ((5 * Math.round(mulberry32(startofweek + 99556484639)() * 5)) / 100)
 
 async function checkFileExists(file: fs.PathLike) {
   try {
@@ -1241,54 +1249,6 @@ WHERE friends.toAccountID == :accountID
         });
       }
     });
-    app.post("/api/startrocketfuel", async (req, res) => {
-      const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-        {
-          ":token": req.cookies.token,
-        }
-      );
-      let rocketFuel: any = (
-        await db.all(
-          "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
-          {
-            ":accountID": accountdata.accountID,
-          }
-        )
-      ).length;
-      let blast = Number((
-        await db.get(
-          "SELECT fuel FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
-          {
-            ":accountID": accountdata.accountID,
-            ":time": new Date().getTime(),
-          }
-        )
-      )?.fuel);
-      blast = blast ? blast : 0
-      const fuel = Number(JSON.parse(req.body.fuel))
-      if (accountdata && rocketFuel >= fuel && fuel + blast <= 10) {
-        const topromise = []
-        topromise.push(db.run("UPDATE rocketFuelPoints SET used=true WHERE rowid in (SELECT rowid FROM rocketFuelPoints WHERE accountID=:accountID and used=false LIMIT :limit)", { ":accountID": accountdata.accountID, ":limit": fuel }))
-        if (blast) {
-          console.log("adding to")
-          topromise.push(db.run("UPDATE blast SET fuel=:fuel WHERE accountID=:accountID and (expires is NULL or expires>=:time)", { ":fuel": blast + fuel, ":accountID": accountdata.accountID, ":time": new Date().getTime() }))
-        } else {
-          console.log("creating")
-          topromise.push(db.run("INSERT INTO blast (accountID, fuel, expires) VALUES (:accountID, :fuel, :expires)", { ":fuel": fuel, ":expires": new Date().getTime() + 2.628e+9, ":accountID": accountdata.accountID }))
-          if (!(await db.get("SELECT * FROM badges WHERE accountID=:accountID and name='Blast'", { ":accountID": accountdata.accountID }))) {
-            topromise.push(db.run(
-              "INSERT INTO badges (accountID, name) VALUES (:accountID, 'Blast')", { ":accountID": accountdata.accountID }
-            ));
-          }
-        }
-        await Promise.all(topromise)
-        updateFromAccountID(accountdata.accountID)
-        return res.send(true);
-      } else {
-        return res.send(false);
-      }
-    })
     app.get("/api/getallcontacts", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1634,7 +1594,7 @@ WHERE friends.accountID == :accountID
         res.send({ resp: false, err: "incorrect password!" });
       }
     });
-    app.get("/api/blastprices", (req, res) => {
+    app.get("/api/blastprices", (_, res) => {
       const startofweek = Math.trunc(new Date().getTime() / 6.048e8) * 6.048e8;
       return res.send({
         price: 100,
@@ -1846,24 +1806,80 @@ WHERE friends.accountID == :accountID
         return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
-    app.post("/api/paypal-buy-rocket-fuel", recaptcha.middleware.verify, async (req, res) => {
+    app.post("/api/startrocketfuel", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
-        { ":token": req.cookies.token }
+        {
+          ":token": req.cookies.token,
+        }
       );
-      if ((!req.recaptcha.error || process.env.NODE_ENV === "development") && accountdata) {
+      let rocketFuel: any = (
+        await db.all(
+          "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
+          {
+            ":accountID": accountdata.accountID,
+          }
+        )
+      ).length;
+      let blast = Number((
+        await db.get(
+          "SELECT fuel FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+          {
+            ":accountID": accountdata.accountID,
+            ":time": new Date().getTime(),
+          }
+        )
+      )?.fuel);
+      blast = blast ? blast : 0
+      const fuel = Number(JSON.parse(req.body.fuel))
+      if (accountdata && rocketFuel >= fuel && fuel + blast <= 20) {
         const topromise = []
-        for (let i = 0; i < req.body.quantity; i++) {
-          topromise.push(db.run(
-            "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
-            { ":accountID": accountdata.accountID }
-          ));
+        topromise.push(db.run("UPDATE rocketFuelPoints SET used=true WHERE rowid in (SELECT rowid FROM rocketFuelPoints WHERE accountID=:accountID and used=false LIMIT :limit)", { ":accountID": accountdata.accountID, ":limit": fuel }))
+        if (blast) {
+          console.log("adding to")
+          topromise.push(db.run("UPDATE blast SET fuel=:fuel WHERE accountID=:accountID and (expires is NULL or expires>=:time)", { ":fuel": blast + fuel, ":accountID": accountdata.accountID, ":time": new Date().getTime() }))
+        } else {
+          console.log("creating")
+          topromise.push(db.run("INSERT INTO blast (accountID, fuel, expires) VALUES (:accountID, :fuel, :expires)", { ":fuel": fuel, ":expires": new Date().getTime() + 2.628e+9, ":accountID": accountdata.accountID }))
+          if (!(await db.get("SELECT * FROM badges WHERE accountID=:accountID and name='Blast'", { ":accountID": accountdata.accountID }))) {
+            topromise.push(db.run(
+              "INSERT INTO badges (accountID, name) VALUES (:accountID, 'Blast')", { ":accountID": accountdata.accountID }
+            ));
+          }
         }
         await Promise.all(topromise)
         updateFromAccountID(accountdata.accountID)
-        console.log("added")
-        res.status(200).send()
+        return res.send(true);
       } else {
+        return res.send(false);
+      }
+    })
+    app.post("/api/paypal-buy-rocket-fuel", recaptcha.middleware.verify, async (req, res) => {
+      try {
+        const accountdata = await db.get(
+          "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+          { ":token": req.cookies.token }
+        );
+        if ((!req.recaptcha.error || process.env.NODE_ENV === "development") && accountdata) {
+          const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID)
+          request.requestBody({})
+          const details = (await PPclient.execute(request))
+          console.log(details.result.status + ":", details.result)
+          const topromise = []
+          for (let i = 0; i < req.body.quantity; i++) {
+            topromise.push(db.run(
+              "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
+              { ":accountID": accountdata.accountID }
+            ));
+          }
+          await Promise.all(topromise)
+          updateFromAccountID(accountdata.accountID)
+          console.log("added")
+          res.status(200).send()
+        } else {
+          res.status(403).send()
+        }
+      } catch {
         res.status(403).send()
       }
     })

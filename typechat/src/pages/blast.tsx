@@ -139,8 +139,8 @@ function Blast() {
     useApi<{ price: number; sale: number; startofweek: number }>(menupage === "main" ? "/api/blastprices"
       : null);
   const max = user?.rocketFuel
-    ? user.rocketFuel > 10
-      ? 10 - (user.blast ? user.blast : 0)
+    ? user.rocketFuel > 20
+      ? 20 - (user.blast ? user.blast : 0)
       : user.rocketFuel
     : 0;
   const ends = data
@@ -293,7 +293,7 @@ function Blast() {
                   >
                     <li>+1000 charicters per messages</li>
                     <li>
-                      Bigger monthly upload limit (1 GB)
+                      Bigger monthly upload limit (500 MB)
                     </li>
                     <li>Blast Profile Badge (stays forever!)</li>
                     <li>Custom backgrounds</li>
@@ -582,12 +582,14 @@ function Blast() {
                 { recapToken ? <PayPalButton
                   amount={ String(Number(price) * buyfuel) }
                   shippingPreference="NO_SHIPPING"
-                  onApprove={ async (data: { orderID: string | Blob; }, actions: { order: { capture: () => Promise<any>; }; }) => {
+                  onApprove={ async (data: { orderID: string | Blob; payerID: string | Blob; }, actions: { order: { capture: () => Promise<any>; }; }) => {
                     // Capture the funds from the transaction
                     console.log(actions)
                     const formdata = new FormData();
                     formdata.append(
                       "orderID", data.orderID);
+                    formdata.append(
+                      "payerID", data.payerID);
                     formdata.append("g-recaptcha-response", recapToken);
                     formdata.append("quantity", JSON.stringify(buyfuel));
                     console.log(data);
@@ -596,8 +598,7 @@ function Blast() {
                       body: formdata
                     }).then(async (resp) => {
                       if (resp.status === 200) {
-                        const details = await actions.order.capture()
-                        console.log("success:", details)
+                        console.log("success")
                         setmenupage("buyTY")
                       } else {
                         console.log("error")
