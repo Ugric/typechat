@@ -151,7 +151,10 @@ function Blast() {
   const price = data ? ((data.price * (1 - data.sale)) / 100) : undefined
 
   useEffect(() => {
-    ReactGA.send("open blast");
+    ReactGA.event({
+      category: "blast",
+      action: "open blast",
+    })
     document.title = `Blast - TypeChat`;
     return () => {
       document.title = "TypeChat";
@@ -611,7 +614,11 @@ function Blast() {
                       body: formdata
                     }).then(async (resp) => {
                       if (resp.status === 200) {
-                        ReactGA.send("buy rocket fuel");
+                        ReactGA.event({
+                          category: "blast",
+                          action: "buy rocket fuel",
+                          label: JSON.stringify(buyfuel)
+                        })
                         console.log("success")
                         setmenupage("buyTY")
                       } else {

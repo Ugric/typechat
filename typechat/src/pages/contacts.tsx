@@ -42,7 +42,11 @@ function Contact({
   const [UserModelIsOpen, setUserModelIsOpen] = useState(false);
 
   useEffect(() => {
-    ReactGA.send("open contacts");
+
+    ReactGA.event({
+      category: "contacts",
+      action: "open contacts"
+    });
     document.title = `Contacts - TypeChat`;
     return () => {
       document.title = "TypeChat";

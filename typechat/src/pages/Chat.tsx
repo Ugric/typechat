@@ -1107,7 +1107,11 @@ function ChatPage() {
     }
   }
   useEffect(() => {
-    ReactGA.send("open chat");
+    ReactGA.event({
+      category: "chat",
+      action: "open chat",
+      label: `open to ${chattingto}`,
+    })
     localStorage.setItem("chattingto", JSON.stringify(chattingto));
     const listenerfunction = function (event: any) {
       const items = (event.clipboardData || event.originalEvent.clipboardData)
@@ -1575,7 +1579,11 @@ function ChatPage() {
                 /><h1>Gift Rocket Fuel</h1>
                 <div style={ { height: "1px", width: "100%", background: "var(--dark-bg-colour)", margin: "0 0 1rem 0" } } />
                 <form onSubmit={ (e: any) => {
-                  e.preventDefault(); ReactGA.send("send gift"); console.log(e);
+                  e.preventDefault(); ReactGA.event({
+                    category: "chat",
+                    action: "sent gift",
+                    label: `send gift to ${chattingto}`,
+                  }); console.log(e);
                   const message = e.target[1].value.trim()
                   const tempid = Math.random();
                   const time = new Date().getTime();
@@ -1883,7 +1891,11 @@ function ChatPage() {
                   type="submit"
                   onClick={ () => {
                     inputref.current.focus();
-                    ReactGA.send("send message");
+                    ReactGA.event({
+                      category: "chat",
+                      action: "send message",
+                      label: `send message to ${chattingto}`,
+                    });
                   } }
                 >
                   <FontAwesomeIcon icon={ faPaperPlane } />

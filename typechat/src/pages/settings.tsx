@@ -54,7 +54,10 @@ function Settings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications]);
   useEffect(() => {
-    ReactGA.send("open settings");
+    ReactGA.event({
+      category: "settings",
+      action: "open settings"
+    })
   }, [])
   return (
     <div
