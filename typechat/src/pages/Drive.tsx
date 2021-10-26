@@ -102,7 +102,10 @@ function Drive() {
     );
 
   useEffect(() => {
-    ReactGA.send("open drive");
+    ReactGA.event({
+      category: "drive",
+      action: "open drive"
+    })
     document.title = `Drive - TypeChat`;
     return () => {
       document.title = "TypeChat";
@@ -255,7 +258,11 @@ function Image() {
   const mimetype = data?.mimetype;
   const file = data?.id;
   useEffect(() => {
-    ReactGA.send("open drive file");
+    ReactGA.event({
+      category: "drive",
+      action: "open drive file",
+      label: id
+    })
     if (data) {
       document.title = `${data.filename} - TypeChat`;
     }
