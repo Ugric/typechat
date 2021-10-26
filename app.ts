@@ -1970,7 +1970,7 @@ WHERE friends.accountID == :accountID
             db.run(
               "INSERT INTO badges (accountID, name, expires) VALUES (:accountID, 'new', :expires)",
               {
-                ":accountID": defaultaccount.accountID,
+                ":accountID": accountID,
                 ":expires": new Date().getTime() + 6.048e+8
               }
             ),
