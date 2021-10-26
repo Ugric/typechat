@@ -2,7 +2,7 @@ import blastIcon from "./images/Blast icon.svg";
 import fuelIcon from "./images/fuel-pump.svg";
 import meteorites from "./images/meteorites.svg";
 import "./css/blast.css";
-import { useState, useMemo, MouseEventHandler, useRef } from "react";
+import { useState, useMemo, MouseEventHandler, useRef, useEffect } from "react";
 import useWindowSize from "../hooks/usescreensize";
 import useApi from "../hooks/useapi";
 import { useHistory } from "react-router-dom";
@@ -21,6 +21,7 @@ import playSound from "../playsound";
 import { useData } from "../hooks/datahook";
 import { PayPalButton } from "react-paypal-button-v2";
 import { GoogleReCaptcha } from "react-google-recaptcha-v3";
+import ReactGA from "react-ga4";
 
 function range(size: number, startAt = 0) {
   return [...Array(size).keys()].map((i) => i + startAt);
@@ -148,6 +149,14 @@ function Blast() {
     : undefined;
   const [recapToken, setRecapToken] = useState<null | string>(null);
   const price = data ? ((data.price * (1 - data.sale)) / 100) : undefined
+
+  useEffect(() => {
+    ReactGA.send("open blast");
+    document.title = `Blast - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   return (
     <div>
       <div>
@@ -233,7 +242,7 @@ function Blast() {
                 </div>
                 { user ? (
                   <h5 style={ { textAlign: "center" } }>
-                    you have { user.rocketFuel } Rocket Fuel{ " " }
+                    you have <span style={ { color: `rgb(${(255 - (user.rocketFuel * (255 / 20))) * 2}, ${((user.rocketFuel * (255 / 20))) * 2}, ${0})`, fontWeight: "bolder" } }>{ String(user.rocketFuel).replace(/\B(?=(\d{3})+(?!\d))/g, ",") }</span> Rocket Fuel{ " " }
                     <img
                       src={ fuelIcon }
                       height="25px"
@@ -291,12 +300,13 @@ function Blast() {
                       margin: "1rem",
                     } }
                   >
-                    <li>+1000 charicters per messages</li>
+                    <li>+1000 characters per messages</li>
                     <li>
                       Bigger monthly upload limit (500 MB)
                     </li>
                     <li>Blast Profile Badge (stays forever!)</li>
                     <li>Custom backgrounds</li>
+                    <li>Gift Rocket Fuel to other users via DMs</li>
                     <li>and much more to come!</li>
                   </ul>
                 </div>
@@ -321,7 +331,10 @@ function Blast() {
                   <button
                     id="fuel"
                     className="subbutton"
-                    onClick={ () => setmenupage("buy") }
+                    onClick={ () => user
+                      ? setmenupage("buy") : history.push(
+                        "/login?" + new URLSearchParams({ to: "/blast" })
+                      ) }
                   >
                     Buy Rocket Fuel{ " " }
                     <img
@@ -580,7 +593,7 @@ function Blast() {
               >
                 <h2 style={ { textAlign: "end", color: "var(--dark-mode)" } }>Total: £{ (Number(price) * buyfuel).toFixed(2) }</h2>
                 { recapToken ? <PayPalButton
-                  amount={ String(Number(price) * buyfuel) }
+                  amount={ (Number(price) * buyfuel).toFixed(2) }
                   shippingPreference="NO_SHIPPING"
                   onApprove={ async (data: { orderID: string | Blob; payerID: string | Blob; }, actions: { order: { capture: () => Promise<any>; }; }) => {
                     // Capture the funds from the transaction
@@ -598,6 +611,7 @@ function Blast() {
                       body: formdata
                     }).then(async (resp) => {
                       if (resp.status === 200) {
+                        ReactGA.send("buy rocket fuel");
                         console.log("success")
                         setmenupage("buyTY")
                       } else {
@@ -642,8 +656,8 @@ function Blast() {
                   options={ {
                     currency: "GBP", "clientId": !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0" : "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg"
                   } }
-                /> : <></> }</div>
-              { !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? <p style={ { color: "red" } }>dev mode</p> : <></> }</> :
+                /> : <></> }{ !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? <p style={ { color: "red" } }>dev mode</p> : <></> }</div>
+            </> :
               <>
                 <FontAwesomeIcon
                   icon={ faTimes }

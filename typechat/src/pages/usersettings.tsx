@@ -237,64 +237,65 @@ function UserSettings() {
             ) }
           </form>
         </Modal>
-        <Changebutton name="Profile Background Image" clickable={ false }>
-          <RouterForm
-            action="/api/setbackgroundimage"
-            beforecallback={ (e: any) => {
-              setuploading(true);
-              return true;
-            } }
-            callback={ () => {
-              if (backgroundinputref.current) {
-                backgroundinputref.current.value = "";
-                setbackgroundImage(undefined);
-              }
-              setuploading(false);
-            } }
-          >
-            { backgroundImage ? (
-              <img
-                src={ backgroundImage }
-                alt="background"
-                style={ {
-                  maxHeight: "100px",
-                  maxWidth: "100px",
-                } }
-              />
-            ) : (
-              <></>
-            ) }
-            <input
-              type="file"
-              name="backgroundImage"
-              style={ { maxWidth: "100%" } }
-              onChange={ (e: any) => {
-                setbackgroundImage(
-                  e.target.files[0]
-                    ? URL.createObjectURL(e.target.files[0])
-                    : undefined
-                );
+        { user.blast > 0 ?
+          <Changebutton name="Profile Background Image" clickable={ false }>
+            <RouterForm
+              action="/api/setbackgroundimage"
+              beforecallback={ (e: any) => {
+                setuploading(true);
+                return true;
               } }
-              accept="image/*"
-              ref={ backgroundinputref }
-            />{ " " }
-            { !uploading ? (
-              <button
-                style={ {
-                  color: "white",
-                  backgroundColor: "var(--dark-bg-colour)",
-                  border: "solid 2px var(--light-bg-colour)",
-                  borderRadius: "5px",
+              callback={ () => {
+                if (backgroundinputref.current) {
+                  backgroundinputref.current.value = "";
+                  setbackgroundImage(undefined);
+                }
+                setuploading(false);
+              } }
+            >
+              { backgroundImage ? (
+                <img
+                  src={ backgroundImage }
+                  alt="background"
+                  style={ {
+                    maxHeight: "100px",
+                    maxWidth: "100px",
+                  } }
+                />
+              ) : (
+                <></>
+              ) }
+              <input
+                type="file"
+                name="backgroundImage"
+                style={ { maxWidth: "100%" } }
+                onChange={ (e: any) => {
+                  setbackgroundImage(
+                    e.target.files[0]
+                      ? URL.createObjectURL(e.target.files[0])
+                      : undefined
+                  );
                 } }
-                type="submit"
-              >
-                Save
-              </button>
-            ) : (
-              <></>
-            ) }
-          </RouterForm>
-        </Changebutton>
+                accept="image/*"
+                ref={ backgroundinputref }
+              />{ " " }
+              { !uploading ? (
+                <button
+                  style={ {
+                    color: "white",
+                    backgroundColor: "var(--dark-bg-colour)",
+                    border: "solid 2px var(--light-bg-colour)",
+                    borderRadius: "5px",
+                  } }
+                  type="submit"
+                >
+                  Save
+                </button>
+              ) : (
+                <></>
+              ) }
+            </RouterForm>
+          </Changebutton> : <></> }
         <Changebutton
           name="Username"
           onClick={ () => {

@@ -5,9 +5,11 @@ import { useData } from "./hooks/datahook";
 import playSound from "./playsound";
 import useWindowFocus from "use-window-focus";
 import setIcon from "./setIcons";
+import useWindowVisable from "./hooks/useWindowVisable";
 function NotificationComponent() {
   const { loggedin, NotificationAPI } = useData();
   const isFocussed = useWindowFocus();
+  const isVisable = useWindowVisable()
   const history = useHistory();
   const { lastJsonMessage, sendJsonMessage } = useWebSocket(
     `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
@@ -21,10 +23,11 @@ function NotificationComponent() {
   );
 
   useEffect(() => {
-    sendJsonMessage({ type: "setFocus", focus: isFocussed });
     setIcon("/favicon.ico");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocussed]);
+  useEffect(() => {
+    sendJsonMessage({ type: "setFocus", focus: isVisable });
+  }, [isVisable])
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "ping") {

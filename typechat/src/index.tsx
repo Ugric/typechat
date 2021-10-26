@@ -41,6 +41,10 @@ import LinkDiscord from "./pages/LinkDiscord";
 import Drive from "./pages/Drive";
 import RequestNewPassword from "./pages/requestNewPassword";
 import Blast from "./pages/blast";
+import ReactGA from "react-ga4";
+
+if (!(!process.env.NODE_ENV || process.env.NODE_ENV === 'development')) ReactGA.initialize("G-26D01FTK1T");
+
 
 if (!JSON.parse(String(localStorage.getItem("tabCount")))) {
   localStorage.setItem("tabCount", JSON.stringify(0));

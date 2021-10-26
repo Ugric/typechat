@@ -1,5 +1,5 @@
 import { useData } from "../hooks/datahook";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Loader from "./loader";
 import { useHistory, Link, useLocation } from "react-router-dom";
 import logo from "../images/logos/TS.svg";
@@ -33,6 +33,13 @@ function Signup() {
       ? query.to[0]
       : query.to
     : "/";
+
+  useEffect(() => {
+    document.title = `Signup - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   if (loggedin) {
     history.push(redirect);
     return <></>;

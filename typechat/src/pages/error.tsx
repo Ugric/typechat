@@ -9,6 +9,13 @@ function LoadError({ error }: { error: String }) {
   useEffect(() => {
     playSound(errordataurl);
   }, []);
+
+  useEffect(() => {
+    document.title = `Error - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   return (
     <div
       style={ {

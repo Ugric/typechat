@@ -44,6 +44,7 @@
   "devDependencies": {
     "@types/mime-types": "^2.1.0",
     "@types/node": "^15.12.2",
+    "@types/node-fetch": "^3.0.3",
     "@types/paypal-rest-sdk": "^1.7.6",
     "@types/randomstring": "^1.1.7",
     "@types/web-push": "^3.3.2"
