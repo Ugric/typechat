@@ -4,6 +4,7 @@ import {
   faDesktop,
   faEyeSlash,
   faFile,
+  faGift,
   faMobileAlt,
   faPaperPlane,
   faPencilAlt,
@@ -48,6 +49,10 @@ import ReactPlayer from "react-player/lazy";
 import useApi from "../hooks/useapi";
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 import Badge from "./badges";
+import ReactModal from "react-modal";
+import GiftIcon from "./images/gift.svg"
+import ReactGA from "react-ga4";
+import useWindowVisable from "../hooks/useWindowVisable";
 
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
@@ -92,14 +97,28 @@ interface messageTypes {
 }
 
 interface messageWithText extends messageTypes {
+  gift: undefined;
+  amount: undefined;
   message: string;
   file: undefined;
   mimetype: undefined;
 }
 interface messageWithFile extends messageTypes {
+  gift: undefined;
+  amount: undefined;
   file: string;
   message: undefined;
   mimetype: string;
+}
+
+interface giftMessage extends messageTypes {
+  gift: true;
+  amount: number;
+  from: string;
+  message: string;
+  file: undefined;
+  mimetype: undefined;
+  time: number;
 }
 
 const videoSites = [
@@ -313,7 +332,7 @@ function Message({
   deleteFromID,
   editFromID,
 }: {
-  messages: Array<messageWithText | messageWithFile>;
+  messages: Array<messageWithText | messageWithFile | giftMessage>;
   i: number;
   toscroll: any;
   user: any;
@@ -337,12 +356,13 @@ function Message({
     key: number;
   }[] = [];
   const donekeys: number[] = [];
+  const history = useHistory()
   const shiftkey = useRef(false);
   const key = useRef(null);
   const submitref = useRef<any>();
   const longmessage = messagecharlist && messagecharlist.length > 500;
   const messageref = useRef(message);
-  return (
+  return (!messages[i].gift ?
     <>
       <ContextMenuTrigger
         id={ String(messages[i].ID ? messages[i].ID : messages[i].tempid) }
@@ -672,7 +692,30 @@ function Message({
         ) }
       </ContextMenu>
     </>
-  );
+    : <><div
+      style={ { opacity: !messages[i].ID ? 0.5 : undefined, textAlign: "center", } }
+      className={ `message message-${messages[i].from === user.id ? "mine" : "yours"
+        } ${!messages[i + 1] ||
+          messages[i + 1].from !== messages[i].from ||
+          (messages[i + 1] &&
+            messages[i + 1].time - messages[i].time > 300000)
+          ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+          : ""
+        }`
+      }
+    >
+      <h1>GIFT</h1>
+      <div style={ {
+        width: "100%", height: "1px",
+        backgroundColor: messages[i].from === user.id ? "var(--light-bg-colour)" : "#dadada", marginBottom: "1rem"
+      } }></div>
+      <h4>Here is a gift of { messages[i].amount } Rocket Fuel</h4>{ message ? <p>Message: { message.trim() }</p> : <></> }
+      <img src={ GiftIcon } alt="🎁" style={ {
+        padding: "1rem", margin: "1rem 0", backgroundColor: messages[i].from === user.id ? "var(--light-bg-colour)" : "#dadada",
+        borderRadius: "10px", display: "block", width: "100%", cursor: messages[i].from === user.id ? "not-allowed" : "pointer"
+      } } onClick={ messages[i].from !== user.id ? () => history.push("/blast") : undefined }></img>
+      <b>Click the present to check your Rocket Fuel Balance!</b>
+    </div></>);
 }
 
 function MessageMaker({
@@ -689,7 +732,7 @@ function MessageMaker({
   editFromID,
   sendJsonMessage,
 }: {
-  messages: Array<messageWithText | messageWithFile>;
+  messages: Array<messageWithText | messageWithFile | giftMessage>;
   typingdata: {
     typing: Boolean;
     length: Number;
@@ -711,7 +754,7 @@ function MessageMaker({
   const output = useMemo(() => {
     console.time("chatrender");
     const output = [];
-    let lastmessage: messageWithText | messageWithFile | null = null;
+    let lastmessage: messageWithText | messageWithFile | giftMessage | null = null;
     for (let i = 0; i < messages.length; i++) {
       if (
         (!lastmessage && !canloadmore) ||
@@ -932,10 +975,10 @@ function ChatPage() {
     "9",
     "0",
   ];
-  const [chats, setchats] = useState<Array<messageWithText | messageWithFile>>(
+  const [chats, setchats] = useState<Array<messageWithText | messageWithFile | giftMessage>>(
     []
   );
-  const isFocussed = useWindowFocus();
+  const isFocussed = useWindowVisable();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
   const { notifications, user, NotificationAPI } = useData();
@@ -990,8 +1033,9 @@ function ChatPage() {
   const [SendSound] = useLocalStorage("Send Sound", true);
   const [ReceiveSound] = useLocalStorage("Receive Sound", true);
   const [localchats, setlocalchats] = useLocalStorage<{
-    [key: string]: Array<messageWithText | messageWithFile>;
+    [key: string]: Array<messageWithText | messageWithFile | giftMessage>;
   }>("chats", {});
+  const [giftmodel, setgiftmodel] = useState(false)
   async function sendFile(file: any) {
     const id = Math.random();
     notifications.addNotification({
@@ -1025,6 +1069,8 @@ function ChatPage() {
         });
         setchats((chats) =>
           chats.concat({
+            gift: undefined,
+            amount: undefined,
             from: user.id,
             message: undefined,
             mimetype: file.type,
@@ -1061,6 +1107,7 @@ function ChatPage() {
     }
   }
   useEffect(() => {
+    ReactGA.send("open chat");
     localStorage.setItem("chattingto", JSON.stringify(chattingto));
     const listenerfunction = function (event: any) {
       const items = (event.clipboardData || event.originalEvent.clipboardData)
@@ -1425,6 +1472,7 @@ function ChatPage() {
           <KeyboardEventHandler
             handleKeys={ ["alphanumeric", "space", "shift", "cap"] }
             onKeyEvent={ () => {
+              key.current = null
               inputref.current.focus();
             } }
           />
@@ -1477,7 +1525,7 @@ function ChatPage() {
 
               <button
                 style={ {
-                  width: "37px",
+                  width: "45px",
                   marginRight: "5px",
                   backgroundColor: "var(--dark-bg-colour)",
                   padding: "5px",
@@ -1491,6 +1539,210 @@ function ChatPage() {
                 } }
               >
                 <FontAwesomeIcon icon={ faPlus } />
+              </button>
+              <ReactModal isOpen={ giftmodel } style={ {
+                overlay: {
+                  backgroundColor: "rgb(18 18 18 / 50%)",
+                  zIndex: 10,
+                },
+                content: {
+                  backgroundColor: "var(--dark-mode)",
+                  border: "1px solid var(--dark-bg-colour)",
+                  borderRadius: "10px",
+                  padding: "1rem",
+                  zIndex: 11,
+                  top: "50%",
+                  left: "50%",
+                  right: "auto",
+                  bottom: "auto",
+                  marginRight: "-50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "75%",
+                  maxWidth: "750px",
+                  textAlign: "center",
+                  maxHeight: "500px",
+                },
+              } }
+                onRequestClose={ () => setgiftmodel(false) }>
+                <FontAwesomeIcon
+                  icon={ faTimes }
+                  onClick={ () => setgiftmodel(false) }
+                  style={ {
+                    cursor: "pointer",
+                    fontSize: "30px",
+                    float: "right",
+                  } }
+                /><h1>Gift Rocket Fuel</h1>
+                <div style={ { height: "1px", width: "100%", background: "var(--dark-bg-colour)", margin: "0 0 1rem 0" } } />
+                <form onSubmit={ (e: any) => {
+                  e.preventDefault(); ReactGA.send("send gift"); console.log(e);
+                  const message = e.target[1].value.trim()
+                  const tempid = Math.random();
+                  const time = new Date().getTime();
+                  sendJsonMessage({
+                    type: "gift",
+                    amount: e.target[0].value,
+                    message: message,
+                    tempid,
+                  });
+                  setchats(
+                    chats
+                      .slice(Math.max(chats.length - StartMessagesLength, 0))
+                      .concat({
+                        from: user.id,
+                        gift: true,
+                        amount: e.target[0].value,
+                        file: undefined,
+                        mimetype: undefined,
+                        message: message,
+                        time,
+                        tempid,
+                        edited: false,
+                      })
+                  );
+                  setgiftmodel(false)
+                } }>
+
+                  <div
+                    style={ {
+                      display: "grid",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      alignContent: "space-evenly",
+                      marginBottom: "1rem"
+                    } }
+                  >
+                    <label htmlFor="RF">
+                      How much Rocket Fuel do you want to gift? (max { user.rocketFuel })
+                    </label>
+                    <input
+                      id="RF"
+                      type="number"
+                      min={ "1" }
+                      max={ user.rocketFuel }
+                      defaultValue="1"
+                      onBlur={ (e: any) => {
+                        e.target.value = Math.floor(
+                          e.target.value > user.rocketFuel
+                            ? user.rocketFuel
+                            : e.target.value < 1
+                              ? 1
+                              : e.target.value);
+                      } }
+                    ></input></div>
+
+                  <TextareaAutosize
+                    onInput={ (e: any) => {
+                      const message = e.target.value.trim();
+                      const messagetoarray: string[] = Array.from(message);
+                      const maxlength = 3000 + (1000 * (user.blast ? user.blast : 0))
+                      if (
+                        messagetoarray.length <= maxlength &&
+                        !(key.current === 13 && !shiftkey.current)
+                      ) {
+                        if (personaltyping) {
+                          playSound(
+                            `/sounds/click${Math.floor(
+                              Math.random() * 3 + 1
+                            )}.mp3`
+                          );
+                        }
+                        metypinglengthref.current = messagetoarray.length;
+                        if (metypinglengthref.current > 0) {
+                          metypingref.current = true;
+                          const specialchars: { [key: string]: any } = {};
+                          for (let i = 0; i < messagetoarray.length; i++) {
+                            if (bypassChars.includes(messagetoarray[i])) {
+                              specialchars[i] = messagetoarray[i];
+                            }
+                          }
+                          setmetypingdata({
+                            type: "typing",
+                            typing: metypingref.current,
+                            length: metypinglengthref.current,
+                            specialchars,
+                          });
+                          clearTimeout(typingTimer.current);
+                          typingTimer.current = setTimeout(
+                            doneTyping,
+                            doneTypingInterval
+                          );
+                        } else {
+                          metypingref.current = false;
+                          setmetypingdata({
+                            type: "typing",
+                            typing: false,
+                            length: 0,
+                            specialchars: {},
+                          });
+                        }
+                      } else {
+                        e.target.value = Array.from(e.target.value)
+                          .slice(0, maxlength)
+                          .join("");
+                      }
+                    } }
+                    onKeyDown={ (e: any) => {
+                      key.current = e.keyCode;
+                      shiftkey.current = e.shiftKey;
+                      clearTimeout(typingTimer.current);
+                    } }
+                    autoFocus
+                    style={ {
+                      backgroundColor: "var(--dark-bg-colour)",
+                      padding: "5px",
+                      borderRadius: "20px",
+                      width: "calc(100% - 65px)",
+                      border: "solid 1px var(--light-bg-colour)",
+                      color: "white",
+                      resize: "none",
+                    } }
+                    maxRows={ 10 }
+                    placeholder="Add A Message..."
+                  />
+                  <button
+                    className="btnMain"
+                    onPointerDown={ () => {
+                      playSound("/sounds/click2.mp3");
+                    } }
+                    onPointerUp={ () => {
+                      playSound("/sounds/click1.mp3");
+                    } }
+                    style={ { border: "none", background: "transparent", padding: "0" } }
+                  >
+                    <div className="btnBox">GIFT{ " " }
+                      <img
+                        src={ GiftIcon }
+                        height="30px"
+                        alt="🎁"
+                        className="icon"
+                      /></div>
+                    <div className="btnBottom"></div>
+                  </button>
+                </form>
+              </ReactModal>
+              <button
+                style={ {
+                  width: "45px",
+                  marginRight: "5px",
+                  backgroundColor: "var(--dark-bg-colour)",
+                  padding: "5px",
+                  borderRadius: "20px",
+                  border: "solid 1px var(--light-bg-colour)",
+                  color: "white",
+                  textAlign: "center",
+                  opacity: (usersdata && usersdata.users[chattingto].id !== "TypeChat") ? 1 : 0.5
+                } }
+                disabled={ !(usersdata && usersdata.users[chattingto].id !== "TypeChat") }
+                onClick={ (usersdata && usersdata.users[chattingto].id !== "TypeChat") ? () => {
+                  if (user.rocketFuel > 0) {
+                    setgiftmodel(true)
+                  } else {
+                    history.push("/blast")
+                  }
+                } : undefined }
+              >
+                <FontAwesomeIcon icon={ faGift } />
               </button>
               <form
                 onSubmit={ (e: any) => {
@@ -1515,6 +1767,8 @@ function ChatPage() {
                       chats
                         .slice(Math.max(chats.length - StartMessagesLength, 0))
                         .concat({
+                          gift: undefined,
+                          amount: undefined,
                           from: user.id,
                           file: undefined,
                           mimetype: undefined,
@@ -1629,6 +1883,7 @@ function ChatPage() {
                   type="submit"
                   onClick={ () => {
                     inputref.current.focus();
+                    ReactGA.send("send message");
                   } }
                 >
                   <FontAwesomeIcon icon={ faPaperPlane } />
@@ -1638,7 +1893,7 @@ function ChatPage() {
           </div>
         </div>
       </div>
-    </usersContext.Provider>
+    </usersContext.Provider >
   );
 }
 

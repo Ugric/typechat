@@ -4,12 +4,13 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Link, Redirect, useParams } from "react-router-dom";
 import { useData } from "../hooks/datahook";
 import useApi from "../hooks/useapi";
 import Background from "./CustomBackground";
 import Loader from "./loader";
+import ReactGA from "react-ga4";
 
 function downloadURI(url: string, filename: string) {
   fetch(url)
@@ -99,6 +100,14 @@ function Drive() {
     useApi<{ id: string; filename: string; mimetype: string }[]>(
       "/api/mydrive"
     );
+
+  useEffect(() => {
+    ReactGA.send("open drive");
+    document.title = `Drive - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   if (!loggedin) {
     return (
       <Redirect
@@ -245,7 +254,15 @@ function Image() {
   );
   const mimetype = data?.mimetype;
   const file = data?.id;
-
+  useEffect(() => {
+    ReactGA.send("open drive file");
+    if (data) {
+      document.title = `${data.filename} - TypeChat`;
+    }
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, [data]);
   return data ? (
     <div style={ { margin: "1rem" } }>
       <div

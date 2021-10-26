@@ -1,8 +1,15 @@
 import { faFileCode } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 function Error404() {
+  useEffect(() => {
+    document.title = `404 - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   return (
     <div
       style={ {

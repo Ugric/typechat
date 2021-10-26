@@ -1,10 +1,10 @@
+import { useMemo, useState } from "react"
 import { useData } from "../hooks/datahook"
 
 function Background() {
     const { user } = useData()
-
-    return user?.blast && user?.backgroundImage && false ? <div style={ {
-        backgroundImage: `url(/files/${user.backgroundImage})`,
+    return false ? <div style={ {
+        backgroundImage: `url()`,
         width: "100vw",
         height: "100vh",
         position: "fixed",

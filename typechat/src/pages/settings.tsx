@@ -3,6 +3,7 @@ import useApi from "../hooks/useapi";
 import useLocalStorage from "../hooks/useLocalStorage";
 import Background from "./CustomBackground";
 import ToggleSwitch from "./switch";
+import ReactGA from "react-ga4";
 
 function Setting({ children }: { children: any }) {
   return (
@@ -52,6 +53,9 @@ function Settings() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications]);
+  useEffect(() => {
+    ReactGA.send("open settings");
+  }, [])
   return (
     <div
       style={ {

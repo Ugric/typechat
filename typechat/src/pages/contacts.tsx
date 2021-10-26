@@ -13,6 +13,8 @@ import playSound from "../playsound";
 import useLocalStorage from "../hooks/useLocalStorage";
 import Badge from "./badges";
 import Background from "./CustomBackground";
+import ReactGA from "react-ga4";
+
 const colorThief = new ColorThief();
 
 function Contact({
@@ -38,6 +40,14 @@ function Contact({
   const history = useHistory();
   const holdref = useRef<any>();
   const [UserModelIsOpen, setUserModelIsOpen] = useState(false);
+
+  useEffect(() => {
+    ReactGA.send("open contacts");
+    document.title = `Contacts - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   return (
     <>
       <div
@@ -47,7 +57,7 @@ function Contact({
             playSound("/sounds/click1.mp3");
             setUserModelIsOpen(true);
           }, 500);
-          playSound("/sounds/click3.mp3");
+          playSound("/sounds/click2.mp3");
         } }
         onTouchMove={ () => {
           if (holdref.current) {

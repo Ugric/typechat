@@ -136,6 +136,13 @@ function AddPeople() {
     if (!search) setData(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
+
+  useEffect(() => {
+    document.title = `Add - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   if (!loggedin) {
     history.push("/");
   }
