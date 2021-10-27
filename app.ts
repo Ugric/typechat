@@ -223,7 +223,7 @@ function updateFromAccountID(accountID: string) {
   database.db = db;
   await Promise.all([
     db.run(
-      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification)"
+      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification, disabled)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
@@ -263,6 +263,9 @@ function updateFromAccountID(accountID: string) {
   db.run("ALTER TABLE friendsChatMessages ADD amount").catch(() => { });
   db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => { });
   db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => { });
+  db.run("ALTER TABLE accounts ADD disabled DEFAULT false").catch(
+    () => { }
+  );
   db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(
     () => { }
   );
@@ -397,7 +400,7 @@ function updateFromAccountID(accountID: string) {
     });
     ws.on("connection", async (ws, req) => {
       let accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": parseCookies(req).token,
         }
@@ -1000,7 +1003,7 @@ function updateFromAccountID(accountID: string) {
     90;
     app.get("/api/uploadlimit", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1034,7 +1037,7 @@ function updateFromAccountID(accountID: string) {
     });
     app.post("/api/uploadfile", async (req: any, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1095,7 +1098,7 @@ function updateFromAccountID(accountID: string) {
     });
     app.get("/api/searchusers", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1131,7 +1134,7 @@ function updateFromAccountID(accountID: string) {
     });
     app.post("/api/frienduserfromid", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1245,7 +1248,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     });
     app.get("/api/friendsuserdatafromid", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1292,7 +1295,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     });
     app.get("/api/mydrive", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1311,7 +1314,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     });
     app.get("/api/getallfriendrequests", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1344,7 +1347,7 @@ WHERE friends.toAccountID == :accountID
     });
     app.get("/api/getallcontacts", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1380,7 +1383,7 @@ WHERE friends.accountID == :accountID
     });
     app.get("/api/getuserdataonupdate", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1392,7 +1395,7 @@ WHERE friends.accountID == :accountID
         }
         try {
           const newaccountdata = await db.get(
-            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+            "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
             {
               ":token": req.cookies.token,
             }
@@ -1452,7 +1455,7 @@ WHERE friends.accountID == :accountID
 
     app.get("/api/userdata", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1548,7 +1551,7 @@ WHERE friends.accountID == :accountID
     );
     app.get("/api/getNotificationsOn", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1563,7 +1566,7 @@ WHERE friends.accountID == :accountID
     });
     app.post("/api/togglediscord", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1583,7 +1586,7 @@ WHERE friends.accountID == :accountID
 
     app.post("/api/toggleemail", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1644,7 +1647,7 @@ WHERE friends.accountID == :accountID
     });
     app.post("/api/setusername", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         { ":token": req.cookies.token }
       );
       if (accountdata.password == hasher(req.body.pass + accountdata.salt)) {
@@ -1695,7 +1698,7 @@ WHERE friends.accountID == :accountID
     });
     app.post("/api/setbackgroundimage", async (req: any, res: any) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         { ":token": req.cookies.token }
       );
       const blast = (
@@ -1754,7 +1757,7 @@ WHERE friends.accountID == :accountID
     });
     app.get("/api/link/:id", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         { ":token": req.cookies.token }
       );
       const time = new Date().getTime();
@@ -1853,7 +1856,7 @@ WHERE friends.accountID == :accountID
     });
     app.post("/api/setprofilepic", async (req: any, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         { ":token": req.cookies.token }
       );
       if (accountdata) {
@@ -1908,7 +1911,7 @@ WHERE friends.accountID == :accountID
     });
     app.post("/api/startrocketfuel", async (req, res) => {
       const accountdata = await db.get(
-        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
         {
           ":token": req.cookies.token,
         }
@@ -1957,7 +1960,7 @@ WHERE friends.accountID == :accountID
     app.post("/api/paypal-buy-rocket-fuel", async (req, res) => {
       try {
         const accountdata = await db.get(
-          "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+          "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) and disabled=false LIMIT 1",
           { ":token": req.cookies.token }
         );
         if ((testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) || process.env.NODE_ENV === "development") && accountdata) {
@@ -1986,7 +1989,7 @@ WHERE friends.accountID == :accountID
     app.post("/signup", async (req: any, res) => {
       if (testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) || process.env.NODE_ENV === "development") {
         const emailInUse =
-          (await db.get("SELECT * FROM accounts WHERE email=:email", {
+          (await db.get("SELECT * FROM accounts WHERE email=:email and disabled=false", {
             ":email": req.body.email,
           })) != undefined;
         if (ev.check(req.body.email).valid) {

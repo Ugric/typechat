@@ -148,7 +148,7 @@ function MetaPage({
   decoratedHref: string;
   mine: boolean;
 }) {
-  const urldata = new URL(decoratedHref);
+  const urldata = new URL(decoratedHref, "http://.");
   const { data } = useApi<{
     url: string;
     canonical: string;
@@ -189,7 +189,7 @@ function MetaPage({
     "twitter:player:height": string;
     "twitter:player:stream": string;
     jsonld: {};
-  }>("/api/getmetadata?" + new URLSearchParams({ url }));
+  }>("/api/getmetadata?" + new URLSearchParams({ url: urldata.href }));
   return data ? (
     <div
       style={ {
@@ -295,27 +295,31 @@ function MessageFaviconOrVideoRenderer({
           decoratedText: string;
           key: number;
         }) => {
-          const url = new URL(decoratedHref);
-          return (
-            <React.Fragment key={ key }>
-              { videoSites.includes(url.hostname) ? (
-                <ReactPlayer
-                  url={ decoratedHref }
-                  width="100%"
-                  height="100%"
-                  controls={ true }
-                  style={ { aspectRatio: "16/9" } }
-                />
-              ) : (
-                <MetaPage
-                  url={ decoratedHref }
-                  decoratedText={ decoratedText }
-                  decoratedHref={ decoratedHref }
-                  mine={ mine }
-                ></MetaPage>
-              ) }
-            </React.Fragment>
-          );
+          try {
+            const url = new URL(decoratedHref, "http://.");
+            return (
+              <React.Fragment key={ key }>
+                { videoSites.includes(url.hostname) ? (
+                  <ReactPlayer
+                    url={ decoratedHref }
+                    width="100%"
+                    height="100%"
+                    controls={ true }
+                    style={ { aspectRatio: "16/9" } }
+                  />
+                ) : (
+                  <MetaPage
+                    url={ decoratedHref }
+                    decoratedText={ decoratedText }
+                    decoratedHref={ decoratedHref }
+                    mine={ mine }
+                  ></MetaPage>
+                ) }
+              </React.Fragment>
+            );
+          } catch {
+            return <></>
+          }
         }
       ) }
     </>

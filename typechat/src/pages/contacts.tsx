@@ -40,18 +40,6 @@ function Contact({
   const history = useHistory();
   const holdref = useRef<any>();
   const [UserModelIsOpen, setUserModelIsOpen] = useState(false);
-
-  useEffect(() => {
-
-    ReactGA.event({
-      category: "contacts",
-      action: "open contacts"
-    });
-    document.title = `Contacts - TypeChat`;
-    return () => {
-      document.title = "TypeChat";
-    };
-  }, []);
   return (
     <>
       <div
@@ -183,6 +171,18 @@ function Contacts() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  useEffect(() => {
+
+    ReactGA.event({
+      category: "contacts",
+      action: "open contacts"
+    });
+    document.title = `Contacts - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
   }

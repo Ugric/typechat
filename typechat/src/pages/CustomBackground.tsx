@@ -4,7 +4,7 @@ import { useData } from "../hooks/datahook"
 function Background() {
     const { user } = useData()
     return false ? <div style={ {
-        backgroundImage: `url()`,
+        backgroundImage: `url(/files/${user.backgroundImage})`,
         width: "100vw",
         height: "100vh",
         position: "fixed",
