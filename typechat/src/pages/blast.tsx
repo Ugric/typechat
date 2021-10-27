@@ -303,7 +303,7 @@ function Blast() {
                       margin: "1rem",
                     } }
                   >
-                    <li>+1000 characters per messages</li>
+                    <li>+250 characters per messages</li>
                     <li>
                       Bigger monthly upload limit (500 MB)
                     </li>
