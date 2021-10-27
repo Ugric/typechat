@@ -1643,7 +1643,7 @@ function ChatPage() {
                     onInput={ (e: any) => {
                       const message = e.target.value.trim();
                       const messagetoarray: string[] = Array.from(message);
-                      const maxlength = 3000 + (1000 * (user.blast ? user.blast : 0))
+                      const maxlength = 3000 + (250 * (user.blast ? user.blast : 0))
                       if (
                         messagetoarray.length <= maxlength &&
                         !(key.current === 13 && !shiftkey.current)
