@@ -30,6 +30,7 @@
     "jimp": "^0.16.1",
     "jsqr": "^1.4.0",
     "jsqrcode": "^0.0.7",
+    "logrocket": "^2.1.1",
     "qr-scanner": "^1.2.0",
     "qrcode-decoder": "^0.2.2",
     "qrcode-reader": "^1.0.4",

@@ -42,6 +42,8 @@ import Drive from "./pages/Drive";
 import RequestNewPassword from "./pages/requestNewPassword";
 import Blast from "./pages/blast";
 import ReactGA from "react-ga4";
+import LogRocket from 'logrocket';
+LogRocket.init('b1hvjh/typechat');
 
 if (!(!process.env.NODE_ENV || process.env.NODE_ENV === 'development')) ReactGA.initialize("G-26D01FTK1T");
 
