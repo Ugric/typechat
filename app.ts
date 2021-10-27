@@ -1248,7 +1248,6 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
       });
       res.send(true);
     });
-
     app.get("/api/friendsuserdatafromid", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token and disabled=false) LIMIT 1",
