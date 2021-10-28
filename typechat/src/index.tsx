@@ -112,6 +112,15 @@ function App() {
       }
     })();
   });
+
+  useEffect(() => {
+    if (userdata?.loggedin) {
+      console.log(userdata.user)
+      LogRocket.identify(userdata.user.id, {
+        name: `${userdata.user.username}#${userdata.user.tag}`
+      });
+    }
+  }, [userdata])
   function NotificationAPI(
     options: ReactNotificationOptions,
     onclick: () => {}
