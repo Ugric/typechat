@@ -43,6 +43,7 @@ import RequestNewPassword from "./pages/requestNewPassword";
 import Blast from "./pages/blast";
 import ReactGA from "react-ga4";
 import LogRocket from 'logrocket';
+import TandC from "./pages/T&C";
 LogRocket.init('b1hvjh/typechat');
 
 if (!(!process.env.NODE_ENV || process.env.NODE_ENV === 'development')) ReactGA.initialize("G-26D01FTK1T");
@@ -184,6 +185,9 @@ function App() {
                   </Route>
                   <Route path="/blast" exact>
                     <Blast.Blast />
+                  </Route>
+                  <Route path="/T&C" exact>
+                    <TandC />
                   </Route>
                   <Route path="/verify/:id" exact>
                     <Verify />
