@@ -66,149 +66,155 @@ function Login() {
           } }
         >
           <FontAwesomeIcon icon={ faSignInAlt }></FontAwesomeIcon> Login
-        </h1>
-        <RouterForm
-          action={ "/login" }
-          beforecallback={ (e: any) => {
-            if (recapToken) {
-              if (e.target[0].value !== "" && e.target[1].value !== "") {
-                if (validateEmail(e.target[0].value)) {
-                  setloading(true);
-                  return true;
+        </h1><div
+          data-private>
+          <RouterForm
+            action={ "/login" }
+            beforecallback={ (e: any) => {
+              if (recapToken) {
+                if (e.target[0].value !== "" && e.target[1].value !== "") {
+                  if (validateEmail(e.target[0].value)) {
+                    setloading(true);
+                    return true;
+                  } else {
+                    seterror("input a valid email!");
+                  }
                 } else {
-                  seterror("input a valid email!");
+                  seterror("input an email and password!");
                 }
               } else {
-                seterror("input an email and password!");
+                seterror("waiting for recaptcha token... try again later.");
               }
-            } else {
-              seterror("waiting for recaptcha token... try again later.");
-            }
-          } }
-          appendtoformdata={ (fd) => {
-            if (recapToken) fd.append("g-recaptcha-response", recapToken);
-            return fd;
-          } }
-          style={ {
-            width: "fit-content",
-            margin: "auto",
-            maxWidth: "300px",
-          } }
-          callback={ (resp: any) => {
-            if (resp.resp) {
-              cookies.set("token", resp.token, {
-                path: "/",
-                expires: new Date(Date.now() + 3.154e12),
-              });
-              rechecklogged();
-            } else {
-              setloading(false);
-              seterror(resp.err);
-            }
-          } }
-        >
-          <GoogleReCaptcha
-            onVerify={ (token) => {
-              setRecapToken(token);
             } }
-          />
-          <p
+            appendtoformdata={ (fd) => {
+              if (recapToken) fd.append("g-recaptcha-response", recapToken);
+              return fd;
+            } }
             style={ {
-              textAlign: "end",
-              margin: "0",
+              width: "fit-content",
+              margin: "auto",
+              maxWidth: "300px",
+            } }
+            callback={ (resp: any) => {
+              if (resp.resp) {
+                cookies.set("token", resp.token, {
+                  path: "/",
+                  expires: new Date(Date.now() + 3.154e12),
+                });
+                rechecklogged();
+              } else {
+                setloading(false);
+                seterror(resp.err);
+              }
             } }
           >
-            Email
-          </p>
-          <input
-            type="email"
-            placeholder="Email"
-            name="email"
-            style={ {
-              background: "transparent",
-              borderTop: "none",
-              borderRight: "none",
-              borderBottom: "1px solid white",
-              borderLeft: "none",
-              borderImage: "initial",
-              marginBottom: "1rem",
-              width: "100%",
-              paddingBottom: "0.5rem",
-              fontFamily: "'Source Sans Pro', sans-serif",
-              fontSize: "17px",
-              color: "white",
-              borderRadius: "0px",
-            } }
-          />
-          <p
-            style={ {
-              textAlign: "end",
-              margin: "0",
-            } }
-          >
-            Password
-          </p>
-          <input
-            type="password"
-            placeholder="Password"
-            name="pass"
-            style={ {
-              background: "transparent",
-              borderTop: "none",
-              borderRight: "none",
-              borderBottom: "1px solid white",
-              borderLeft: "none",
-              borderImage: "initial",
-              marginBottom: "1rem",
-              width: "100%",
-              paddingBottom: "0.5rem",
-              fontFamily: "'Source Sans Pro', sans-serif",
-              fontSize: "17px",
-              color: "white",
-              borderRadius: "0px",
-            } }
-          />
-          <input
-            type="submit"
-            value="Login"
-            style={ {
-              padding: "1rem",
-              maxWidth: "250px",
-              width: "100%",
-              border: "none",
-              borderRadius: "50px",
-              background:
-                "linear-gradient(45deg, var(--dark-bg-colour) 0%, var(--light-bg-colour) 100%)",
-              color: "white",
-              fontFamily: '"Source Sans Pro", sans-serif',
-              fontSize: "20px",
-              boxShadow: "rgb(0, 0, 0) 0px 6px 5px 0px",
-            } }
-          />
-          <p style={ { margin: "1rem 0", color: "red" } }>{ error }</p>
-          <p style={ { margin: "1rem 0", color: "white" } }>
-            dont already have an account?{ " " }
-            <span>
-              <Link
-                to={ "/signup" + location.search }
-                style={ { color: "var(--secondary-text-colour)" } }
-              >
-                Make one
-              </Link>
-            </span>
-          </p>
-          <p style={ { margin: "1rem 0", color: "white" } }>
-            Forgot your password?{ " " }
-            <span>
-              <Link
-                to={ "/requestNewPassword" }
-                style={ { color: "var(--secondary-text-colour)" } }
-              >
-                Change it
-              </Link>
-            </span>
-          </p>
-        </RouterForm>
+            <GoogleReCaptcha
+              onVerify={ (token) => {
+                setRecapToken(token);
+              } }
+            />
+            <p
+              style={ {
+                textAlign: "end",
+                margin: "0",
+              } }
+            >
+              Email
+            </p>
+            <input
+              type="email"
+              placeholder="Email"
+              name="email"
+              style={ {
+                background: "transparent",
+                borderTop: "none",
+                borderRight: "none",
+                borderBottom: "1px solid white",
+                borderLeft: "none",
+                borderImage: "initial",
+                marginBottom: "1rem",
+                width: "100%",
+                paddingBottom: "0.5rem",
+                fontFamily: "'Source Sans Pro', sans-serif",
+                fontSize: "17px",
+                color: "white",
+                borderRadius: "0px",
+              } }
+            />
+            <p
+              style={ {
+                textAlign: "end",
+                margin: "0",
+              } }
+            >
+              Password
+            </p>
+            <input
+              type="password"
+              placeholder="Password"
+              name="pass"
+              style={ {
+                background: "transparent",
+                borderTop: "none",
+                borderRight: "none",
+                borderBottom: "1px solid white",
+                borderLeft: "none",
+                borderImage: "initial",
+                marginBottom: "1rem",
+                width: "100%",
+                paddingBottom: "0.5rem",
+                fontFamily: "'Source Sans Pro', sans-serif",
+                fontSize: "17px",
+                color: "white",
+                borderRadius: "0px",
+              } }
+            />
+            <p style={ {
+              fontSize: "13px",
+              marginBottom: "1rem !important",
+            } }>By logging in, you agree to the <a href="/t&c" target="blank_">T & C's</a></p>
+            <input
+              type="submit"
+              value="Login"
+              style={ {
+                padding: "1rem",
+                maxWidth: "250px",
+                width: "100%",
+                border: "none",
+                borderRadius: "50px",
+                background:
+                  "linear-gradient(45deg, var(--dark-bg-colour) 0%, var(--light-bg-colour) 100%)",
+                color: "white",
+                fontFamily: '"Source Sans Pro", sans-serif',
+                fontSize: "20px",
+                boxShadow: "rgb(0, 0, 0) 0px 6px 5px 0px",
+              } }
+            />
+            <p style={ { margin: "1rem 0", color: "red" } }>{ error }</p>
+            <p style={ { margin: "1rem 0", color: "white" } }>
+              dont already have an account?{ " " }
+              <span>
+                <Link
+                  to={ "/signup" + location.search }
+                  style={ { color: "var(--secondary-text-colour)" } }
+                >
+                  Make one
+                </Link>
+              </span>
+            </p>
+            <p style={ { margin: "1rem 0", color: "white" } }>
+              Forgot your password?{ " " }
+              <span>
+                <Link
+                  to={ "/requestNewPassword" }
+                  style={ { color: "var(--secondary-text-colour)" } }
+                >
+                  Change it
+                </Link>
+              </span>
+            </p>
+          </RouterForm>
+        </div>
       </div>
     </>
   );

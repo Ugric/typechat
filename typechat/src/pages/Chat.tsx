@@ -372,6 +372,7 @@ function Message({
         id={ String(messages[i].ID ? messages[i].ID : messages[i].tempid) }
       >
         <div
+          data-private
           style={ { opacity: !messages[i].ID ? 0.5 : undefined } }
           className={
             onlyemojis || file
@@ -713,9 +714,11 @@ function Message({
         width: "100%", height: "1px",
         backgroundColor: messages[i].from === user.id ? "var(--light-bg-colour)" : "#dadada", marginBottom: "1rem"
       } }></div>
-      <h4>Here is a gift of { messages[i].amount } Rocket Fuel</h4>{ message ? <p>Message: { message.trim() }</p> : <></> }
+      <h4>Here is a gift of { messages[i].amount } Rocket Fuel</h4>{ message ? <p
+        data-private>Message: { message.trim() }</p> : <></> }
       <img src={ GiftIcon } alt="🎁" style={ {
-        padding: "1rem", margin: "1rem 0", backgroundColor: messages[i].from === user.id ? "var(--light-bg-colour)" : "#dadada",
+        padding: "1rem", margin: "1rem 0",
+        backgroundColor: messages[i].from === user.id ? "var(--light-bg-colour)" : "#dadada",
         borderRadius: "10px", display: "block", width: "100%", cursor: messages[i].from === user.id ? "not-allowed" : "pointer"
       } } onClick={ messages[i].from !== user.id ? () => history.push("/blast") : undefined }></img>
       <b>Click the present to check your Rocket Fuel Balance!</b>
@@ -782,6 +785,7 @@ function MessageMaker({
         output.push(
           messages[i].from === user.id || users[messages[i].from] ? (
             <div
+              data-private
               key={ messages[i].ID + "topname" }
               style={ {
                 alignSelf:
@@ -1444,6 +1448,7 @@ function ChatPage() {
                         : usersdata.users[chattingto].profilePic
                     )
                   }
+                  data-private
                   style={ {
                     display: "block",
                     height: "65%",
@@ -1452,7 +1457,8 @@ function ChatPage() {
                   } }
                   alt={ usersdata.users[chattingto].username }
                 />
-                <p style={ { textAlign: "center" } }>
+                <p style={ { textAlign: "center" } }
+                  data-private>
                   { usersdata.users[chattingto].username }{ " " }
                   <FontAwesomeIcon
                     style={ {
@@ -1468,8 +1474,9 @@ function ChatPage() {
                     }
                   ></FontAwesomeIcon>
                 </p>
-                <Badge badges={ usersdata.users[chattingto].badges }
-                  size="20px"></Badge>
+                <div
+                  data-private><Badge badges={ usersdata.users[chattingto].badges }
+                    size="20px"></Badge></div>
               </>
             ) : (
               <p style={ { margin: "1rem", textAlign: "center" } }>
@@ -1644,7 +1651,7 @@ function ChatPage() {
                     ></input></div>
 
                   <TextareaAutosize
-                    onInput={ (e: any) => {
+                    data-private="lipsum" onInput={ (e: any) => {
                       const message = e.target.value.trim();
                       const messagetoarray: string[] = Array.from(message);
                       const maxlength = 3000 + (250 * (user.blast ? user.blast : 0))
@@ -1807,6 +1814,7 @@ function ChatPage() {
                 } }
               >
                 <TextareaAutosize
+                  data-private="lipsum"
                   ref={ inputref }
                   onInput={ (e: any) => {
                     if (key.current === 13 && !shiftkey.current) {

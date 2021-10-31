@@ -427,6 +427,11 @@ function UserSettings() {
             ) }
           </form>
         </Modal>
+
+        <p style={ {
+          fontSize: "13px",
+          marginBottom: "1rem !important",
+        } }>By having a TypeChat account, you agree to the <a href="/t&c" target="blank_" style={ { color: "var(--secondary-text-colour)" } }>T & C's</a></p>
       </div>
     </div>
   );

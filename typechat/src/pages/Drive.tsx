@@ -2,6 +2,7 @@ import {
   faDownload,
   faPhotoVideo,
   faPlus,
+  faShare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useRef } from "react";
@@ -11,6 +12,7 @@ import useApi from "../hooks/useapi";
 import Background from "./CustomBackground";
 import Loader from "./loader";
 import ReactGA from "react-ga4";
+import Error404 from "./404";
 
 function downloadURI(url: string, filename: string) {
   fetch(url)
@@ -37,6 +39,7 @@ function FilePreview({
   const ext = name.substring(name.lastIndexOf("."));
   return (
     <Link
+      data-private
       style={ {
         color: "white",
         textDecoration: "none",
@@ -252,7 +255,7 @@ function Drive() {
 
 function Image() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useApi<{ id: string; filename: string; mimetype: string }>(
+  const { data, error } = useApi<{ id: string; filename: string; mimetype: string }>(
     "/api/getimagedata?" + new URLSearchParams({ id })
   );
   const mimetype = data?.mimetype;
@@ -282,7 +285,34 @@ function Image() {
           maxWidth: "700px",
         } }
       >
-        <h1>{ data.filename }</h1>
+        <h1
+          data-private>{ data.filename }</h1>
+        <div
+          onClick={ () => {
+            navigator.clipboard.writeText("https://tchat.us.to/drive/" + file);
+            alert("Copied media source to clipboard.")
+          } }
+          style={ {
+            color: "var(--secondary-text-colour)",
+            cursor: "pointer",
+            fontSize: "25px",
+          } }
+        >
+          <FontAwesomeIcon icon={ faShare }></FontAwesomeIcon> Share
+        </div>
+        <div
+          onClick={ () => {
+            navigator.clipboard.writeText("https://tchat.us.to/files/" + file);
+            alert("Copied media source to clipboard.")
+          } }
+          style={ {
+            color: "var(--secondary-text-colour)",
+            cursor: "pointer",
+            fontSize: "25px",
+          } }
+        >
+          <FontAwesomeIcon icon={ faPhotoVideo }></FontAwesomeIcon> Copy Source
+        </div>
         <div
           onClick={ () => {
             downloadURI("/files/" + file, data.filename);
@@ -302,39 +332,40 @@ function Image() {
             width: "100%",
             margin: "1rem 0",
           } }
-        ></div>
-        { mimetype ? (
-          mimetype.split("/")[0] === "image" ? (
-            <img
-              alt={ file }
-              src={ `/files/${file}` }
-              style={ { width: "100%", borderRadius: "20px" } }
-              loading="lazy"
-            ></img>
-          ) : mimetype.split("/")[0] === "video" ? (
-            <video
-              src={ `/files/${file}` }
-              style={ { width: "100%" } }
-              controls
-              playsInline
-            ></video>
-          ) : mimetype.split("/")[0] === "audio" ? (
-            <audio
-              src={ `/files/${file}` }
-              style={ { width: "100%" } }
-              controls
-              playsInline
-            ></audio>
+        ></div><div
+          data-private>
+          { mimetype ? (
+            mimetype.split("/")[0] === "image" ? (
+              <img
+                alt={ file }
+                src={ `/files/${file}` }
+                style={ { width: "100%", borderRadius: "20px" } }
+                loading="lazy"
+              ></img>
+            ) : mimetype.split("/")[0] === "video" ? (
+              <video
+                src={ `/files/${file}` }
+                style={ { width: "100%" } }
+                controls
+                playsInline
+              ></video>
+            ) : mimetype.split("/")[0] === "audio" ? (
+              <audio
+                src={ `/files/${file}` }
+                style={ { width: "100%" } }
+                controls
+                playsInline
+              ></audio>
+            ) : (
+              <p>No Preview!</p>
+            )
           ) : (
             <p>No Preview!</p>
-          )
-        ) : (
-          <p>No Preview!</p>
-        ) }
+          ) }</div>
       </div>
     </div>
   ) : (
-    <Loader></Loader>
+    error ? <Error404></Error404> : <Loader></Loader>
   );
 }
 

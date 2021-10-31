@@ -69,7 +69,8 @@ function Signup() {
         >
           <FontAwesomeIcon icon={ faAddressCard }></FontAwesomeIcon> Sign Up
         </h1>
-        <div>
+        <div
+          data-private>
           <RouterForm
             action={ "/signup" }
             beforecallback={ (e: any) => {
@@ -230,6 +231,10 @@ function Signup() {
               } }
               autoComplete="new-password"
             />
+            <p style={ {
+              fontSize: "13px",
+              marginBottom: "1rem !important",
+            } }>By creating an account, you agree to the <a href="/t&c" target="blank_">T & C's</a></p>
             <input
               type="submit"
               value="Sign up"

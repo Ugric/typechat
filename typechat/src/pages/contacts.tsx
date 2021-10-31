@@ -43,6 +43,7 @@ function Contact({
   return (
     <>
       <div
+        data-private
         onPointerDown={ (e: any) => {
           holdref.current = setTimeout(() => {
             holdref.current = undefined;
@@ -213,6 +214,7 @@ function Contacts() {
               (localcontacts && localcontacts.length > 0) ? (
               <>
                 <input
+                  data-private
                   type="text"
                   style={ {
                     width: "100%",
