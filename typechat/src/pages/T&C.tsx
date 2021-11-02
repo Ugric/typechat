@@ -10,7 +10,7 @@ function TandC() {
             textAlign: "center"
         } }
     >
-        <h1>T & C</h1>
+        <h1>Terms And Conditions</h1>
         <p>By Creating an account you agree to the following</p>
         <div
             style={ {
@@ -77,6 +77,35 @@ function TandC() {
                 textAlign: "start"
             } }
         >
+            <h5>Privacy Policy</h5>
+            <div
+                style={ {
+                    width: "100%",
+                    height: "1px",
+                    backgroundColor: "var(--light-bg-colour)",
+                } }
+            ></div>
+            <ul
+                style={ {
+                    margin: "1rem",
+                } }
+            >
+                <li>We use your email to send you notifications about messages, this can be turned off in settings.</li>
+                <li>We <b>DO NOT</b> store your passwords in plain text! The technique used is <a target="blank_" style={ { color: "var(--secondary-text-colour)" } } href="https://en.wikipedia.org/wiki/Salt_(cryptography)">hash with a salt</a>.</li>
+                <li>All account infomation is stored securely in an <a target="blank_" style={ { color: "var(--secondary-text-colour)" } } href="https://en.wikipedia.org/wiki/SQL">SQL (Structured Query Language)</a> database.</li>
+                <li>Our Privacy Policy is in addtion to google's <a target="blank_" style={ { color: "var(--secondary-text-colour)" } } href="https://policies.google.com/privacy">3rd party site Privacy Policy</a> due to <a target="blank" href="https://analytics.google.com/" style={ { color: "var(--secondary-text-colour)" } }>google analytics</a>.</li>
+            </ul>
+        </div>
+        <div
+            style={ {
+                border: "solid 1px var(--light-bg-colour)",
+                borderRadius: "10px",
+                backgroundColor: "var(--dark-bg-colour)",
+                padding: "1rem",
+                margin: "1rem",
+                textAlign: "start"
+            } }
+        >
             <h5>Important info</h5>
             <div
                 style={ {
@@ -96,8 +125,7 @@ function TandC() {
                 </li>
             </ul>
         </div>
-        <p>the offical TypeChat account will never ask for your password!</p>
-        <p>also try not to get rick rolled</p>
+        <p>the official TypeChat account will never ask for your password!</p>
     </div>
 }
 
