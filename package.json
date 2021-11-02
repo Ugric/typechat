@@ -25,6 +25,7 @@
     "forcedomain": "^2.2.11",
     "greenlock": "^4.0.4",
     "greenlock-express": "^4.0.3",
+    "morgan": "^1.10.0",
     "newsapi": "^2.4.1",
     "node-force-domain": "^0.2.0",
     "node-notifier": "^10.0.0",
