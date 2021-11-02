@@ -125,7 +125,7 @@ function updateFromAccountID(accountID: string) {
     file: { data: BinaryLike; mimetype: string; name: string },
     from?: string
   ) => {
-    const hashed = createHash("md5").update(file.data).digest("hex");
+    const hashed = createHash("sha256").update(file.data).digest("hex");
     const existsindatabase = await db.get(
       "SELECT * FROM images WHERE hash=:hash LIMIT 1",
       { ":hash": hashed }
@@ -155,7 +155,7 @@ function updateFromAccountID(accountID: string) {
     };
   };
   const hasher = (string: string) =>
-    createHash("md5").update(string).digest("hex");
+    createHash("sha256").update(string).digest("hex");
 
   async function DiscordNotification(
     accoutID: string,
@@ -1903,7 +1903,7 @@ WHERE friends.accountID == :accountID
           );
           return res.send({ resp: true, token });
         } else {
-          return res.send({ resp: false, err: "invalid email or password!" });
+          return res.send({ resp: false, err: "invalid email or password! (due to a minor security flaw, we had to reset all passwords, please click 'change password')" });
         }
       } else {
         return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });

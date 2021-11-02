@@ -2,6 +2,7 @@ import {
   faDownload,
   faPhotoVideo,
   faPlus,
+  faTrash,
   faShare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -290,7 +291,7 @@ function Image() {
         <div
           onClick={ () => {
             navigator.clipboard.writeText("https://tchat.us.to/drive/" + file);
-            alert("Copied media source to clipboard.")
+            alert("Copied share link to clipboard.")
           } }
           style={ {
             color: "var(--secondary-text-colour)",

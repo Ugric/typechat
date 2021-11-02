@@ -1277,6 +1277,73 @@ function ChatPage() {
             );
           }
         }
+      } else if (lastJsonMessage.type === "gift") {
+        if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
+          playSound("/sounds/gift.mp3");
+        }
+        lastJsonMessage.message.gift = true
+        setchats((chats) => chats.concat(lastJsonMessage.message));
+
+        settypingdata({
+          typing: false,
+          length: 0,
+          specialchars: {},
+        });
+        if (usersdata) {
+          if (toscroll.current) {
+            setcanloadmore(true);
+            isLoadMore.current = false;
+            setloadingchatmessages(false);
+            setchats((chats) =>
+              chats.slice(Math.max(chats.length - StartMessagesLength, 0))
+            );
+            setTimeout(scrolltobottom, 0);
+            if (
+              lastJsonMessage.message.from !== user.id &&
+              !isFocussed &&
+              isElectron()
+            ) {
+              notify(
+                `${usersdata.users[lastJsonMessage.message.from].username}`,
+                lastJsonMessage.message.message,
+                () => {
+                  history.push(`/chat/${chattingto}`);
+                  scrolltobottom();
+                }
+              );
+            }
+          } else if (lastJsonMessage.message.from !== user.id) {
+            NotificationAPI(
+              {
+                title: `${usersdata.users[lastJsonMessage.message.from].username
+                  }`,
+                message: lastJsonMessage.message.message
+                  ? truncate(lastJsonMessage.message.message, 25)
+                  : "file",
+                type: "default",
+                onRemoval: (_: number, type: string) => {
+                  if (type === "click") {
+                    history.push(`/chat/${chattingto}`);
+                    scrolltobottom();
+                  }
+                },
+                insert: "top",
+                container: "top-right",
+                animationIn: ["animate__animated", "animate__fadeIn"],
+                animationOut: ["animate__animated", "animate__fadeOut"],
+                dismiss: {
+                  pauseOnHover: true,
+                  duration: 5000,
+                  onScreen: true,
+                },
+              },
+              () => {
+                history.push(`/chat/${chattingto}`);
+                scrolltobottom();
+              }
+            );
+          }
+        }
       } else if (lastJsonMessage.type === "delete") {
         if (lastJsonMessage.from !== user.id && ReceiveSound) {
           playSound("/sounds/delete.mp3");
