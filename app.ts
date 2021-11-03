@@ -1508,12 +1508,13 @@ WHERE friends.accountID == :accountID
           if (requestaccount) {
             const passwordUpdateID = generate(30);
             updatepassword[passwordUpdateID] = requestaccount.accountID;
-            PasswordEmail(req.body.email, passwordUpdateID).catch(() => { });
+            PasswordEmail(req.body.email, passwordUpdateID).catch(console.error);
             setTimeout(() => {
               if (updatepassword[passwordUpdateID])
                 delete updatepassword[passwordUpdateID];
             }, 3600000);
           }
+          console.log(requestaccount)
         }
         return res.send(true);
       }
