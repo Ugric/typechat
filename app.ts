@@ -1500,7 +1500,6 @@ WHERE friends.accountID == :accountID
     app.post(
       "/api/requestnewpassword",
       async (req, res) => {
-        if (process.env.NODE_ENV === "development") {
           const requestaccount = await db.get(
             "SELECT * FROM accounts WHERE email=:email",
             { ":email": req.body.email }
@@ -1515,7 +1514,6 @@ WHERE friends.accountID == :accountID
             }, 3600000);
           }
           console.log(requestaccount)
-        }
         return res.send(true);
       }
     );
