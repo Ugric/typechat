@@ -538,7 +538,7 @@ function Blast() {
                     </p>
                     <p style={ { fontSize: "15px" } }>
                       ends on the { ends }
-                      { String(ends).endsWith("1")
+                      { ends<10 || ends>20?String(ends).endsWith("1")
                         ? "st"
                         : String(ends).endsWith("2")
                           ? "nd"
