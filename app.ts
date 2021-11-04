@@ -125,7 +125,7 @@ function updateFromAccountID(accountID: string) {
     file: { data: BinaryLike; mimetype: string; name: string },
     from?: string
   ) => {
-    const hashed = createHash("sha256").update(file.data).digest("hex");
+    const hashed = createHash("md5").update(file.data).digest("hex");
     const existsindatabase = await db.get(
       "SELECT * FROM images WHERE hash=:hash LIMIT 1",
       { ":hash": hashed }
