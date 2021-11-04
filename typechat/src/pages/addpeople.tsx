@@ -164,6 +164,7 @@ function AddPeople() {
           maxWidth: "700px",
         } }
       >
+        {/*
         <h1 style={ { textAlign: "center" } }>Add</h1>
         <div
           style={ {
@@ -208,8 +209,15 @@ function AddPeople() {
             } }
             style={ { width: "100%" } }
           />
-        </div>
-        <div style={ { textAlign: "center" } }>
+          </div>*/}
+        <div style={ {
+          maxWidth: "500px",
+          textAlign: "center",
+          margin: "1rem auto",
+          border: "solid 1px var(--light-bg-colour)",
+          padding: "1rem",
+          borderRadius: "10px",
+        } }>
           <h2>Friend Requests</h2>
           <div>
             { friendrequests ? (
@@ -251,61 +259,71 @@ function AddPeople() {
             ) }
           </div>
         </div>
-        <input
-          type="text"
-          style={ {
-            width: "100%",
-            backgroundColor: "var(--dark-bg-colour)",
-            padding: "5px",
-            borderRadius: "20px",
-            border: "solid 1px var(--light-bg-colour)",
-            color: "white",
-          } }
-          placeholder={ "search users" }
-          onKeyUp={ (e: any) => {
-            setsearch(e.target.value.trim());
-          } }
-        ></input>
-        <div>
-          { data && search ? (
-            data.resp ? (
-              data.data.length > 0 ? (
-                <div>
-                  <p style={ { textAlign: "end" } }>
-                    { data.data.length } result{ data.data.length === 1 ? "" : "s" }{ " " }
-                    found!
-                  </p>
-                  { data.data.map(
-                    (
-                      value: {
-                        profilePic: string;
-                        username: string;
-                        id: string;
-                        tag: string;
-                        backgroundImage: string | null;
-                        [key: string]: any;
-                      },
-                      index: number
-                    ) => (
-                      <UserListing
-                        user={ value }
-                        setloading={ setloading }
-                        key={ value.id }
-                      />
-                    )
-                  ) }
-                </div>
+        <div style={ {
+          maxWidth: "500px",
+          textAlign: "center",
+          margin: "1rem auto",
+          border: "solid 1px var(--light-bg-colour)",
+          padding: "1rem",
+          borderRadius: "10px",
+        } }>
+          <h2>Search Users</h2>
+          <input
+            type="text"
+            style={ {
+              width: "100%",
+              backgroundColor: "var(--dark-bg-colour)",
+              padding: "5px",
+              borderRadius: "20px",
+              border: "solid 1px var(--light-bg-colour)",
+              color: "white",
+            } }
+            placeholder={ "search users" }
+            onKeyUp={ (e: any) => {
+              setsearch(e.target.value.trim());
+            } }
+          ></input>
+          <div>
+            { data && search ? (
+              data.resp ? (
+                data.data.length > 0 ? (
+                  <div>
+                    <p style={ { textAlign: "end" } }>
+                      { data.data.length } result{ data.data.length === 1 ? "" : "s" }{ " " }
+                      found!
+                    </p>
+                    { data.data.map(
+                      (
+                        value: {
+                          profilePic: string;
+                          username: string;
+                          id: string;
+                          tag: string;
+                          backgroundImage: string | null;
+                          [key: string]: any;
+                        },
+                        index: number
+                      ) => (
+                        <UserListing
+                          user={ value }
+                          setloading={ setloading }
+                          key={ value.id }
+                        />
+                      )
+                    ) }
+                  </div>
+                ) : (
+                  <p>No Results Found!</p>
+                )
               ) : (
-                <p>No Results Found!</p>
+                <p style={ { color: "red", textAlign: "center" } }>{ data.err }</p>
               )
             ) : (
-              <p style={ { color: "red", textAlign: "center" } }>{ data.err }</p>
-            )
-          ) : (
-            <p style={ { textAlign: "center" } }>
-              type someones username and tag
-            </p>
-          ) }
+              <p style={ { textAlign: "center" } }>
+                type someones username and tag
+              </p>
+            ) }
+          </div>
         </div>
       </div>
     </div>

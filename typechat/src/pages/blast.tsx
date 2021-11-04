@@ -22,6 +22,7 @@ import { useData } from "../hooks/datahook";
 import { PayPalButton } from "react-paypal-button-v2";
 import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import ReactGA from "react-ga4";
+import Loader from "./loader";
 
 function range(size: number, startAt = 0) {
   return [...Array(size).keys()].map((i) => i + startAt);
@@ -227,13 +228,13 @@ function Blast() {
                       </p>
                       <p style={ { fontSize: "15px" } }>
                         ends on the { ends }
-                        { String(ends).endsWith("1")
+                        { ends ? ends < 10 || ends > 20 ? String(ends).endsWith("1")
                           ? "st"
                           : String(ends).endsWith("2")
                             ? "nd"
                             : String(ends).endsWith("1")
                               ? "rd"
-                              : "th" }
+                              : "th" : "th" : "" }
                       </p>
                       <p style={ { fontSize: "10px" } }>
                         (was £{ (data.price / 100).toFixed(2) })
@@ -538,13 +539,13 @@ function Blast() {
                     </p>
                     <p style={ { fontSize: "15px" } }>
                       ends on the { ends }
-                      { ends<10 || ends>20?String(ends).endsWith("1")
+                      { ends ? ends < 10 || ends > 20 ? String(ends).endsWith("1")
                         ? "st"
                         : String(ends).endsWith("2")
                           ? "nd"
                           : String(ends).endsWith("1")
                             ? "rd"
-                            : "th" }
+                            : "th" : "th" : "" }
                     </p>
                     <p style={ { fontSize: "10px" } }>
                       (was £{ (data.price / 100).toFixed(2) })
@@ -663,7 +664,7 @@ function Blast() {
                   options={ {
                     currency: "GBP", "clientId": !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0" : "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg"
                   } }
-                /> : <></> }{ !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? <p style={ { color: "red" } }>dev mode</p> : <></> }</div>
+                /> : <Loader></Loader> }{ !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? <p style={ { color: "red" } }>dev mode</p> : <></> }</div>
             </> :
               <>
                 <FontAwesomeIcon

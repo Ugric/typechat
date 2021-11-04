@@ -16,6 +16,7 @@ import {
   faRocket,
   faUserCog,
   faPhotoVideo,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { Link, useLocation } from "react-router-dom";
@@ -80,6 +81,7 @@ const PageNav = () => {
                         ? "white"
                         : "",
                   } }
+                  title="Chat"
                 >
                   <FontAwesomeIcon icon={ faComment } />
                 </Nav.Link>
@@ -94,6 +96,7 @@ const PageNav = () => {
                   playSound("/sounds/click1.mp3");
                 } }
                 as={ Link }
+                title="Contacts"
                 to="/contacts"
                 style={ {
                   color: location.pathname === "/contacts" ? "white" : "",
@@ -111,6 +114,7 @@ const PageNav = () => {
                 as={ Link }
                 to="/add"
                 style={ { color: location.pathname === "/add" ? "white" : "" } }
+                title="Add People"
               >
                 <FontAwesomeIcon icon={ faPlus } />
               </Nav.Link>

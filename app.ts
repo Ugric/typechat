@@ -125,7 +125,7 @@ function updateFromAccountID(accountID: string) {
     file: { data: BinaryLike; mimetype: string; name: string },
     from?: string
   ) => {
-    const hashed = createHash("sha256").update(file.data).digest("hex");
+    const hashed = createHash("md5").update(file.data).digest("hex");
     const existsindatabase = await db.get(
       "SELECT * FROM images WHERE hash=:hash LIMIT 1",
       { ":hash": hashed }
@@ -223,7 +223,7 @@ function updateFromAccountID(accountID: string) {
   database.db = db;
   await Promise.all([
     db.run(
-      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification, disabled)"
+      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
@@ -263,9 +263,6 @@ function updateFromAccountID(accountID: string) {
   db.run("ALTER TABLE friendsChatMessages ADD amount").catch(() => { });
   db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => { });
   db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => { });
-  db.run("ALTER TABLE accounts ADD disabled DEFAULT false").catch(
-    () => { }
-  );
   db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(
     () => { }
   );
@@ -1500,20 +1497,20 @@ WHERE friends.accountID == :accountID
     app.post(
       "/api/requestnewpassword",
       async (req, res) => {
-          const requestaccount = await db.get(
-            "SELECT * FROM accounts WHERE email=:email",
-            { ":email": req.body.email }
-          );
-          if (requestaccount) {
-            const passwordUpdateID = generate(30);
-            updatepassword[passwordUpdateID] = requestaccount.accountID;
-            PasswordEmail(req.body.email, passwordUpdateID).catch(console.error);
-            setTimeout(() => {
-              if (updatepassword[passwordUpdateID])
-                delete updatepassword[passwordUpdateID];
-            }, 3600000);
-          }
-          console.log(requestaccount)
+        const requestaccount = await db.get(
+          "SELECT * FROM accounts WHERE email=:email",
+          { ":email": req.body.email }
+        );
+        if (requestaccount) {
+          const passwordUpdateID = generate(30);
+          updatepassword[passwordUpdateID] = requestaccount.accountID;
+          PasswordEmail(req.body.email, passwordUpdateID).catch(console.error);
+          setTimeout(() => {
+            if (updatepassword[passwordUpdateID])
+              delete updatepassword[passwordUpdateID];
+          }, 3600000);
+        }
+        console.log(requestaccount)
         return res.send(true);
       }
     );
@@ -1965,7 +1962,6 @@ WHERE friends.accountID == :accountID
         );
         if ((testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) || process.env.NODE_ENV === "development") && accountdata) {
           const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID)
-          request.requestBody({})
           const details = (await PPclient.execute(request))
           console.log(details.result.status + ":", details.result)
           const topromise = []
@@ -2017,7 +2013,7 @@ WHERE friends.accountID == :accountID
           const firstMessage = `Hello ${req.body.uname}#${tag}! The Team hope you will enjoy your time on typechat! If you have any issues, just text us! 💬✅`;
           await Promise.all([
             db.run(
-              "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, joined, discordnotification, emailnotification) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :time, true, true)",
+              "INSERT INTO accounts (accountID, email, username, password, salt, profilePic, tag, joined, discordnotification, emailnotification, disabled) VALUES  (:accountID, :email, :username, :password, :salt, :profilePic, :tag, :time, true, true, false)",
               {
                 ":accountID": accountID,
                 ":email": req.body.email,
@@ -2095,39 +2091,20 @@ WHERE friends.accountID == :accountID
           VerificationEmail(req.body.email, verificationID);
           await snooze(3600000);
           if (toVerify[verificationID]) {
-            const newemail = generate(15) + "@typechat.us.to";
-            const salt = generate(150);
-            const password = hasher(autoaccountdetails.pass + salt);
-            const message = `lol, i did verify my email, my email is now ${newemail} and you already know what the password would be set to lol.`;
             await Promise.all([
-              db.run(
-                `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, time, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :time, false)`,
-                {
-                  ":ID": generate(100),
-                  ":accountID": accountID,
-                  ":toAccountID": defaultaccount.accountID,
-                  ":message": message,
-                  ":time": new Date().getTime(),
-                }
-              ),
+              db.run(`DELETE FROM accounts WHERE accountID = :accountID`, {
+                ":accountID": accountID,
+              }),
               db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
                 ":accountID": accountID,
               }),
-              db.run(
-                `UPDATE accounts
-            SET email = :email, salt = :salt, password = :password
-            WHERE accountID = :accountID;`,
-                {
-                  ":email": newemail,
-                  ":salt": salt,
-                  ":password": password,
-                  ":accountID": accountID,
-                }
-              ),
+              db.run(`DELETE FROM friends WHERE accountID = :accountID and toAccountID = :accountID`, {
+                ":accountID": accountID,
+              }),
             ]);
             sendNotification(defaultaccount.accountID, {
               title: "Not verified lol",
-              message: truncate(message, 25),
+              message: `${req.body.uname}#${tag} was deleted because they didnt verify! ${req.body.email}`,
               to: `/chat/${defaultaccount.accountID}`,
             });
             updateFromAccountID(accountID);

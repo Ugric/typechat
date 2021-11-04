@@ -36,7 +36,7 @@ function TandC() {
                 } }
             >
                 <li>to not use the app for illigal activity</li>
-                <li>keep all users on the app feeling save and secure</li>
+                <li>keep all users on the app feeling safe and secure</li>
                 <li>to report people who break any rules to the offical TypeChat account</li>
             </ul>
         </div>
@@ -63,7 +63,7 @@ function TandC() {
                     margin: "1rem",
                 } }
             >
-                <li>to keep your personal infomation save and secure from hackers</li>
+                <li>to keep your personal infomation safe and secure from hackers</li>
                 <li>to make sure you feel save at all time while using the app</li>
             </ul>
         </div>
