@@ -16,7 +16,6 @@ import {
   faRocket,
   faUserCog,
   faPhotoVideo,
-  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { Link, useLocation } from "react-router-dom";

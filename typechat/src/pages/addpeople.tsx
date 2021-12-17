@@ -7,8 +7,6 @@ import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import Loader from "./loader";
 import { useHistory } from "react-router-dom";
 import { useData } from "../hooks/datahook";
-import QRCode from "qrcode.react";
-import QrReader from "react-qr-reader";
 import Background from "./CustomBackground";
 
 const colorThief = new ColorThief();
@@ -123,7 +121,7 @@ function UserListing({
 
 function AddPeople() {
   const [search, setsearch] = useState("");
-  const { loggedin, user } = useData();
+  const { loggedin } = useData();
   const { data, setData } = useApi<any>(
     search
       ? "/api/searchusers?" + new URLSearchParams({ q: search }).toString()
