@@ -54,8 +54,8 @@
     "asyncScriptTags": true
   },
   "scripts": {
-    "dev": "set NODE_ENV=development&& nodemon app.ts",
-    "pro": "set NODE_ENV=production&& ts-node app.ts"
+    "dev": "NODE_ENV=development nodemon app.ts",
+    "pro": "NODE_ENV=production ts-node app.ts"
   },
   "name": "typechat",
   "description": "![TypeChat info](https://opengraph.githubassets.com/4a135b7bc41f08d2b41d0b550f5135b3ece34526bf69f44066368742ce4a95a2/Ugric/typechat)\r # TypeChat",

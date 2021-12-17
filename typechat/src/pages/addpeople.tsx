@@ -35,7 +35,7 @@ function UserListing({
   const history = useHistory();
   return (
     <div
-      style={ {
+      style={{
         backgroundImage: user.backgroundImage
           ? `url(/files/${user.backgroundImage})`
           : "",
@@ -50,54 +50,54 @@ function UserListing({
         textOverflow: "ellipsis",
         overflow: "hidden",
         whiteSpace: "nowrap",
-      } }
+      }}
     >
       <img
         alt="profile"
         loading="lazy"
-        src={ "/files/" + user.profilePic }
-        style={ {
+        src={"/files/" + user.profilePic}
+        style={{
           maxHeight: "75px",
           maxWidth: "100%",
           height: "auto",
           width: "auto",
           borderRadius: "50%",
-        } }
-        onLoad={ async (e: any) => {
+        }}
+        onLoad={async (e: any) => {
           const resp = colorThief.getColor(e.target);
           setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
-        } }
+        }}
       />
       <span>
         <span
-          style={ {
+          style={{
             color: "white",
             WebkitTextStroke: "1px black",
             fontWeight: "bold",
             fontSize: "20px",
             marginLeft: "5px",
-          } }
+          }}
         >
-          { user.username }
+          {user.username}
           <span
-            style={ {
+            style={{
               color: "lightgray",
               fontWeight: "normal",
-            } }
+            }}
           >
-            #{ user.tag }
+            #{user.tag}
           </span>
         </span>
       </span>
       <div
-        style={ {
+        style={{
           float: "right",
           background: "var(--main-bg-colour)",
           padding: "5px",
           borderRadius: "10px",
           cursor: "pointer",
-        } }
-        onClick={ async () => {
+        }}
+        onClick={async () => {
           setloading(true);
           const formdata = new FormData();
           formdata.append("user", user.id);
@@ -113,9 +113,9 @@ function UserListing({
             history.push(`/contacts`);
           }
           setloading(false);
-        } }
+        }}
       >
-        <FontAwesomeIcon icon={ faUserPlus }></FontAwesomeIcon>
+        <FontAwesomeIcon icon={faUserPlus}></FontAwesomeIcon>
       </div>
     </div>
   );
@@ -150,19 +150,20 @@ function AddPeople() {
     <Loader></Loader>
   ) : (
     <div
-      style={ {
+      style={{
         margin: "1rem",
-      } }
-    ><Background />
+      }}
+    >
+      <Background />
       <div
-        style={ {
+        style={{
           margin: "auto",
           border: "solid 1px var(--light-bg-colour)",
           borderRadius: "10px",
           backgroundColor: "var(--dark-bg-colour)",
           padding: "1rem",
           maxWidth: "700px",
-        } }
+        }}
       >
         {/*
         <h1 style={ { textAlign: "center" } }>Add</h1>
@@ -210,25 +211,27 @@ function AddPeople() {
             style={ { width: "100%" } }
           />
           </div>*/}
-        <div style={ {
-          maxWidth: "500px",
-          textAlign: "center",
-          margin: "1rem auto",
-          border: "solid 1px var(--light-bg-colour)",
-          padding: "1rem",
-          borderRadius: "10px",
-        } }>
+        <div
+          style={{
+            maxWidth: "500px",
+            textAlign: "center",
+            margin: "1rem auto",
+            border: "solid 1px var(--light-bg-colour)",
+            padding: "1rem",
+            borderRadius: "10px",
+          }}
+        >
           <h2>Friend Requests</h2>
           <div>
-            { friendrequests ? (
+            {friendrequests ? (
               friendrequests.resp ? (
                 friendrequests.friendrequests.length > 0 ? (
                   <div>
-                    <p style={ { textAlign: "end" } }>
-                      { friendrequests.friendrequests.length } friend request
-                      { friendrequests.friendrequests.length === 1 ? "" : "s" }
+                    <p style={{ textAlign: "end" }}>
+                      {friendrequests.friendrequests.length} friend request
+                      {friendrequests.friendrequests.length === 1 ? "" : "s"}
                     </p>
-                    { friendrequests.friendrequests.map(
+                    {friendrequests.friendrequests.map(
                       (
                         value: {
                           profilePic: string;
@@ -241,58 +244,62 @@ function AddPeople() {
                         index: number
                       ) => (
                         <UserListing
-                          user={ value }
-                          setloading={ setloading }
-                          key={ value.id }
+                          user={value}
+                          setloading={setloading}
+                          key={value.id}
                         />
                       )
-                    ) }
+                    )}
                   </div>
                 ) : (
                   <p>You have no friend requests!</p>
                 )
               ) : (
-                <p style={ { color: "red", textAlign: "center" } }>An Error Occured</p>
+                <p style={{ color: "red", textAlign: "center" }}>
+                  An Error Occured
+                </p>
               )
             ) : (
-              <p style={ { textAlign: "center" } }>loading...</p>
-            ) }
+              <p style={{ textAlign: "center" }}>loading...</p>
+            )}
           </div>
         </div>
-        <div style={ {
-          maxWidth: "500px",
-          textAlign: "center",
-          margin: "1rem auto",
-          border: "solid 1px var(--light-bg-colour)",
-          padding: "1rem",
-          borderRadius: "10px",
-        } }>
+        <div
+          style={{
+            maxWidth: "500px",
+            textAlign: "center",
+            margin: "1rem auto",
+            border: "solid 1px var(--light-bg-colour)",
+            padding: "1rem",
+            borderRadius: "10px",
+          }}
+        >
           <h2>Search Users</h2>
           <input
             type="text"
-            style={ {
+            style={{
               width: "100%",
               backgroundColor: "var(--dark-bg-colour)",
               padding: "5px",
               borderRadius: "20px",
               border: "solid 1px var(--light-bg-colour)",
               color: "white",
-            } }
-            placeholder={ "search users" }
-            onKeyUp={ (e: any) => {
+            }}
+            placeholder={"search users"}
+            onKeyUp={(e: any) => {
               setsearch(e.target.value.trim());
-            } }
+            }}
           ></input>
           <div>
-            { data && search ? (
+            {data && search ? (
               data.resp ? (
                 data.data.length > 0 ? (
                   <div>
-                    <p style={ { textAlign: "end" } }>
-                      { data.data.length } result{ data.data.length === 1 ? "" : "s" }{ " " }
-                      found!
+                    <p style={{ textAlign: "end" }}>
+                      {data.data.length} result
+                      {data.data.length === 1 ? "" : "s"} found!
                     </p>
-                    { data.data.map(
+                    {data.data.map(
                       (
                         value: {
                           profilePic: string;
@@ -305,24 +312,24 @@ function AddPeople() {
                         index: number
                       ) => (
                         <UserListing
-                          user={ value }
-                          setloading={ setloading }
-                          key={ value.id }
+                          user={value}
+                          setloading={setloading}
+                          key={value.id}
                         />
                       )
-                    ) }
+                    )}
                   </div>
                 ) : (
                   <p>No Results Found!</p>
                 )
               ) : (
-                <p style={ { color: "red", textAlign: "center" } }>{ data.err }</p>
+                <p style={{ color: "red", textAlign: "center" }}>{data.err}</p>
               )
             ) : (
-              <p style={ { textAlign: "center" } }>
+              <p style={{ textAlign: "center" }}>
                 type someones username and tag
               </p>
-            ) }
+            )}
           </div>
         </div>
       </div>

@@ -12,23 +12,23 @@ function Error404() {
   }, []);
   return (
     <div
-      style={ {
+      style={{
         position: "absolute",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
         textAlign: "center",
         color: "gray",
-      } }
+      }}
     >
-      <div style={ { fontSize: "50px" } }>
-        <FontAwesomeIcon icon={ faFileCode } />
+      <div style={{ fontSize: "50px" }}>
+        <FontAwesomeIcon icon={faFileCode} />
       </div>
       <h1>Page Not Found!</h1>
       <p>
-        go to the{ " " }
+        go to the{" "}
         <span>
-          <Link to="/" style={ { color: "var(--secondary-text-colour)" } }>
+          <Link to="/" style={{ color: "var(--secondary-text-colour)" }}>
             Home Page
           </Link>
           !

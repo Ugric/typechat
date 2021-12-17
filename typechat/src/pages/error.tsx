@@ -18,24 +18,24 @@ function LoadError({ error }: { error: String }) {
   }, []);
   return (
     <div
-      style={ {
+      style={{
         position: "absolute",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
         textAlign: "center",
         color: "red",
-      } }
+      }}
     >
-      <div style={ { fontSize: "50px" } }>
-        <FontAwesomeIcon icon={ faExclamationTriangle } />
+      <div style={{ fontSize: "50px" }}>
+        <FontAwesomeIcon icon={faExclamationTriangle} />
       </div>
       <h1>ERROR</h1>
-      <p>{ error }</p>
+      <p>{error}</p>
       <p>
-        go to the{ " " }
+        go to the{" "}
         <span>
-          <Link to="/" style={ { color: "var(--secondary-text-colour)" } }>
+          <Link to="/" style={{ color: "var(--secondary-text-colour)" }}>
             Home Page
           </Link>
           !

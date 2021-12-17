@@ -42,12 +42,12 @@ import Drive from "./pages/Drive";
 import RequestNewPassword from "./pages/requestNewPassword";
 import Blast from "./pages/blast";
 import ReactGA from "react-ga4";
-import LogRocket from 'logrocket';
+import LogRocket from "logrocket";
 import TandC from "./pages/T&C";
-LogRocket.init('b1hvjh/typechat');
+LogRocket.init("b1hvjh/typechat");
 
-if (!(!process.env.NODE_ENV || process.env.NODE_ENV === 'development')) ReactGA.initialize("G-26D01FTK1T");
-
+if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development"))
+  ReactGA.initialize("G-26D01FTK1T");
 
 if (!JSON.parse(String(localStorage.getItem("tabCount")))) {
   localStorage.setItem("tabCount", JSON.stringify(0));
@@ -117,10 +117,10 @@ function App() {
   useEffect(() => {
     if (userdata?.loggedin) {
       LogRocket.identify(userdata.user.id, {
-        name: `${userdata.user.username}#${userdata.user.tag}`
+        name: `${userdata.user.username}#${userdata.user.tag}`,
       });
     }
-  }, [userdata])
+  }, [userdata]);
   function NotificationAPI(
     options: ReactNotificationOptions,
     onclick: () => {}
@@ -138,16 +138,16 @@ function App() {
   return (
     <GoogleReCaptchaProvider reCaptchaKey="6LcHJdYcAAAAAHmOyGZbVAVkLNdeG0Pe2Rl3RVDV">
       <Router>
-        <div style={ { overflowWrap: "anywhere" } }>
-          { error || loading ? (
+        <div style={{ overflowWrap: "anywhere" }}>
+          {error || loading ? (
             error ? (
-              <LoadError error={ String(error) }></LoadError>
+              <LoadError error={String(error)}></LoadError>
             ) : (
               <Loader></Loader>
             )
           ) : (
             <datahook.Provider
-              value={ {
+              value={{
                 loggedin: userdata.loggedin,
                 user: userdata.user,
                 rechecklogged: reload,
@@ -159,7 +159,7 @@ function App() {
                 catchedcontacts,
                 setcachedcontacts,
                 NotificationAPI,
-              } }
+              }}
             >
               <PageNav />
               <ReactNotification />
@@ -170,13 +170,13 @@ function App() {
                     <Home />
                   </Route>
                   <Route path="/chat" exact>
-                    <Redirect to={ chattingto ? `/chat/${chattingto}` : "/" } />
+                    <Redirect to={chattingto ? `/chat/${chattingto}` : "/"} />
                   </Route>
                   <Route
                     path="/chat/:id"
-                    render={ ({ match }) => (
-                      <Chat key={ match.params.id } isGroupChat={ false } />
-                    ) }
+                    render={({ match }) => (
+                      <Chat isGroupChat={false} chattingto={match.params.id} />
+                    )}
                     exact
                   ></Route>
                   <Route path="/contacts" exact>
@@ -228,7 +228,7 @@ function App() {
                 </Switch>
               </div>
             </datahook.Provider>
-          ) }
+          )}
         </div>
       </Router>
     </GoogleReCaptchaProvider>
