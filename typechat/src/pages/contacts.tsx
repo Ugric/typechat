@@ -21,16 +21,10 @@ import SwiperCore, {
   Mousewheel,
   Virtual,
   EffectCoverflow,
-  Scrollbar,
+  Navigation
 } from "swiper";
 
-SwiperCore.use([
-  Pagination,
-  Mousewheel,
-  Virtual,
-  EffectCoverflow,
-  Scrollbar,
-]);
+SwiperCore.use([Pagination, Mousewheel, Virtual, EffectCoverflow, Navigation]);
 
 const colorThief = new ColorThief();
 
@@ -326,7 +320,8 @@ function SwiperPages() {
     <>
       <Swiper
         effect={"coverflow"}
-        scrollbar={{ draggable: true, hide: false, snapOnRelease: true }}
+        navigation
+        pagination
         direction="horizontal"
         mousewheel={{
           forceToAxis: true,
