@@ -2114,7 +2114,7 @@ WHERE friends.accountID == :accountID
       }
     });
     if (!(process.env.NODE_ENV === "development")) {
-      app.use(forceDomain({ hostname: "tchat.us.to" }));
+      app.use(forceDomain({ hostname: "typechat.world" }));
     }
     app.get("/logo.png", (_, res) =>
       res.sendFile(path.join(__dirname, "logo.png"))
