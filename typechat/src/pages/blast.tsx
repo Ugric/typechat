@@ -24,6 +24,22 @@ import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import ReactGA from "react-ga4";
 import Loader from "./loader";
 
+// make a function that takes in the day of the month and adds 'th' or 'st' or 'nd' or 'rd' to it
+function ordinal_suffix_of(i: number) {
+  var j = i % 10,
+    k = i % 100;
+  if (j == 1 && k != 11) {
+    return i + "st";
+  }
+  if (j == 2 && k != 12) {
+    return i + 'nd'
+  }
+  if (j == 3 && k != 13) {
+    return i + 'rd'
+  }
+  return i + 'th'
+}
+
 function range(size: number, startAt = 0) {
   return [...Array(size).keys()].map((i) => i + startAt);
 }
@@ -226,18 +242,7 @@ function Blast() {
                         />
                       </p>
                       <p style={{ fontSize: "15px" }}>
-                        ends on the {ends}
-                        {ends
-                          ? ends < 10 || ends > 20
-                            ? String(ends).endsWith("1")
-                              ? "st"
-                              : String(ends).endsWith("2")
-                              ? "nd"
-                              : String(ends).endsWith("1")
-                              ? "rd"
-                              : "th"
-                            : "th"
-                          : ""}
+                        ends on the {ordinal_suffix_of(Number(ends))}
                       </p>
                       <p style={{ fontSize: "10px" }}>
                         (was £{(data.price / 100).toFixed(2)})
@@ -575,18 +580,7 @@ function Blast() {
                         />
                       </p>
                       <p style={{ fontSize: "15px" }}>
-                        ends on the {ends}
-                        {ends
-                          ? ends < 10 || ends > 20
-                            ? String(ends).endsWith("1")
-                              ? "st"
-                              : String(ends).endsWith("2")
-                              ? "nd"
-                              : String(ends).endsWith("1")
-                              ? "rd"
-                              : "th"
-                            : "th"
-                          : ""}
+                        ends on the {ordinal_suffix_of(Number(ends))}
                       </p>
                       <p style={{ fontSize: "10px" }}>
                         (was £{(data.price / 100).toFixed(2)})
