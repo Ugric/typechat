@@ -1365,6 +1365,7 @@ WHERE friends.accountID == :accountID
     (SELECT time FROM friendsChatMessages WHERE (friendsChatMessages.accountID == :accountID and friendsChatMessages.toAccountID == friends.toAccountID) or (friendsChatMessages.accountID == friends.toAccountID and friendsChatMessages.toAccountID == :accountID) ORDER BY time DESC LIMIT 1) DESC`,
           { ":accountID": accountdata.accountID }
         );
+        
         for (const contact of contacts) {
           contact.badges = await getBadgesFromAccountID(contact.id);
         }
