@@ -1361,9 +1361,11 @@ SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage, (SE
 FROM friends 
 JOIN accounts ON friends.toAccountID=accounts.accountID
 WHERE friends.accountID == :accountID
-    and toAccountID in friendrequestlist`,
+    and toAccountID in friendrequestlist ORDER BY
+    (SELECT time FROM friendsChatMessages WHERE (friendsChatMessages.accountID == :accountID and friendsChatMessages.toAccountID == friends.toAccountID) or (friendsChatMessages.accountID == friends.toAccountID and friendsChatMessages.toAccountID == :accountID) ORDER BY time DESC LIMIT 1) DESC`,
           { ":accountID": accountdata.accountID }
         );
+        
         for (const contact of contacts) {
           contact.badges = await getBadgesFromAccountID(contact.id);
         }
