@@ -24,7 +24,13 @@ import SwiperCore, {
   Scrollbar,
 } from "swiper";
 
-SwiperCore.use([Pagination, Mousewheel, Virtual, EffectCoverflow, Scrollbar]);
+SwiperCore.use([
+  Pagination,
+  Mousewheel,
+  Virtual,
+  EffectCoverflow,
+  Scrollbar,
+]);
 
 const colorThief = new ColorThief();
 
@@ -200,6 +206,10 @@ function Contacts() {
     "contacts",
     undefined
   );
+  const contactsRef = useRef<any>();
+  const elDistanceToTop = contactsRef.current
+    ? window.pageYOffset + contactsRef.current.getBoundingClientRect().top
+    : 0;
   useEffect(() => {
     document.documentElement.scrollTop = 0;
   }, []);
@@ -209,17 +219,6 @@ function Contacts() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
-
-  useEffect(() => {
-    ReactGA.event({
-      category: "contacts",
-      action: "open contacts",
-    });
-    document.title = `Contacts - TypeChat`;
-    return () => {
-      document.title = "TypeChat";
-    };
-  }, []);
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
   }
@@ -261,22 +260,141 @@ function Contacts() {
                     borderRadius: "20px",
                     border: "solid 1px var(--light-bg-colour)",
                     color: "white",
-                    marginBottom: "1rem",
                   }}
                   placeholder={"search contacts"}
                   onKeyUp={(e: any) => {
                     setsearch(e.target.value.trim());
                   }}
                 ></input>
-                {(data ? data.contacts : localcontacts).map((contact: any) =>
-                  (contact.username + "#" + contact.tag)
-                    .toUpperCase()
-                    .includes(search.toUpperCase()) ? (
-                    <Contact key={contact.id} user={contact}></Contact>
-                  ) : (
-                    <></>
-                  )
-                )}
+                <div
+                  ref={contactsRef}
+                  style={{
+                    maxHeight: "calc(100vh - " + elDistanceToTop + "px)",
+                    padding: "1rem",
+                    overflowY: "auto",
+                  }}
+                >
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                  {(data ? data.contacts : localcontacts).map(
+                    (contact: any, i: number) =>
+                      (contact.username + "#" + contact.tag)
+                        .toUpperCase()
+                        .includes(search.toUpperCase()) ? (
+                        <Contact user={contact} key={contact.id}></Contact>
+                      ) : (
+                        <></>
+                      )
+                  )}
+                </div>
               </>
             ) : (
               <p style={{ textAlign: "center" }}>
@@ -303,13 +421,22 @@ function Contacts() {
 
 function SwiperPages() {
   const { navbarsize } = useData();
-  const [contactsKey, setcontactsKey] = useState(0);
-  console.log(navbarsize);
+  const [contactsShow, setcontactsShow] = useState(true);
+  useEffect(() => {
+    ReactGA.event({
+      category: "contacts",
+      action: "open contacts",
+    });
+    document.title = `Contacts - TypeChat`;
+    return () => {
+      document.title = "TypeChat";
+    };
+  }, []);
   return (
     <>
       <Swiper
         effect={"coverflow"}
-        scrollbar={{ draggable: true, hide: false }}
+        scrollbar={{ draggable: true, hide: false, snapOnRelease: true }}
         direction="horizontal"
         mousewheel={{
           forceToAxis: true,
@@ -322,18 +449,24 @@ function SwiperPages() {
           slideShadows: false,
         }}
         virtual
-        style={{ minHeight: `calc(100vh - ${navbarsize.height}px` }}
-        onActiveIndexChange={(e) => {
-          if (e.activeIndex === 0) {
-            setcontactsKey(contactsKey + 1);
+        style={{
+          height: `calc(100vh - ${navbarsize.height}px)`,
+          overflow: "hidden",
+        }}
+        onSlideChangeTransitionEnd={(e) => {
+          if (e.activeIndex !== 0) {
+            setcontactsShow(false);
           }
+        }}
+        onSlideChangeTransitionStart={()=>{
+          setcontactsShow(true);
         }}
       >
         <SwiperSlide virtualIndex={0}>
-          <Contacts key={contactsKey} />
+          {contactsShow? <Contacts />: <></>}
         </SwiperSlide>
         <SwiperSlide virtualIndex={1}>
-          <Groups key={contactsKey} />
+          <Groups />
         </SwiperSlide>
       </Swiper>
     </>

@@ -2,7 +2,6 @@ import {
   faDownload,
   faPhotoVideo,
   faPlus,
-  faTrash,
   faShare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -276,7 +275,7 @@ function Image() {
     return () => {
       document.title = "TypeChat";
     };
-  }, [data]);
+  }, [data, id]);
   return data ? (
     <div style={{ margin: "1rem" }}>
       <div

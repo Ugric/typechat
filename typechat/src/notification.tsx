@@ -27,6 +27,7 @@ function NotificationComponent() {
   }, [isFocussed]);
   useEffect(() => {
     sendJsonMessage({ type: "setFocus", focus: isVisable });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisable])
   useEffect(() => {
     if (lastJsonMessage) {

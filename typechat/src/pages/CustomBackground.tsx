@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { useData } from "../hooks/datahook";
 
 function Background() {
