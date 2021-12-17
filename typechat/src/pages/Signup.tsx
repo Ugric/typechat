@@ -46,34 +46,33 @@ function Signup() {
   }
   return (
     <>
-      <div style={ { display: loading ? "" : "none" } }>
+      <div style={{ display: loading ? "" : "none" }}>
         <Loader></Loader>
       </div>
       <div
-        style={ {
+        style={{
           margin: "5rem 0",
           textAlign: "center",
           display: !loading ? "" : "none",
-        } }
+        }}
       >
         <img
-          src={ logo }
+          src={logo}
           alt="logo"
-          style={ { width: "150px", borderRadius: "10px" } }
+          style={{ width: "150px", borderRadius: "10px" }}
         ></img>
         <h1
-          style={ {
+          style={{
             fontSize: "20px",
             fontFamily: "'Source Sans Pro', sans-serif",
-          } }
+          }}
         >
-          <FontAwesomeIcon icon={ faAddressCard }></FontAwesomeIcon> Sign Up
+          <FontAwesomeIcon icon={faAddressCard}></FontAwesomeIcon> Sign Up
         </h1>
-        <div
-          data-private>
+        <div data-private>
           <RouterForm
-            action={ "/signup" }
-            beforecallback={ (e: any) => {
+            action={"/signup"}
+            beforecallback={(e: any) => {
               if (recapToken) {
                 if (
                   e.target[0].value !== "" &&
@@ -93,14 +92,14 @@ function Signup() {
               } else {
                 seterror("waiting for recaptcha token... try again later.");
               }
-            } }
-            appendtoformdata={ (fd: FormData) => {
+            }}
+            appendtoformdata={(fd: FormData) => {
               if (recapToken) fd.append("g-recaptcha-response", recapToken);
               fd.append("profile", profile ? profile : "");
               return fd;
-            } }
-            style={ { width: "fit-content", margin: "auto", maxWidth: "300px" } }
-            callback={ (resp: any) => {
+            }}
+            style={{ width: "fit-content", margin: "auto", maxWidth: "300px" }}
+            callback={(resp: any) => {
               if (resp.resp) {
                 cookies.set("token", resp.token, {
                   path: "/",
@@ -111,52 +110,52 @@ function Signup() {
                 setloading(false);
                 seterror(resp.err);
               }
-            } }
+            }}
           >
             <GoogleReCaptcha
-              onVerify={ (token) => {
+              onVerify={(token) => {
                 setRecapToken(token);
-              } }
-            />{ " " }
+              }}
+            />{" "}
             <p
-              style={ {
+              style={{
                 textAlign: "end",
                 margin: "0",
-              } }
+              }}
             >
               profile
             </p>
             <Avatar
-              width={ 300 }
-              height={ 0 }
-              imageWidth={ 300 }
-              onCrop={ (dataURL) => {
+              width={300}
+              height={0}
+              imageWidth={300}
+              onCrop={(dataURL) => {
                 fetch(dataURL).then((fetched) =>
                   fetched.blob().then((blob) => setprofile(blob))
                 );
-              } }
-              labelStyle={ { color: "white" } }
-              onClose={ () => {
+              }}
+              labelStyle={{ color: "white" }}
+              onClose={() => {
                 setprofile(null);
-              } }
+              }}
               exportMimeType="image/jpeg"
-              exportSize={ 500 }
-              exportQuality={ 0.75 }
+              exportSize={500}
+              exportQuality={0.75}
               exportAsSquare
-            />{ " " }
+            />{" "}
             <p
-              style={ {
+              style={{
                 textAlign: "end",
                 margin: "0",
-              } }
+              }}
             >
               Email
-            </p>{ " " }
+            </p>{" "}
             <input
               type="email"
               placeholder="Email"
               name="email"
-              style={ {
+              style={{
                 background: "transparent",
                 borderTop: "none",
                 borderRight: "none",
@@ -170,22 +169,22 @@ function Signup() {
                 fontSize: "17px",
                 color: "white",
                 borderRadius: "0px",
-              } }
+              }}
               autoComplete="new-password"
             />
             <p
-              style={ {
+              style={{
                 textAlign: "end",
                 margin: "0",
-              } }
+              }}
             >
               Username
-            </p>{ " " }
+            </p>{" "}
             <input
               type="text"
               placeholder="Username"
               name="uname"
-              style={ {
+              style={{
                 background: "transparent",
                 borderTop: "none",
                 borderRight: "none",
@@ -199,14 +198,14 @@ function Signup() {
                 fontSize: "17px",
                 color: "white",
                 borderRadius: "0px",
-              } }
+              }}
               autoComplete="new-password"
-            />{ " " }
+            />{" "}
             <p
-              style={ {
+              style={{
                 textAlign: "end",
                 margin: "0",
-              } }
+              }}
             >
               Password
             </p>
@@ -214,7 +213,7 @@ function Signup() {
               type="password"
               placeholder="Password"
               name="pass"
-              style={ {
+              style={{
                 background: "transparent",
                 borderTop: "none",
                 borderRight: "none",
@@ -228,17 +227,24 @@ function Signup() {
                 fontSize: "17px",
                 color: "white",
                 borderRadius: "0px",
-              } }
+              }}
               autoComplete="new-password"
             />
-            <p style={ {
-              fontSize: "13px",
-              marginBottom: "1rem !important",
-            } }>By creating an account, you agree to the <a href="/t&c" target="blank_">T & C's</a></p>
+            <p
+              style={{
+                fontSize: "13px",
+                marginBottom: "1rem !important",
+              }}
+            >
+              By creating an account, you agree to the{" "}
+              <a href="/t&c" target="blank_">
+                T & C's
+              </a>
+            </p>
             <input
               type="submit"
               value="Sign up"
-              style={ {
+              style={{
                 padding: "1rem",
                 width: "100%",
                 border: "none",
@@ -249,15 +255,15 @@ function Signup() {
                 fontFamily: '"Source Sans Pro", sans-serif',
                 fontSize: "20px",
                 boxShadow: "rgb(0, 0, 0) 0px 6px 5px 0px",
-              } }
+              }}
             />
-            <p style={ { margin: "1rem 0", color: "red" } }>{ error }</p>
-            <p style={ { margin: "1rem 0", color: "white" } }>
-              already have an account?{ " " }
+            <p style={{ margin: "1rem 0", color: "red" }}>{error}</p>
+            <p style={{ margin: "1rem 0", color: "white" }}>
+              already have an account?{" "}
               <span>
                 <Link
-                  to={ "/login" + location.search }
-                  style={ { color: "var(--secondary-text-colour)" } }
+                  to={"/login" + location.search}
+                  style={{ color: "var(--secondary-text-colour)" }}
                 >
                   Login
                 </Link>

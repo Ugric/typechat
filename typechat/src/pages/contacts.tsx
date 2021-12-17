@@ -12,8 +12,19 @@ import ProfilePage from "./profilePage";
 import playSound from "../playsound";
 import useLocalStorage from "../hooks/useLocalStorage";
 import Badge from "./badges";
-import Background from "./CustomBackground";
 import ReactGA from "react-ga4";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/swiper-bundle.min.css";
+import "swiper/swiper.min.css";
+import SwiperCore, {
+  Pagination,
+  Mousewheel,
+  Virtual,
+  EffectCoverflow,
+  Scrollbar,
+} from "swiper";
+
+SwiperCore.use([Pagination, Mousewheel, Virtual, EffectCoverflow, Scrollbar]);
 
 const colorThief = new ColorThief();
 
@@ -44,28 +55,28 @@ function Contact({
     <>
       <div
         data-private
-        onPointerDown={ (e: any) => {
+        onPointerDown={(e: any) => {
           holdref.current = setTimeout(() => {
             holdref.current = undefined;
             playSound("/sounds/click1.mp3");
             setUserModelIsOpen(true);
           }, 500);
           playSound("/sounds/click2.mp3");
-        } }
-        onTouchMove={ () => {
+        }}
+        onTouchMove={() => {
           if (holdref.current) {
             clearInterval(holdref.current);
             holdref.current = undefined;
           }
-        } }
-        onClick={ () => {
+        }}
+        onClick={() => {
           if (holdref.current) {
             clearInterval(holdref.current);
             playSound("/sounds/click1.mp3");
             history.push(`/chat/${user.id}`);
           }
-        } }
-        style={ {
+        }}
+        style={{
           backgroundImage: user.backgroundImage
             ? `url(/files/${user.backgroundImage})`
             : "",
@@ -82,50 +93,53 @@ function Contact({
           cursor: "pointer",
 
           minHeight: "82px",
-        } }
-        className={ "contactbutton noselect" }
+        }}
+        className={"contactbutton noselect"}
       >
-        <div style={ {
-          display: "flex",
-          alignItems: "center",
-          flexWrap: "wrap",
-          flexDirection: "row"
-        } }>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            flexDirection: "row",
+          }}
+        >
           <img
             alt="profile"
             loading="lazy"
-            src={ "/files/" + user.profilePic }
-            style={ {
+            src={"/files/" + user.profilePic}
+            style={{
               maxHeight: "50px",
               maxWidth: "100%",
               height: "auto",
               width: "auto",
               borderRadius: "50%",
-            } }
-            onLoad={ (e: any) => {
+            }}
+            onLoad={(e: any) => {
               const resp = colorThief.getColor(e.target);
               setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });
-            } }
+            }}
           />
           <span
-            style={ {
+            style={{
               color: "white",
               WebkitTextStroke: "1px black",
               fontWeight: "bold",
               fontSize: "20px",
               marginLeft: "5px",
-            } }
+            }}
           >
-            { user.username }
-          </span></div>
-        <Badge badges={ user.badges } side="flex-end" size="25px"></Badge>
+            {user.username}
+          </span>
+        </div>
+        <Badge badges={user.badges} side="flex-end" size="25px"></Badge>
       </div>
       <Modal
-        isOpen={ UserModelIsOpen }
-        onRequestClose={ () => {
+        isOpen={UserModelIsOpen}
+        onRequestClose={() => {
           setUserModelIsOpen(false);
-        } }
-        style={ {
+        }}
+        style={{
           overlay: {
             backgroundColor: "rgb(18 18 18 / 50%)",
             zIndex: 10,
@@ -146,12 +160,35 @@ function Contact({
 
             maxHeight: "500px",
           },
-        } }
+        }}
         contentLabel="Username Change"
       >
-        <ProfilePage user={ user }></ProfilePage>
+        <ProfilePage user={user}></ProfilePage>
       </Modal>
     </>
+  );
+}
+
+function Groups() {
+  return (
+    <div
+      style={{
+        margin: "1rem 0",
+      }}
+    >
+      <div
+        style={{
+          margin: "auto",
+          borderRadius: "10px",
+          padding: "1rem",
+          maxWidth: "700px",
+        }}
+      >
+        <h1 style={{ textAlign: "center", WebkitTextStroke: "1px black" }}>
+          Groups coming soon!
+        </h1>
+      </div>
+    </div>
   );
 }
 
@@ -174,10 +211,9 @@ function Contacts() {
   }, [data]);
 
   useEffect(() => {
-
     ReactGA.event({
       category: "contacts",
-      action: "open contacts"
+      action: "open contacts",
     });
     document.title = `Contacts - TypeChat`;
     return () => {
@@ -189,34 +225,36 @@ function Contacts() {
   }
   return (loading || error) && !localcontacts ? (
     error ? (
-      <LoadError error={ String(error) }></LoadError>
+      <LoadError error={String(error)}></LoadError>
     ) : (
       <Loader></Loader>
     )
   ) : (
     <div
-      style={ {
+      style={{
         margin: "1rem 0",
-      } }
-    ><Background />
+      }}
+    >
       <div
-        style={ {
+        style={{
           margin: "auto",
           borderRadius: "10px",
           padding: "1rem",
           maxWidth: "700px",
-        } }
+        }}
       >
-        <h1 style={ { textAlign: "center", WebkitTextStroke: "1px black" } }>Contacts</h1>
+        <h1 style={{ textAlign: "center", WebkitTextStroke: "1px black" }}>
+          Contacts
+        </h1>
         <div>
-          { localcontacts || data.resp ? (
+          {localcontacts || data.resp ? (
             (data && data.contacts.length > 0) ||
-              (localcontacts && localcontacts.length > 0) ? (
+            (localcontacts && localcontacts.length > 0) ? (
               <>
                 <input
                   data-private
                   type="text"
-                  style={ {
+                  style={{
                     width: "100%",
                     backgroundColor: "var(--dark-bg-colour)",
                     padding: "5px",
@@ -224,43 +262,82 @@ function Contacts() {
                     border: "solid 1px var(--light-bg-colour)",
                     color: "white",
                     marginBottom: "1rem",
-                  } }
-                  placeholder={ "search contacts" }
-                  onKeyUp={ (e: any) => {
+                  }}
+                  placeholder={"search contacts"}
+                  onKeyUp={(e: any) => {
                     setsearch(e.target.value.trim());
-                  } }
+                  }}
                 ></input>
-                { (data ? data.contacts : localcontacts).map((contact: any) =>
+                {(data ? data.contacts : localcontacts).map((contact: any) =>
                   (contact.username + "#" + contact.tag)
                     .toUpperCase()
                     .includes(search.toUpperCase()) ? (
-                    <Contact key={ contact.id } user={ contact }></Contact>
+                    <Contact key={contact.id} user={contact}></Contact>
                   ) : (
                     <></>
                   )
-                ) }
+                )}
               </>
             ) : (
-              <p style={ { textAlign: "center" } }>
-                You have no contacts,{ " " }
+              <p style={{ textAlign: "center" }}>
+                You have no contacts,{" "}
                 <span>
                   <Link
-                    style={ { color: "var(--secondary-text-colour)" } }
+                    style={{ color: "var(--secondary-text-colour)" }}
                     to="/add"
                   >
                     add people
                   </Link>
-                </span>{ " " }
+                </span>{" "}
                 or wait for them to add you back!
               </p>
             )
           ) : (
-            <p style={ { color: "red", textAlign: "center" } }>{ data.err }</p>
-          ) }
+            <p style={{ color: "red", textAlign: "center" }}>{data.err}</p>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export default Contacts;
+function SwiperPages() {
+  const { navbarsize } = useData();
+  const [contactsKey, setcontactsKey] = useState(0);
+  console.log(navbarsize);
+  return (
+    <>
+      <Swiper
+        effect={"coverflow"}
+        scrollbar={{ draggable: true, hide: false }}
+        direction="horizontal"
+        mousewheel={{
+          forceToAxis: true,
+        }}
+        coverflowEffect={{
+          rotate: 50,
+          stretch: 0,
+          depth: 100,
+          modifier: 1,
+          slideShadows: false,
+        }}
+        virtual
+        style={{ minHeight: `calc(100vh - ${navbarsize.height}px` }}
+        onActiveIndexChange={(e) => {
+          if (e.activeIndex === 0) {
+            setcontactsKey(contactsKey + 1);
+          }
+        }}
+      >
+        <SwiperSlide virtualIndex={0}>
+          <Contacts key={contactsKey} />
+        </SwiperSlide>
+        <SwiperSlide virtualIndex={1}>
+          <Groups key={contactsKey} />
+        </SwiperSlide>
+      </Swiper>
+    </>
+  );
+}
+
+export default SwiperPages;

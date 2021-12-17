@@ -1,4 +1,4 @@
-import react from "react"
+import react from "react";
 
 export function RouterForm({
   action,
@@ -16,13 +16,15 @@ export function RouterForm({
   action: string;
   beforecallback: (e: any) => boolean | undefined;
   callback(responce: any): void;
-  children: any; style?: react.CSSProperties;
-  appendtoformdata?(fd: FormData): FormData; onerror?(e: any): void
+  children: any;
+  style?: react.CSSProperties;
+  appendtoformdata?(fd: FormData): FormData;
+  onerror?(e: any): void;
 }): JSX.Element {
   return (
     <form
-      style={ style }
-      onSubmit={ async (e: any) => {
+      style={style}
+      onSubmit={async (e: any) => {
         e.preventDefault();
         if (beforecallback(e)) {
           const fd = new FormData();
@@ -56,9 +58,9 @@ export function RouterForm({
             onerror(e);
           }
         }
-      } }
+      }}
     >
-      { children }
+      {children}
     </form>
   );
 }

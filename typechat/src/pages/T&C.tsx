@@ -64,7 +64,7 @@ function TandC() {
                 } }
             >
                 <li>to keep your personal infomation safe and secure from hackers</li>
-                <li>to make sure you feel save at all time while using the app</li>
+                <li>to make sure you feel safe at all time while using the app</li>
             </ul>
         </div>
         <div

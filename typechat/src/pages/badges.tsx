@@ -25,7 +25,7 @@ const badgestype: {
   desc: string;
   icon: IconDefinition;
   color: string;
-  link?: string
+  link?: string;
 }[] = [
   {
     name: "Beta Tester",
@@ -38,7 +38,7 @@ const badgestype: {
     desc: "WOW, thats a Blast Member!",
     icon: faRocket,
     color: "#5656ff",
-    link: "/blast"
+    link: "/blast",
   },
   {
     name: "brain",
@@ -52,11 +52,29 @@ const badgestype: {
     icon: faBug,
     color: "#9c00a7",
   },
-  { name: "discord", desc: "Discord", icon: faDiscord, color: "#5865f2", link: "/invite" },
+  {
+    name: "discord",
+    desc: "Discord",
+    icon: faDiscord,
+    color: "#5865f2",
+    link: "/invite",
+  },
   { name: "youtube", desc: "Youtube", icon: faYoutube, color: "#FF0000" },
   { name: "twitch", desc: "Twitch", icon: faTwitch, color: "#6441a5" },
-  { name: "python", desc: "Python", icon: faPython, color: "linear-gradient(135deg, #008cff, #ffcc00)", link: "https://www.python.org/" },
-  { name: "nodejs", desc: "Node.js", icon: faNodeJs, color: "#71a752", link: "https://nodejs.org/" },
+  {
+    name: "python",
+    desc: "Python",
+    icon: faPython,
+    color: "linear-gradient(135deg, #008cff, #ffcc00)",
+    link: "https://www.python.org/",
+  },
+  {
+    name: "nodejs",
+    desc: "Node.js",
+    icon: faNodeJs,
+    color: "#71a752",
+    link: "https://nodejs.org/",
+  },
   {
     name: "new",
     desc: "A new user, say hi!",
@@ -87,11 +105,11 @@ const badgestype: {
 function Badge({
   badges,
   side,
-  size
+  size,
 }: {
   badges: { name: string; link?: string }[];
   side?: string;
-  size?: string | number
+  size?: string | number;
 }) {
   const badgerender = useMemo(() => {
     const output = [];
@@ -101,26 +119,32 @@ function Badge({
           if (badge.name === badgetype.name) {
             output.push(
               <abbr
-                key={ badgetype.name }
-                title={ badgetype.desc }
-                style={ {
+                key={badgetype.name}
+                title={badgetype.desc}
+                style={{
                   background: badgetype.color,
                   borderRadius: "5px",
                   margin: "2px",
                   padding: "0px 3px",
                   height: size ? size : "30px",
                   width: size ? size : "30px",
-                  cursor: badge.link || badgetype.link ? "pointer" : undefined
-                } }
-                onClick={ () => badge.link ? window.open(badge.link, "blank_") : badgetype.link ? window.open(badgetype.link, "blank_") : undefined }
+                  cursor: badge.link || badgetype.link ? "pointer" : undefined,
+                }}
+                onClick={() =>
+                  badge.link
+                    ? window.open(badge.link, "blank_")
+                    : badgetype.link
+                    ? window.open(badgetype.link, "blank_")
+                    : undefined
+                }
               >
                 <FontAwesomeIcon
-                  icon={ badgetype.icon }
-                  style={ { width: "100%", height: "100%" } }
+                  icon={badgetype.icon}
+                  style={{ width: "100%", height: "100%" }}
                 />
               </abbr>
             );
-            break
+            break;
           }
         }
       }
@@ -129,13 +153,13 @@ function Badge({
   }, [badges, size]);
   return badgerender.length > 0 ? (
     <div
-      style={ {
+      style={{
         display: "flex",
         flexWrap: "wrap",
         justifyContent: side ? side : "center",
-      } }
+      }}
     >
-      { badgerender }
+      {badgerender}
     </div>
   ) : (
     <></>

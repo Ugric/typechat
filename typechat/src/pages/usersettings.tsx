@@ -106,7 +106,7 @@ function UserSettings() {
             <>
               <p>
                 { humanFileSize(Number(uploadlimitdata?.limitused), true) } /{ " " }
-                { humanFileSize(Number(uploadlimitdata?.filelimit), true, 0) } (
+                { humanFileSize(Number(uploadlimitdata?.filelimit), true) } (
                 { humanFileSize(
                   Number(uploadlimitdata?.filelimit) -
                   Number(uploadlimitdata?.limitused),

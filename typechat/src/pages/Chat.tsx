@@ -50,7 +50,7 @@ import useApi from "../hooks/useapi";
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 import Badge from "./badges";
 import ReactModal from "react-modal";
-import GiftIcon from "./images/gift.svg"
+import GiftIcon from "./images/gift.svg";
 import ReactGA from "react-ga4";
 import useWindowVisable from "../hooks/useWindowVisable";
 
@@ -192,81 +192,81 @@ function MetaPage({
   }>("/api/getmetadata?" + new URLSearchParams({ url: urldata.href }));
   return data ? (
     <div
-      style={ {
+      style={{
         padding: "1rem",
         border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"}`,
         backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
         borderRadius: "10px",
         maxWidth: "350px",
         margin: "auto",
-      } }
+      }}
     >
       <a
-        href={ decoratedHref }
+        href={decoratedHref}
         target="blank"
-        style={ {
+        style={{
           fontSize: "24px",
-        } }
+        }}
       >
         <img
-          alt={ urldata.hostname }
-          style={ {
+          alt={urldata.hostname}
+          style={{
             marginRight: "5px",
             aspectRatio: "1/1",
             height: "100%",
             minHeight: "24px",
-          } }
-          src={ `https://www.google.com/s2/favicons?${new URLSearchParams({
+          }}
+          src={`https://www.google.com/s2/favicons?${new URLSearchParams({
             size: "24",
             domain: urldata.hostname,
-          })}` }
+          })}`}
         />
-        { data.title ? data.title : decoratedText }
+        {data.title ? data.title : decoratedText}
       </a>
-      <p>{ data.description }</p>
-      { data.image.length > 0 ? (
+      <p>{data.description}</p>
+      {data.image.length > 0 ? (
         <img
-          src={ new URL(data.image, url).href }
-          style={ { width: "100%", borderRadius: "10px" } }
-          alt={ data.title ? data.title : decoratedText }
+          src={new URL(data.image, url).href}
+          style={{ width: "100%", borderRadius: "10px" }}
+          alt={data.title ? data.title : decoratedText}
         ></img>
       ) : (
         <></>
-      ) }
+      )}
     </div>
   ) : (
     <div
-      style={ {
+      style={{
         padding: "1rem",
         border: `solid 1px ${mine ? "var(--main-bg-colour)" : "#d0d0d0"}`,
         backgroundColor: mine ? "var(--main-bg-colour)" : "#dadada",
         borderRadius: "10px",
         margin: "5px",
-      } }
+      }}
     >
       <a
-        href={ decoratedHref }
+        href={decoratedHref}
         target="blank"
-        style={ {
+        style={{
           display: "flex",
           justifyContent: "space-between",
           margin: 0,
-        } }
+        }}
       >
         <img
-          alt={ urldata.hostname }
-          style={ {
+          alt={urldata.hostname}
+          style={{
             marginRight: "5px",
             aspectRatio: "1/1",
             height: "100%",
             minHeight: "24px",
-          } }
-          src={ `https://www.google.com/s2/favicons?${new URLSearchParams({
+          }}
+          src={`https://www.google.com/s2/favicons?${new URLSearchParams({
             size: "24",
             domain: urldata.hostname,
-          })}` }
+          })}`}
         />
-        <p style={ { maxWidth: "90%" } }>{ decoratedText }</p>
+        <p style={{ maxWidth: "90%" }}>{decoratedText}</p>
       </a>
     </div>
   );
@@ -285,7 +285,7 @@ function MessageFaviconOrVideoRenderer({
 }) {
   return (
     <>
-      { links.map(
+      {links.map(
         ({
           decoratedHref,
           decoratedText,
@@ -298,30 +298,30 @@ function MessageFaviconOrVideoRenderer({
           try {
             const url = new URL(decoratedHref, "http://.");
             return (
-              <React.Fragment key={ key }>
-                { videoSites.includes(url.hostname) ? (
+              <React.Fragment key={key}>
+                {videoSites.includes(url.hostname) ? (
                   <ReactPlayer
-                    url={ decoratedHref }
+                    url={decoratedHref}
                     width="100%"
                     height="100%"
-                    controls={ true }
-                    style={ { aspectRatio: "16/9" } }
+                    controls={true}
+                    style={{ aspectRatio: "16/9" }}
                   />
                 ) : (
                   <MetaPage
-                    url={ decoratedHref }
-                    decoratedText={ decoratedText }
-                    decoratedHref={ decoratedHref }
-                    mine={ mine }
+                    url={decoratedHref}
+                    decoratedText={decoratedText}
+                    decoratedHref={decoratedHref}
+                    mine={mine}
                   ></MetaPage>
-                ) }
+                )}
               </React.Fragment>
             );
           } catch {
-            return <></>
+            return <></>;
           }
         }
-      ) }
+      )}
     </>
   );
 }
@@ -360,39 +360,42 @@ function Message({
     key: number;
   }[] = [];
   const donekeys: number[] = [];
-  const history = useHistory()
+  const history = useHistory();
   const shiftkey = useRef(false);
   const key = useRef(null);
   const submitref = useRef<any>();
   const longmessage = messagecharlist && messagecharlist.length > 500;
   const messageref = useRef(message);
-  return (!messages[i].gift ?
+  return !messages[i].gift ? (
     <>
       <ContextMenuTrigger
-        id={ String(messages[i].ID ? messages[i].ID : messages[i].tempid) }
+        id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}
       >
         <div
           data-private
-          style={ { opacity: !messages[i].ID ? 0.5 : undefined } }
+          style={{ opacity: !messages[i].ID ? 0.5 : undefined }}
           className={
             onlyemojis || file
-              ? `message message-${messages[i].from === user.id ? "mine" : "yours"
-              } ${!messages[i + 1] ||
-                messages[i + 1].from !== messages[i].from ||
-                (messages[i + 1] &&
-                  messages[i + 1].time - messages[i].time > 300000)
-                ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
-                : ""
-              }`
-              : `emojimessage-${messages[i].from === user.id ? "mine" : "yours"
-              }`
+              ? `message message-${
+                  messages[i].from === user.id ? "mine" : "yours"
+                } ${
+                  !messages[i + 1] ||
+                  messages[i + 1].from !== messages[i].from ||
+                  (messages[i + 1] &&
+                    messages[i + 1].time - messages[i].time > 300000)
+                    ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+                    : ""
+                }`
+              : `emojimessage-${
+                  messages[i].from === user.id ? "mine" : "yours"
+                }`
           }
         >
-          { message ? (
+          {message ? (
             editing ? (
               <>
                 <form
-                  onSubmit={ (e: any) => {
+                  onSubmit={(e: any) => {
                     e.preventDefault();
                     setediting(false);
                     const tempmessage = messageref.current;
@@ -407,10 +410,10 @@ function Message({
                       });
                       editFromID(messages[i].ID, tempmessage);
                     }
-                  } }
+                  }}
                 >
                   <TextareaAutosize
-                    onInput={ (e: any) => {
+                    onInput={(e: any) => {
                       if (key.current === 13 && !shiftkey.current) {
                         submitref.current.click();
                       } else {
@@ -426,13 +429,13 @@ function Message({
                           .slice(0, 3000)
                           .join("");
                       }
-                    } }
-                    onKeyDown={ (e: any) => {
+                    }}
+                    onKeyDown={(e: any) => {
                       key.current = e.keyCode;
                       shiftkey.current = e.shiftKey;
-                    } }
+                    }}
                     autoFocus
-                    style={ {
+                    style={{
                       backgroundColor: "var(--dark-bg-colour)",
                       padding: "5px",
                       borderRadius: "20px",
@@ -440,289 +443,322 @@ function Message({
                       color: "white",
                       resize: "none",
                       width: "100%",
-                    } }
-                    maxRows={ 10 }
+                    }}
+                    maxRows={10}
                     placeholder="Type Something..."
-                    defaultValue={ message }
+                    defaultValue={message}
                   />
                   <input
                     type="submit"
-                    ref={ submitref }
-                    style={ { display: "none" } }
+                    ref={submitref}
+                    style={{ display: "none" }}
                   ></input>
                 </form>
               </>
             ) : (
               <>
-                <p>{ onlyemojis ? (
-                  (longmessage && messagecharlist && !fullyopened
-                    ? messagecharlist.slice(0, 500).join("")
-                    : message
-                  )
-                    .split("```")
-                    .map((value: string, index: number) =>
-                      index % 2 === 0 ? (
-                        <React.Fragment key={ index }>
-                          <Linkify
-                            componentDecorator={ (
-                              decoratedHref,
-                              decoratedText,
-                              key
-                            ) => {
-                              if (!donekeys.includes(key)) {
-                                links.push({
-                                  decoratedHref,
-                                  decoratedText,
-                                  key,
-                                });
-                                donekeys.push(key);
-                              }
-                              return (
-                                <a
-                                  target="blank"
-                                  href={ decoratedHref }
-                                  key={ key }
-                                >
-                                  { decoratedText }
-                                </a>
-                              );
-                            } }
-                          >
-                            { value.trim() }
-                          </Linkify>
-                        </React.Fragment>
-                      ) : (
-                        <SyntaxHighlighter key={ index }>
-                          { value.trim() }
-                        </SyntaxHighlighter>
-                      )
+                <p>
+                  {onlyemojis ? (
+                    (longmessage && messagecharlist && !fullyopened
+                      ? messagecharlist.slice(0, 500).join("")
+                      : message
                     )
-                ) : (
-                  <h1 className="emojimessage">{ message }</h1>
-                ) }</p>
-                { longmessage && !fullyopened ? "..." : "" }
-                { !longmessage || fullyopened ? (
+                      .split("```")
+                      .map((value: string, index: number) =>
+                        index % 2 === 0 ? (
+                          <React.Fragment key={index}>
+                            <Linkify
+                              componentDecorator={(
+                                decoratedHref,
+                                decoratedText,
+                                key
+                              ) => {
+                                if (!donekeys.includes(key)) {
+                                  links.push({
+                                    decoratedHref,
+                                    decoratedText,
+                                    key,
+                                  });
+                                  donekeys.push(key);
+                                }
+                                return (
+                                  <a
+                                    target="blank"
+                                    href={decoratedHref}
+                                    key={key}
+                                  >
+                                    {decoratedText}
+                                  </a>
+                                );
+                              }}
+                            >
+                              {value.trim()}
+                            </Linkify>
+                          </React.Fragment>
+                        ) : (
+                          <SyntaxHighlighter key={index}>
+                            {value.trim()}
+                          </SyntaxHighlighter>
+                        )
+                      )
+                  ) : (
+                    <h1 className="emojimessage">{message}</h1>
+                  )}
+                </p>
+                {longmessage && !fullyopened ? "..." : ""}
+                {!longmessage || fullyopened ? (
                   <MessageFaviconOrVideoRenderer
-                    links={ links }
-                    mine={ messages[i].from === user.id }
+                    links={links}
+                    mine={messages[i].from === user.id}
                   ></MessageFaviconOrVideoRenderer>
                 ) : (
                   <></>
-                ) }
-                { longmessage ? (
+                )}
+                {longmessage ? (
                   <p
-                    onClick={ () => setfullyopened(!fullyopened) }
-                    style={ {
+                    onClick={() => setfullyopened(!fullyopened)}
+                    style={{
                       color:
                         messages[i].from === user.id ? "lightgray" : "gray",
                       fontSize: "12px",
-                    } }
+                    }}
                   >
-                    show { fullyopened ? "less" : "more" }
+                    show {fullyopened ? "less" : "more"}
                   </p>
                 ) : (
                   <></>
-                ) }
-                { messages[i].edited ? (
+                )}
+                {messages[i].edited ? (
                   <p
-                    style={ {
+                    style={{
                       color:
                         messages[i].from === user.id ? "lightgray" : "gray",
                       fontSize: "10px",
                       float: "right",
-                    } }
+                    }}
                   >
                     edited
                   </p>
                 ) : (
                   <></>
-                ) }
+                )}
               </>
             )
           ) : file ? (
             <div>
-              { mimetype ? (
+              {mimetype ? (
                 mimetype.split("/")[0] === "image" ? (
                   <img
-                    alt={ file }
-                    src={ `/files/${file}` }
-                    style={ {
+                    alt={file}
+                    src={`/files/${file}`}
+                    style={{
                       maxWidth: "100%",
                       maxHeight: "300px",
                       borderRadius: "20px",
-                    } }
+                    }}
                     loading="lazy"
-                    onLoad={ () => {
+                    onLoad={() => {
                       if (toscroll.current) {
                         scrolltobottom();
                       }
-                    } }
+                    }}
                   ></img>
                 ) : mimetype.split("/")[0] === "video" ? (
                   <video
-                    src={ `/files/${file}` }
-                    style={ { width: "100%", maxHeight: "300px" } }
+                    src={`/files/${file}`}
+                    style={{ width: "100%", maxHeight: "300px" }}
                     controls
                     playsInline
-                    onLoad={ () => {
+                    onLoad={() => {
                       if (toscroll.current) {
                         scrolltobottom();
                       }
-                    } }
+                    }}
                   ></video>
                 ) : mimetype.split("/")[0] === "audio" ? (
                   <audio
-                    src={ `/files/${file}` }
-                    style={ { width: "100%", maxHeight: "300px" } }
+                    src={`/files/${file}`}
+                    style={{ width: "100%", maxHeight: "300px" }}
                     controls
                     playsInline
-                    onLoad={ () => {
+                    onLoad={() => {
                       if (toscroll.current) {
                         scrolltobottom();
                       }
-                    } }
+                    }}
                   ></audio>
                 ) : (
                   <div
-                    onClick={ () => {
+                    onClick={() => {
                       window.open(
                         `/files/${file}`,
                         file,
                         "width=600,height=400"
                       );
-                    } }
-                    style={ {
+                    }}
+                    style={{
                       color: "var(--secondary-text-colour)",
                       cursor: "pointer",
-                    } }
+                    }}
                   >
-                    <FontAwesomeIcon icon={ faFile }></FontAwesomeIcon> File
+                    <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
                   </div>
                 )
               ) : (
                 <div
-                  onClick={ () => {
+                  onClick={() => {
                     window.open(`/files/${file}`, file, "width=600,height=400");
-                  } }
-                  style={ {
+                  }}
+                  style={{
                     color: "var(--secondary-text-colour)",
                     cursor: "pointer",
-                  } }
+                  }}
                 >
-                  <FontAwesomeIcon icon={ faFile }></FontAwesomeIcon> File
+                  <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
                 </div>
-              ) }
+              )}
             </div>
           ) : (
             <></>
-          ) }
+          )}
         </div>
       </ContextMenuTrigger>
 
       <ContextMenu
-        id={ String(messages[i].ID ? messages[i].ID : messages[i].tempid) }
+        id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}
       >
-        <p style={ { textAlign: "center" } }>
-          { new Date(messages[i].time).toLocaleString() }
+        <p style={{ textAlign: "center" }}>
+          {new Date(messages[i].time).toLocaleString()}
         </p>
         <MenuItem
-          onClick={ () => {
+          onClick={() => {
             navigator.clipboard.writeText(
               message
                 ? message
-                : `${window.location.protocol}://${!process.env.NODE_ENV ||
-                  process.env.NODE_ENV === "development"
-                  ? window.location.hostname + ":5000"
-                  : window.location.host
-                }/files/${file}`
+                : `${window.location.protocol}://${
+                    !process.env.NODE_ENV ||
+                    process.env.NODE_ENV === "development"
+                      ? window.location.hostname + ":5000"
+                      : window.location.host
+                  }/files/${file}`
             );
-          } }
+          }}
         >
           <span>
-            <FontAwesomeIcon icon={ faCopy } /> Copy
+            <FontAwesomeIcon icon={faCopy} /> Copy
           </span>
         </MenuItem>
-        { messages[i].from === user.id && messages[i].ID ? (
+        {messages[i].from === user.id && messages[i].ID ? (
           <>
             <MenuItem
-              onClick={ () => {
+              onClick={() => {
                 sendJsonMessage({ type: "delete", id: messages[i].ID });
                 deleteFromID(messages[i].ID);
-              } }
+              }}
             >
               <span>
-                <FontAwesomeIcon icon={ faTrash } /> Delete
+                <FontAwesomeIcon icon={faTrash} /> Delete
               </span>
             </MenuItem>
-            { message ? (
+            {message ? (
               <MenuItem
-                onClick={ () => {
+                onClick={() => {
                   setediting(!editing);
-                } }
+                }}
               >
                 <span>
-                  { editing ? (
+                  {editing ? (
                     <>
-                      <FontAwesomeIcon icon={ faTimes } /> Cancel Edit
+                      <FontAwesomeIcon icon={faTimes} /> Cancel Edit
                     </>
                   ) : (
                     <>
-                      <FontAwesomeIcon icon={ faPencilAlt } /> Edit
+                      <FontAwesomeIcon icon={faPencilAlt} /> Edit
                     </>
-                  ) }
+                  )}
                 </span>
               </MenuItem>
             ) : (
               <></>
-            ) }
+            )}
           </>
         ) : (
           <></>
-        ) }
-        { longmessage ? (
+        )}
+        {longmessage ? (
           <MenuItem
-            onClick={ () => {
+            onClick={() => {
               setfullyopened(!fullyopened);
-            } }
+            }}
           >
             <span>
               <FontAwesomeIcon
-                icon={ fullyopened ? faMinusCircle : faPlusCircle }
-              />{ " " }
-              Show { fullyopened ? "less" : "more" }
+                icon={fullyopened ? faMinusCircle : faPlusCircle}
+              />{" "}
+              Show {fullyopened ? "less" : "more"}
             </span>
           </MenuItem>
         ) : (
           <></>
-        ) }
+        )}
       </ContextMenu>
     </>
-    : <><div
-      style={ { opacity: !messages[i].ID ? 0.5 : undefined, textAlign: "center", } }
-      className={ `message message-${messages[i].from === user.id ? "mine" : "yours"
-        } ${!messages[i + 1] ||
+  ) : (
+    <>
+      <div
+        style={{
+          opacity: !messages[i].ID ? 0.5 : undefined,
+          textAlign: "center",
+        }}
+        className={`message message-${
+          messages[i].from === user.id ? "mine" : "yours"
+        } ${
+          !messages[i + 1] ||
           messages[i + 1].from !== messages[i].from ||
-          (messages[i + 1] &&
-            messages[i + 1].time - messages[i].time > 300000)
-          ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
-          : ""
-        }`
-      }
-    >
-      <h1>GIFT</h1>
-      <div style={ {
-        width: "100%", height: "1px",
-        backgroundColor: messages[i].from === user.id ? "var(--light-bg-colour)" : "#dadada", marginBottom: "1rem"
-      } }></div>
-      <h4>Here is a gift of { messages[i].amount } Rocket Fuel</h4>{ message ? <p
-        data-private>Message: { message.trim() }</p> : <></> }
-      <img src={ GiftIcon } alt="🎁" style={ {
-        padding: "1rem", margin: "1rem 0",
-        backgroundColor: messages[i].from === user.id ? "var(--light-bg-colour)" : "#dadada",
-        borderRadius: "10px", display: "block", width: "100%", cursor: messages[i].from === user.id ? "not-allowed" : "pointer"
-      } } onClick={ messages[i].from !== user.id ? () => history.push("/blast") : undefined }></img>
-      <b>Click the present to check your Rocket Fuel Balance!</b>
-    </div></>);
+          (messages[i + 1] && messages[i + 1].time - messages[i].time > 300000)
+            ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+            : ""
+        }`}
+      >
+        <h1>GIFT</h1>
+        <div
+          style={{
+            width: "100%",
+            height: "1px",
+            backgroundColor:
+              messages[i].from === user.id
+                ? "var(--light-bg-colour)"
+                : "#dadada",
+            marginBottom: "1rem",
+          }}
+        ></div>
+        <h4>Here is a gift of {messages[i].amount} Rocket Fuel</h4>
+        {message ? <p data-private>Message: {message.trim()}</p> : <></>}
+        <img
+          src={GiftIcon}
+          alt="🎁"
+          style={{
+            padding: "1rem",
+            margin: "1rem 0",
+            backgroundColor:
+              messages[i].from === user.id
+                ? "var(--light-bg-colour)"
+                : "#dadada",
+            borderRadius: "10px",
+            display: "block",
+            width: "100%",
+            cursor: messages[i].from === user.id ? "not-allowed" : "pointer",
+          }}
+          onClick={
+            messages[i].from !== user.id
+              ? () => history.push("/blast")
+              : undefined
+          }
+        ></img>
+        <b>Click the present to check your Rocket Fuel Balance!</b>
+      </div>
+    </>
+  );
 }
 
 function MessageMaker({
@@ -761,7 +797,8 @@ function MessageMaker({
   const output = useMemo(() => {
     console.time("chatrender");
     const output = [];
-    let lastmessage: messageWithText | messageWithFile | giftMessage | null = null;
+    let lastmessage: messageWithText | messageWithFile | giftMessage | null =
+      null;
     for (let i = 0; i < messages.length; i++) {
       if (
         (!lastmessage && !canloadmore) ||
@@ -769,15 +806,15 @@ function MessageMaker({
       ) {
         output.push(
           <p
-            key={ messages[i].time }
-            style={ {
+            key={messages[i].time}
+            style={{
               margin: "0",
               color: `lightgray`,
               fontSize: "10px",
               textAlign: "center",
-            } }
+            }}
           >
-            { new Date(messages[i].time).toLocaleString() }
+            {new Date(messages[i].time).toLocaleString()}
           </p>
         );
       }
@@ -786,37 +823,38 @@ function MessageMaker({
           messages[i].from === user.id || users[messages[i].from] ? (
             <div
               data-private
-              key={ messages[i].ID + "topname" }
-              style={ {
+              key={messages[i].ID + "topname"}
+              style={{
                 alignSelf:
                   messages[i].from === user.id ? "flex-end" : "flex-start",
-              } }
+              }}
             >
-              { messages[i].from === user.id ? (
-                <span style={ { marginRight: "5px" } }>{ user.username }</span>
+              {messages[i].from === user.id ? (
+                <span style={{ marginRight: "5px" }}>{user.username}</span>
               ) : (
                 <></>
-              ) }
+              )}
               <img
-                src={ `/files/${messages[i].from === user.id
-                  ? user.profilePic
-                  : users[messages[i].from].profilePic
-                  }` }
-                style={ {
+                src={`/files/${
+                  messages[i].from === user.id
+                    ? user.profilePic
+                    : users[messages[i].from].profilePic
+                }`}
+                style={{
                   width: "25px",
                   height: "25px",
                   margin: "3px",
                   borderRadius: "50%",
-                } }
+                }}
                 alt=""
               />
-              { users[messages[i].from] ? (
-                <span style={ { marginLeft: "5px" } }>
-                  { users[messages[i].from].username }
+              {users[messages[i].from] ? (
+                <span style={{ marginLeft: "5px" }}>
+                  {users[messages[i].from].username}
                 </span>
               ) : (
                 <></>
-              ) }
+              )}
             </div>
           ) : (
             <></>
@@ -825,15 +863,15 @@ function MessageMaker({
       }
       output.push(
         <Message
-          key={ messages[i].ID ? messages[i].ID : messages[i].tempid }
-          messages={ messages }
-          deleteFromID={ deleteFromID }
-          i={ i }
-          user={ user }
-          toscroll={ toscroll }
-          scrolltobottom={ scrolltobottom }
-          sendJsonMessage={ sendJsonMessage }
-          editFromID={ editFromID }
+          key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+          messages={messages}
+          deleteFromID={deleteFromID}
+          i={i}
+          user={user}
+          toscroll={toscroll}
+          scrolltobottom={scrolltobottom}
+          sendJsonMessage={sendJsonMessage}
+          editFromID={editFromID}
         ></Message>
       );
       lastmessage = messages[i];
@@ -860,8 +898,8 @@ function MessageMaker({
     if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
         document.documentElement.scrollHeight -
-        document.documentElement.scrollTop -
-        document.documentElement.clientHeight <=
+          document.documentElement.scrollTop -
+          document.documentElement.clientHeight <=
         200;
       if (canloadmore) {
         if (document.documentElement.scrollTop < 10) {
@@ -872,48 +910,48 @@ function MessageMaker({
   };
   return (
     <div
-      style={ {
+      style={{
         width: "100%",
         height: `100%`,
         overflow: "overlay",
-      } }
-      ref={ scrollref }
+      }}
+      ref={scrollref}
     >
       <div
         className="chat"
-        style={ {
+        style={{
           margin: `90px auto 3rem auto`,
           maxWidth: "900px",
-        } }
+        }}
       >
-        { messages.length > 0 ? (
+        {messages.length > 0 ? (
           <>
-            { canloadmore && loadingmore ? (
-              <Loader key={ "loader" }></Loader>
+            {canloadmore && loadingmore ? (
+              <Loader key={"loader"}></Loader>
             ) : (
               <></>
-            ) }
-            { output }
+            )}
+            {output}
           </>
         ) : (
-          <p style={ { color: "gray", textAlign: "center" } }>
+          <p style={{ color: "gray", textAlign: "center" }}>
             this chat is empty... say hi!
           </p>
-        ) }
-        { typingdata.typing ? (
+        )}
+        {typingdata.typing ? (
           <div
             className="message message-yours last-yours"
-            style={ {
+            style={{
               opacity: 0.5,
               textShadow: "0 0 7px black",
               color: "transparent",
-            } }
+            }}
           >
-            { faketext }
+            {faketext}
           </div>
         ) : (
           <></>
-        ) }
+        )}
       </div>
     </div>
   );
@@ -922,26 +960,26 @@ function MessageMaker({
 function ChatNotFound() {
   return (
     <div
-      style={ {
+      style={{
         position: "absolute",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
         textAlign: "center",
         color: "gray",
-      } }
+      }}
     >
-      <div style={ { fontSize: "50px" } }>
-        <FontAwesomeIcon icon={ faSadCry } />
-        <FontAwesomeIcon icon={ faCommentSlash } />
+      <div style={{ fontSize: "50px" }}>
+        <FontAwesomeIcon icon={faSadCry} />
+        <FontAwesomeIcon icon={faCommentSlash} />
       </div>
       <h1>No Chat Found!</h1>
       <p>
-        go to{ " " }
+        go to{" "}
         <span>
           <Link
             to="/contacts"
-            style={ { color: "var(--secondary-text-colour)" } }
+            style={{ color: "var(--secondary-text-colour)" }}
           >
             contacts
           </Link>
@@ -983,9 +1021,9 @@ function ChatPage() {
     "9",
     "0",
   ];
-  const [chats, setchats] = useState<Array<messageWithText | messageWithFile | giftMessage>>(
-    []
-  );
+  const [chats, setchats] = useState<
+    Array<messageWithText | messageWithFile | giftMessage>
+  >([]);
   const isFocussed = useWindowVisable();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
@@ -1012,9 +1050,10 @@ function ChatPage() {
     specialchars: {},
   });
   const [socketUrl] = useState(
-    `ws${window.location.protocol === "https:" ? "s" : ""}://${!process.env.NODE_ENV || process.env.NODE_ENV === "development"
-      ? window.location.hostname + ":5000"
-      : window.location.host
+    `ws${window.location.protocol === "https:" ? "s" : ""}://${
+      !process.env.NODE_ENV || process.env.NODE_ENV === "development"
+        ? window.location.hostname + ":5000"
+        : window.location.host
     }/chat`
   );
   const size = useWindowSize();
@@ -1043,7 +1082,7 @@ function ChatPage() {
   const [localchats, setlocalchats] = useLocalStorage<{
     [key: string]: Array<messageWithText | messageWithFile | giftMessage>;
   }>("chats", {});
-  const [giftmodel, setgiftmodel] = useState(false)
+  const [giftmodel, setgiftmodel] = useState(false);
   async function sendFile(file: any) {
     const id = Math.random();
     notifications.addNotification({
@@ -1119,7 +1158,7 @@ function ChatPage() {
       category: "chat",
       action: "open chat",
       label: `open to ${chattingto}`,
-    })
+    });
     localStorage.setItem("chattingto", JSON.stringify(chattingto));
     const listenerfunction = function (event: any) {
       const items = (event.clipboardData || event.originalEvent.clipboardData)
@@ -1248,8 +1287,9 @@ function ChatPage() {
           } else if (lastJsonMessage.message.from !== user.id) {
             NotificationAPI(
               {
-                title: `${usersdata.users[lastJsonMessage.message.from].username
-                  }`,
+                title: `${
+                  usersdata.users[lastJsonMessage.message.from].username
+                }`,
                 message: lastJsonMessage.message.message
                   ? truncate(lastJsonMessage.message.message, 25)
                   : "file",
@@ -1281,7 +1321,7 @@ function ChatPage() {
         if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
           playSound("/sounds/gift.mp3");
         }
-        lastJsonMessage.message.gift = true
+        lastJsonMessage.message.gift = true;
         setchats((chats) => chats.concat(lastJsonMessage.message));
 
         settypingdata({
@@ -1315,8 +1355,9 @@ function ChatPage() {
           } else if (lastJsonMessage.message.from !== user.id) {
             NotificationAPI(
               {
-                title: `${usersdata.users[lastJsonMessage.message.from].username
-                  }`,
+                title: `${
+                  usersdata.users[lastJsonMessage.message.from].username
+                }`,
                 message: lastJsonMessage.message.message
                   ? truncate(lastJsonMessage.message.message, 25)
                   : "file",
@@ -1488,12 +1529,12 @@ function ChatPage() {
   }
   return (
     <usersContext.Provider
-      value={ usersdata ? usersdata : { exists: false, users: {} } }
+      value={usersdata ? usersdata : { exists: false, users: {} }}
     >
       <div>
         <div>
           <div
-            style={ {
+            style={{
               position: "fixed",
               width: "100%",
               height: "90px",
@@ -1501,11 +1542,11 @@ function ChatPage() {
               zIndex: 10,
               background:
                 "linear-gradient(0deg, transparent, var(--dark-mode))",
-            } }
+            }}
           >
-            { usersdata && readyState === ReadyState.OPEN ? (
+            {usersdata && readyState === ReadyState.OPEN ? (
               <>
-                { " " }
+                {" "}
                 <img
                   src={
                     "/files/" +
@@ -1516,65 +1557,68 @@ function ChatPage() {
                     )
                   }
                   data-private
-                  style={ {
+                  style={{
                     display: "block",
                     height: "65%",
                     margin: "auto",
-                    borderRadius: "100%", aspectRatio: "1/1",
-                  } }
-                  alt={ usersdata.users[chattingto].username }
+                    borderRadius: "100%",
+                    aspectRatio: "1/1",
+                  }}
+                  alt={usersdata.users[chattingto].username}
                 />
-                <p style={ { textAlign: "center" } }
-                  data-private>
-                  { usersdata.users[chattingto].username }{ " " }
+                <p style={{ textAlign: "center" }} data-private>
+                  {usersdata.users[chattingto].username}{" "}
                   <FontAwesomeIcon
-                    style={ {
+                    style={{
                       color:
                         isonline === "0" ? "var(--offline)" : "var(--online)",
-                    } }
+                    }}
                     icon={
                       isonline === "1"
                         ? faDesktop
                         : isonline === "M"
-                          ? faMobileAlt
-                          : faEyeSlash
+                        ? faMobileAlt
+                        : faEyeSlash
                     }
                   ></FontAwesomeIcon>
                 </p>
-                <div
-                  data-private><Badge badges={ usersdata.users[chattingto].badges }
-                    size="20px"></Badge></div>
+                <div data-private>
+                  <Badge
+                    badges={usersdata.users[chattingto].badges}
+                    size="20px"
+                  ></Badge>
+                </div>
               </>
             ) : (
-              <p style={ { margin: "1rem", textAlign: "center" } }>
-                { ReadyState[readyState] }
+              <p style={{ margin: "1rem", textAlign: "center" }}>
+                {ReadyState[readyState]}
               </p>
-            ) }
+            )}
           </div>
           <KeyboardEventHandler
-            handleKeys={ ["alphanumeric", "space", "shift", "cap"] }
-            onKeyEvent={ () => {
-              key.current = null
+            handleKeys={["alphanumeric", "space", "shift", "cap"]}
+            onKeyEvent={() => {
+              key.current = null;
               inputref.current.focus();
-            } }
+            }}
           />
           <MessageMaker
-            deleteFromID={ deleteFromID }
-            editFromID={ editFromID }
-            scrolltobottom={ scrolltobottom }
-            scrollref={ scrollerref }
-            messages={ loadingchatmessages ? localchats[chattingto] : chats }
-            typingdata={ typingdata }
-            toscroll={ toscroll }
-            canloadmore={ canloadmore && readyState === ReadyState.OPEN }
-            loadingmore={ loadingmore }
-            loadmore={ loadmore }
-            chatUpdateID={ chatUpdateID }
-            sendJsonMessage={ sendJsonMessage }
+            deleteFromID={deleteFromID}
+            editFromID={editFromID}
+            scrolltobottom={scrolltobottom}
+            scrollref={scrollerref}
+            messages={loadingchatmessages ? localchats[chattingto] : chats}
+            typingdata={typingdata}
+            toscroll={toscroll}
+            canloadmore={canloadmore && readyState === ReadyState.OPEN}
+            loadingmore={loadingmore}
+            loadmore={loadmore}
+            chatUpdateID={chatUpdateID}
+            sendJsonMessage={sendJsonMessage}
           />
-          <div ref={ bottomref }></div>
+          <div ref={bottomref}></div>
           <div
-            style={ {
+            style={{
               position: "fixed",
               padding: "1rem",
               width: "100%",
@@ -1582,31 +1626,31 @@ function ChatPage() {
               background:
                 "linear-gradient(180deg, transparent, var(--dark-mode))",
               display: "flex",
-            } }
+            }}
           >
             <div
-              style={ {
+              style={{
                 margin: "auto",
                 width: "100%",
                 maxWidth: "800px",
                 display: "flex",
-              } }
+              }}
             >
               <input
                 type="file"
-                style={ { display: "none" } }
-                ref={ fileref }
-                onInput={ async (e: any) => {
+                style={{ display: "none" }}
+                ref={fileref}
+                onInput={async (e: any) => {
                   if (e.target.files.length > 0) {
                     const file = e.target.files[0];
                     e.target.value = "";
                     sendFile(file);
                   }
-                } }
+                }}
               />
 
               <button
-                style={ {
+                style={{
                   width: "45px",
                   marginRight: "5px",
                   backgroundColor: "var(--dark-bg-colour)",
@@ -1615,113 +1659,132 @@ function ChatPage() {
                   border: "solid 1px var(--light-bg-colour)",
                   color: "white",
                   textAlign: "center",
-                } }
-                onClick={ () => {
+                }}
+                onClick={() => {
                   if (fileref.current) fileref.current.click();
-                } }
+                }}
               >
-                <FontAwesomeIcon icon={ faPlus } />
+                <FontAwesomeIcon icon={faPlus} />
               </button>
-              <ReactModal isOpen={ giftmodel } style={ {
-                overlay: {
-                  backgroundColor: "rgb(18 18 18 / 50%)",
-                  zIndex: 10,
-                },
-                content: {
-                  backgroundColor: "var(--dark-mode)",
-                  border: "1px solid var(--dark-bg-colour)",
-                  borderRadius: "10px",
-                  padding: "1rem",
-                  zIndex: 11,
-                  top: "50%",
-                  left: "50%",
-                  right: "auto",
-                  bottom: "auto",
-                  marginRight: "-50%",
-                  transform: "translate(-50%, -50%)",
-                  width: "75%",
-                  maxWidth: "750px",
-                  textAlign: "center",
-                  maxHeight: "500px",
-                },
-              } }
-                onRequestClose={ () => setgiftmodel(false) }>
+              <ReactModal
+                isOpen={giftmodel}
+                style={{
+                  overlay: {
+                    backgroundColor: "rgb(18 18 18 / 50%)",
+                    zIndex: 10,
+                  },
+                  content: {
+                    backgroundColor: "var(--dark-mode)",
+                    border: "1px solid var(--dark-bg-colour)",
+                    borderRadius: "10px",
+                    padding: "1rem",
+                    zIndex: 11,
+                    top: "50%",
+                    left: "50%",
+                    right: "auto",
+                    bottom: "auto",
+                    marginRight: "-50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "75%",
+                    maxWidth: "750px",
+                    textAlign: "center",
+                    maxHeight: "500px",
+                  },
+                }}
+                onRequestClose={() => setgiftmodel(false)}
+              >
                 <FontAwesomeIcon
-                  icon={ faTimes }
-                  onClick={ () => setgiftmodel(false) }
-                  style={ {
+                  icon={faTimes}
+                  onClick={() => setgiftmodel(false)}
+                  style={{
                     cursor: "pointer",
                     fontSize: "30px",
                     float: "right",
-                  } }
-                /><h1>Gift Rocket Fuel</h1>
-                <div style={ { height: "1px", width: "100%", background: "var(--dark-bg-colour)", margin: "0 0 1rem 0" } } />
-                <form onSubmit={ (e: any) => {
-                  e.preventDefault(); ReactGA.event({
-                    category: "chat",
-                    action: "sent gift",
-                    label: `send gift to ${chattingto}`,
-                  }); console.log(e);
-                  const message = e.target[1].value.trim()
-                  const tempid = Math.random();
-                  const time = new Date().getTime();
-                  sendJsonMessage({
-                    type: "gift",
-                    amount: e.target[0].value,
-                    message: message,
-                    tempid,
-                  });
-                  setchats(
-                    chats
-                      .slice(Math.max(chats.length - StartMessagesLength, 0))
-                      .concat({
-                        from: user.id,
-                        gift: true,
-                        amount: e.target[0].value,
-                        file: undefined,
-                        mimetype: undefined,
-                        message: message,
-                        time,
-                        tempid,
-                        edited: false,
-                      })
-                  );
-                  setgiftmodel(false)
-                } }>
-
+                  }}
+                />
+                <h1>Gift Rocket Fuel</h1>
+                <div
+                  style={{
+                    height: "1px",
+                    width: "100%",
+                    background: "var(--dark-bg-colour)",
+                    margin: "0 0 1rem 0",
+                  }}
+                />
+                <form
+                  onSubmit={(e: any) => {
+                    e.preventDefault();
+                    ReactGA.event({
+                      category: "chat",
+                      action: "sent gift",
+                      label: `send gift to ${chattingto}`,
+                    });
+                    console.log(e);
+                    const message = e.target[1].value.trim();
+                    const tempid = Math.random();
+                    const time = new Date().getTime();
+                    sendJsonMessage({
+                      type: "gift",
+                      amount: e.target[0].value,
+                      message: message,
+                      tempid,
+                    });
+                    setchats(
+                      chats
+                        .slice(Math.max(chats.length - StartMessagesLength, 0))
+                        .concat({
+                          from: user.id,
+                          gift: true,
+                          amount: e.target[0].value,
+                          file: undefined,
+                          mimetype: undefined,
+                          message: message,
+                          time,
+                          tempid,
+                          edited: false,
+                        })
+                    );
+                    setgiftmodel(false);
+                  }}
+                >
                   <div
-                    style={ {
+                    style={{
                       display: "grid",
                       alignItems: "center",
                       justifyContent: "center",
                       alignContent: "space-evenly",
-                      marginBottom: "1rem"
-                    } }
+                      marginBottom: "1rem",
+                    }}
                   >
                     <label htmlFor="RF">
-                      How much Rocket Fuel do you want to gift? (max { user.rocketFuel })
+                      How much Rocket Fuel do you want to gift? (max{" "}
+                      {user.rocketFuel})
                     </label>
                     <input
                       id="RF"
                       type="number"
-                      min={ "1" }
-                      max={ user.rocketFuel }
+                      min={"1"}
+                      max={user.rocketFuel}
                       defaultValue="1"
-                      onBlur={ (e: any) => {
+                      onBlur={(e: any) => {
                         e.target.value = Math.floor(
                           e.target.value > user.rocketFuel
                             ? user.rocketFuel
                             : e.target.value < 1
-                              ? 1
-                              : e.target.value);
-                      } }
-                    ></input></div>
+                            ? 1
+                            : e.target.value
+                        );
+                      }}
+                    ></input>
+                  </div>
 
                   <TextareaAutosize
-                    data-private="lipsum" onInput={ (e: any) => {
+                    data-private="lipsum"
+                    onInput={(e: any) => {
                       const message = e.target.value.trim();
                       const messagetoarray: string[] = Array.from(message);
-                      const maxlength = 3000 + (250 * (user.blast ? user.blast : 0))
+                      const maxlength =
+                        3000 + 250 * (user.blast ? user.blast : 0);
                       if (
                         messagetoarray.length <= maxlength &&
                         !(key.current === 13 && !shiftkey.current)
@@ -1767,14 +1830,14 @@ function ChatPage() {
                           .slice(0, maxlength)
                           .join("");
                       }
-                    } }
-                    onKeyDown={ (e: any) => {
+                    }}
+                    onKeyDown={(e: any) => {
                       key.current = e.keyCode;
                       shiftkey.current = e.shiftKey;
                       clearTimeout(typingTimer.current);
-                    } }
+                    }}
                     autoFocus
-                    style={ {
+                    style={{
                       backgroundColor: "var(--dark-bg-colour)",
                       padding: "5px",
                       borderRadius: "20px",
@@ -1782,33 +1845,39 @@ function ChatPage() {
                       border: "solid 1px var(--light-bg-colour)",
                       color: "white",
                       resize: "none",
-                    } }
-                    maxRows={ 10 }
+                    }}
+                    maxRows={10}
                     placeholder="Add A Message..."
                   />
                   <button
                     className="btnMain"
-                    onPointerDown={ () => {
+                    onPointerDown={() => {
                       playSound("/sounds/click2.mp3");
-                    } }
-                    onPointerUp={ () => {
+                    }}
+                    onPointerUp={() => {
                       playSound("/sounds/click1.mp3");
-                    } }
-                    style={ { border: "none", background: "transparent", padding: "0" } }
+                    }}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      padding: "0",
+                    }}
                   >
-                    <div className="btnBox">GIFT{ " " }
+                    <div className="btnBox">
+                      GIFT{" "}
                       <img
-                        src={ GiftIcon }
+                        src={GiftIcon}
                         height="30px"
                         alt="🎁"
                         className="icon"
-                      /></div>
+                      />
+                    </div>
                     <div className="btnBottom"></div>
                   </button>
                 </form>
               </ReactModal>
               <button
-                style={ {
+                style={{
                   width: "45px",
                   marginRight: "5px",
                   backgroundColor: "var(--dark-bg-colour)",
@@ -1817,21 +1886,30 @@ function ChatPage() {
                   border: "solid 1px var(--light-bg-colour)",
                   color: "white",
                   textAlign: "center",
-                  opacity: (usersdata && usersdata.users[chattingto].id !== "TypeChat") ? 1 : 0.5
-                } }
-                disabled={ !(usersdata && usersdata.users[chattingto].id !== "TypeChat") }
-                onClick={ (usersdata && usersdata.users[chattingto].id !== "TypeChat") ? () => {
-                  if (user.rocketFuel > 0) {
-                    setgiftmodel(true)
-                  } else {
-                    history.push("/blast")
-                  }
-                } : undefined }
+                  opacity:
+                    usersdata && usersdata.users[chattingto].id !== "TypeChat"
+                      ? 1
+                      : 0.5,
+                }}
+                disabled={
+                  !(usersdata && usersdata.users[chattingto].id !== "TypeChat")
+                }
+                onClick={
+                  usersdata && usersdata.users[chattingto].id !== "TypeChat"
+                    ? () => {
+                        if (user.rocketFuel > 0) {
+                          setgiftmodel(true);
+                        } else {
+                          history.push("/blast");
+                        }
+                      }
+                    : undefined
+                }
               >
-                <FontAwesomeIcon icon={ faGift } />
+                <FontAwesomeIcon icon={faGift} />
               </button>
               <form
-                onSubmit={ (e: any) => {
+                onSubmit={(e: any) => {
                   e.preventDefault();
                   const message = e.target[0].value.trim();
                   if (message !== "") {
@@ -1873,24 +1951,25 @@ function ChatPage() {
                       specialchars: {},
                     });
                   }
-                } }
-                ref={ formref }
-                style={ {
+                }}
+                ref={formref}
+                style={{
                   width: "100%",
                   display: "flex",
-                } }
+                }}
               >
                 <TextareaAutosize
                   data-private="lipsum"
-                  ref={ inputref }
-                  onInput={ (e: any) => {
+                  ref={inputref}
+                  onInput={(e: any) => {
                     if (key.current === 13 && !shiftkey.current) {
                       submitref.current.click();
                       inputref.current.value = "";
                     }
                     const message = e.target.value.trim();
                     const messagetoarray: string[] = Array.from(message);
-                    const maxlength = 3000 + (1000 * (user.blast ? user.blast : 0))
+                    const maxlength =
+                      3000 + 1000 * (user.blast ? user.blast : 0);
                     if (
                       messagetoarray.length <= maxlength &&
                       !(key.current === 13 && !shiftkey.current)
@@ -1936,14 +2015,14 @@ function ChatPage() {
                         .slice(0, maxlength)
                         .join("");
                     }
-                  } }
-                  onKeyDown={ (e: any) => {
+                  }}
+                  onKeyDown={(e: any) => {
                     key.current = e.keyCode;
                     shiftkey.current = e.shiftKey;
                     clearTimeout(typingTimer.current);
-                  } }
+                  }}
                   autoFocus
-                  style={ {
+                  style={{
                     backgroundColor: "var(--dark-bg-colour)",
                     padding: "5px",
                     borderRadius: "20px",
@@ -1951,13 +2030,13 @@ function ChatPage() {
                     border: "solid 1px var(--light-bg-colour)",
                     color: "white",
                     resize: "none",
-                  } }
-                  maxRows={ 10 }
+                  }}
+                  maxRows={10}
                   placeholder="Type Something..."
                 />
                 <button
-                  ref={ submitref }
-                  style={ {
+                  ref={submitref}
+                  style={{
                     width: "60px",
                     marginLeft: "5px",
                     backgroundColor: "var(--dark-bg-colour)",
@@ -1966,37 +2045,42 @@ function ChatPage() {
                     border: "solid 1px var(--light-bg-colour)",
                     color: "white",
                     textAlign: "center",
-                  } }
+                  }}
                   type="submit"
-                  onClick={ () => {
+                  onClick={() => {
                     inputref.current.focus();
                     ReactGA.event({
                       category: "chat",
                       action: "send message",
                       label: `send message to ${chattingto}`,
                     });
-                  } }
+                  }}
                 >
-                  <FontAwesomeIcon icon={ faPaperPlane } />
+                  <FontAwesomeIcon icon={faPaperPlane} />
                 </button>
               </form>
             </div>
           </div>
         </div>
       </div>
-    </usersContext.Provider >
+    </usersContext.Provider>
   );
 }
 
-function Chat({ isGroupChat }: { isGroupChat: boolean }) {
+function Chat({
+  isGroupChat,
+  chattingto,
+}: {
+  isGroupChat: boolean;
+  chattingto: string;
+}) {
   const { loggedin, user } = useData();
-  const { id: chattingto } = useParams<{ id: string }>();
   const time = useMemo(() => new Date().getTime(), []);
   if (!loggedin) {
     return <Redirect to="/"></Redirect>;
   } else if (chattingto && chattingto !== user.id) {
     return (
-      <chatSettings.Provider value={ { isGroupChat, time } }>
+      <chatSettings.Provider value={{ isGroupChat, time }}>
         <ChatPage />
       </chatSettings.Provider>
     );

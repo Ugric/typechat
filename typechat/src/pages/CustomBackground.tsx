@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react"
-import { useData } from "../hooks/datahook"
+import { useMemo, useState } from "react";
+import { useData } from "../hooks/datahook";
 
 function Background() {
-    const { user } = useData()
-    return false ? <div style={ {
+  const { user } = useData();
+  return false ? (
+    <div
+      style={{
         backgroundImage: `url(/files/${user.backgroundImage})`,
         width: "100vw",
         height: "100vh",
@@ -14,7 +16,11 @@ function Background() {
         backgroundRepeat: "no-repeat",
         backgroundSize: "cover",
         backgroundPosition: "center",
-    } } /> : <></>
+      }}
+    />
+  ) : (
+    <></>
+  );
 }
 
-export default Background
+export default Background;

@@ -44,33 +44,33 @@ function Login() {
   }
   return (
     <>
-      <div style={ { display: loading ? "" : "none" } }>
+      <div style={{ display: loading ? "" : "none" }}>
         <Loader></Loader>
       </div>
       <div
-        style={ {
+        style={{
           margin: "5rem 0",
           textAlign: "center",
           display: !loading ? "" : "none",
-        } }
+        }}
       >
         <img
-          src={ logo }
-          style={ { width: "150px", borderRadius: "10px" } }
+          src={logo}
+          style={{ width: "150px", borderRadius: "10px" }}
           alt="logo"
         ></img>
         <h1
-          style={ {
+          style={{
             fontSize: "20px",
             fontFamily: "'Source Sans Pro', sans-serif",
-          } }
+          }}
         >
-          <FontAwesomeIcon icon={ faSignInAlt }></FontAwesomeIcon> Login
-        </h1><div
-          data-private>
+          <FontAwesomeIcon icon={faSignInAlt}></FontAwesomeIcon> Login
+        </h1>
+        <div data-private>
           <RouterForm
-            action={ "/login" }
-            beforecallback={ (e: any) => {
+            action={"/login"}
+            beforecallback={(e: any) => {
               if (recapToken) {
                 if (e.target[0].value !== "" && e.target[1].value !== "") {
                   if (validateEmail(e.target[0].value)) {
@@ -85,17 +85,17 @@ function Login() {
               } else {
                 seterror("waiting for recaptcha token... try again later.");
               }
-            } }
-            appendtoformdata={ (fd) => {
+            }}
+            appendtoformdata={(fd) => {
               if (recapToken) fd.append("g-recaptcha-response", recapToken);
               return fd;
-            } }
-            style={ {
+            }}
+            style={{
               width: "fit-content",
               margin: "auto",
               maxWidth: "300px",
-            } }
-            callback={ (resp: any) => {
+            }}
+            callback={(resp: any) => {
               if (resp.resp) {
                 cookies.set("token", resp.token, {
                   path: "/",
@@ -106,18 +106,18 @@ function Login() {
                 setloading(false);
                 seterror(resp.err);
               }
-            } }
+            }}
           >
             <GoogleReCaptcha
-              onVerify={ (token) => {
+              onVerify={(token) => {
                 setRecapToken(token);
-              } }
+              }}
             />
             <p
-              style={ {
+              style={{
                 textAlign: "end",
                 margin: "0",
-              } }
+              }}
             >
               Email
             </p>
@@ -125,7 +125,7 @@ function Login() {
               type="email"
               placeholder="Email"
               name="email"
-              style={ {
+              style={{
                 background: "transparent",
                 borderTop: "none",
                 borderRight: "none",
@@ -139,13 +139,13 @@ function Login() {
                 fontSize: "17px",
                 color: "white",
                 borderRadius: "0px",
-              } }
+              }}
             />
             <p
-              style={ {
+              style={{
                 textAlign: "end",
                 margin: "0",
-              } }
+              }}
             >
               Password
             </p>
@@ -153,7 +153,7 @@ function Login() {
               type="password"
               placeholder="Password"
               name="pass"
-              style={ {
+              style={{
                 background: "transparent",
                 borderTop: "none",
                 borderRight: "none",
@@ -167,16 +167,23 @@ function Login() {
                 fontSize: "17px",
                 color: "white",
                 borderRadius: "0px",
-              } }
+              }}
             />
-            <p style={ {
-              fontSize: "13px",
-              marginBottom: "1rem !important",
-            } }>By logging in, you agree to the <a href="/t&c" target="blank_">T & C's</a></p>
+            <p
+              style={{
+                fontSize: "13px",
+                marginBottom: "1rem !important",
+              }}
+            >
+              By logging in, you agree to the{" "}
+              <a href="/t&c" target="blank_">
+                T & C's
+              </a>
+            </p>
             <input
               type="submit"
               value="Login"
-              style={ {
+              style={{
                 padding: "1rem",
                 maxWidth: "250px",
                 width: "100%",
@@ -188,26 +195,26 @@ function Login() {
                 fontFamily: '"Source Sans Pro", sans-serif',
                 fontSize: "20px",
                 boxShadow: "rgb(0, 0, 0) 0px 6px 5px 0px",
-              } }
+              }}
             />
-            <p style={ { margin: "1rem 0", color: "red" } }>{ error }</p>
-            <p style={ { margin: "1rem 0", color: "white" } }>
-              dont already have an account?{ " " }
+            <p style={{ margin: "1rem 0", color: "red" }}>{error}</p>
+            <p style={{ margin: "1rem 0", color: "white" }}>
+              dont already have an account?{" "}
               <span>
                 <Link
-                  to={ "/signup" + location.search }
-                  style={ { color: "var(--secondary-text-colour)" } }
+                  to={"/signup" + location.search}
+                  style={{ color: "var(--secondary-text-colour)" }}
                 >
                   Make one
                 </Link>
               </span>
             </p>
-            <p style={ { margin: "1rem 0", color: "white" } }>
-              Forgot your password?{ " " }
+            <p style={{ margin: "1rem 0", color: "white" }}>
+              Forgot your password?{" "}
               <span>
                 <Link
-                  to={ "/requestNewPassword" }
-                  style={ { color: "var(--secondary-text-colour)" } }
+                  to={"/requestNewPassword"}
+                  style={{ color: "var(--secondary-text-colour)" }}
                 >
                   Change it
                 </Link>

@@ -37,196 +37,196 @@ const PageNav = () => {
   return (
     <>
       <Navbar
-        ref={ Navbarref }
+        ref={Navbarref}
         bg="darkpurple"
         variant="dark"
         fixed="top"
-        style={ { top: isElectron() ? "30px" : undefined } }
+        style={{ top: isElectron() ? "30px" : undefined }}
       >
         <Navbar.Brand
-          onPointerDown={ () => {
+          onPointerDown={() => {
             playSound("/sounds/click2.mp3");
-          } }
-          onPointerUp={ () => {
+          }}
+          onPointerUp={() => {
             playSound("/sounds/click1.mp3");
-          } }
-          as={ Link }
-          to={ loggedin ? "/contacts" : "/" }
+          }}
+          as={Link}
+          to={loggedin ? "/contacts" : "/"}
         >
           <img
             alt="TypeChat"
-            src={ width > 700 ? bigLogo : smallLogo }
-            style={ {
+            src={width > 700 ? bigLogo : smallLogo}
+            style={{
               height: "40px",
-            } }
+            }}
           />
         </Navbar.Brand>
 
         <Nav className="mc-auto">
-          { loggedin ? (
+          {loggedin ? (
             <>
-              { chattingto ? (
+              {chattingto ? (
                 <Nav.Link
-                  onPointerDown={ () => {
+                  onPointerDown={() => {
                     playSound("/sounds/click2.mp3");
-                  } }
-                  onPointerUp={ () => {
+                  }}
+                  onPointerUp={() => {
                     playSound("/sounds/click1.mp3");
-                  } }
-                  as={ Link }
-                  to={ `/chat/${chattingto}` }
-                  style={ {
+                  }}
+                  as={Link}
+                  to={`/chat/${chattingto}`}
+                  style={{
                     color:
                       location.pathname === `/chat/${chattingto}`
                         ? "white"
                         : "",
-                  } }
+                  }}
                   title="Chat"
                 >
-                  <FontAwesomeIcon icon={ faComment } />
+                  <FontAwesomeIcon icon={faComment} />
                 </Nav.Link>
               ) : (
                 <></>
-              ) }
+              )}
               <Nav.Link
-                onPointerDown={ () => {
+                onPointerDown={() => {
                   playSound("/sounds/click2.mp3");
-                } }
-                onPointerUp={ () => {
+                }}
+                onPointerUp={() => {
                   playSound("/sounds/click1.mp3");
-                } }
-                as={ Link }
+                }}
+                as={Link}
                 title="Contacts"
                 to="/contacts"
-                style={ {
+                style={{
                   color: location.pathname === "/contacts" ? "white" : "",
-                } }
+                }}
               >
-                <FontAwesomeIcon icon={ faUserFriends } />
+                <FontAwesomeIcon icon={faUserFriends} />
               </Nav.Link>
               <Nav.Link
-                onPointerDown={ () => {
+                onPointerDown={() => {
                   playSound("/sounds/click2.mp3");
-                } }
-                onPointerUp={ () => {
+                }}
+                onPointerUp={() => {
                   playSound("/sounds/click1.mp3");
-                } }
-                as={ Link }
+                }}
+                as={Link}
                 to="/add"
-                style={ { color: location.pathname === "/add" ? "white" : "" } }
+                style={{ color: location.pathname === "/add" ? "white" : "" }}
                 title="Add People"
               >
-                <FontAwesomeIcon icon={ faPlus } />
+                <FontAwesomeIcon icon={faPlus} />
               </Nav.Link>
             </>
           ) : (
             <></>
-          ) }
+          )}
         </Nav>
         <Nav>
           <Nav.Link
-            onPointerDown={ () => {
+            onPointerDown={() => {
               playSound("/sounds/click2.mp3");
-            } }
-            onPointerUp={ () => {
+            }}
+            onPointerUp={() => {
               playSound("/sounds/click1.mp3");
-            } }
-            onClick={ () => window.open("/invite", "blank_") }
+            }}
+            onClick={() => window.open("/invite", "blank_")}
           >
-            <FontAwesomeIcon icon={ faDiscord } />
+            <FontAwesomeIcon icon={faDiscord} />
           </Nav.Link>
           <Nav.Link
-            onPointerDown={ () => {
+            onPointerDown={() => {
               playSound("/sounds/click2.mp3");
-            } }
-            onPointerUp={ () => {
+            }}
+            onPointerUp={() => {
               playSound("/sounds/click1.mp3");
-            } }
-            as={ Link }
+            }}
+            as={Link}
             to="/blast"
-            style={ { color: location.pathname === "/blast" ? "white" : "" } }
+            style={{ color: location.pathname === "/blast" ? "white" : "" }}
           >
-            <FontAwesomeIcon icon={ faRocket } />
+            <FontAwesomeIcon icon={faRocket} />
           </Nav.Link>
           <Nav.Link
-            onPointerDown={ () => {
+            onPointerDown={() => {
               playSound("/sounds/click2.mp3");
-            } }
-            onPointerUp={ () => {
+            }}
+            onPointerUp={() => {
               playSound("/sounds/click1.mp3");
-            } }
-            as={ Link }
+            }}
+            as={Link}
             to="/settings"
-            style={ { color: location.pathname === "/settings" ? "white" : "" } }
+            style={{ color: location.pathname === "/settings" ? "white" : "" }}
           >
-            <FontAwesomeIcon icon={ faCog } />
+            <FontAwesomeIcon icon={faCog} />
           </Nav.Link>
-          { loggedin ? (
+          {loggedin ? (
             <>
               <Dropdown>
                 <Dropdown.Toggle
-                  style={ {
+                  style={{
                     backgroundColor: "transparent",
                     border: "none",
                     margin: "0",
                     padding: "0",
-                  } }
-                  onPointerDown={ () => {
+                  }}
+                  onPointerDown={() => {
                     playSound("/sounds/click2.mp3");
-                  } }
-                  onPointerUp={ () => {
+                  }}
+                  onPointerUp={() => {
                     playSound("/sounds/click1.mp3");
-                  } }
+                  }}
                 >
                   <img
                     alt="Profile"
-                    src={ "/files/" + user.profilePic }
-                    style={ { height: "40px", borderRadius: "50%" } }
+                    src={"/files/" + user.profilePic}
+                    style={{ height: "40px", borderRadius: "50%" }}
                   />
                 </Dropdown.Toggle>
 
-                <Dropdown.Menu alignRight className={ "db-darkpurple" }>
+                <Dropdown.Menu alignRight className={"db-darkpurple"}>
                   <Dropdown.Item
-                    as={ Link }
+                    as={Link}
                     to="/user/settings"
-                    onPointerDown={ () => {
+                    onPointerDown={() => {
                       playSound("/sounds/click2.mp3");
-                    } }
-                    onPointerUp={ () => {
+                    }}
+                    onPointerUp={() => {
                       playSound("/sounds/click1.mp3");
-                    } }
+                    }}
                   >
-                    <FontAwesomeIcon icon={ faUserCog } /> User Settings
+                    <FontAwesomeIcon icon={faUserCog} /> User Settings
                   </Dropdown.Item>
                   <Dropdown.Item
-                    as={ Link }
+                    as={Link}
                     to="/user/drive"
-                    onPointerDown={ () => {
+                    onPointerDown={() => {
                       playSound("/sounds/click2.mp3");
-                    } }
-                    onPointerUp={ () => {
+                    }}
+                    onPointerUp={() => {
                       playSound("/sounds/click1.mp3");
-                    } }
+                    }}
                   >
-                    <FontAwesomeIcon icon={ faPhotoVideo } /> Drive
+                    <FontAwesomeIcon icon={faPhotoVideo} /> Drive
                   </Dropdown.Item>
                   <Dropdown.Item
-                    onClick={ async () => {
+                    onClick={async () => {
                       await fetch("/api/logout");
                       cookies.remove("token");
                       rechecklogged();
                       localStorage.removeItem("chats");
                       localStorage.removeItem("contacts");
                       localStorage.removeItem("chattingto");
-                    } }
-                    onPointerDown={ () => {
+                    }}
+                    onPointerDown={() => {
                       playSound("/sounds/click2.mp3");
-                    } }
-                    onPointerUp={ () => {
+                    }}
+                    onPointerUp={() => {
                       playSound("/sounds/click1.mp3");
-                    } }
+                    }}
                   >
-                    <FontAwesomeIcon icon={ faSignOutAlt } /> Logout
+                    <FontAwesomeIcon icon={faSignOutAlt} /> Logout
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
@@ -234,39 +234,39 @@ const PageNav = () => {
           ) : (
             <>
               <Nav.Link
-                onPointerDown={ () => {
+                onPointerDown={() => {
                   playSound("/sounds/click2.mp3");
-                } }
-                onPointerUp={ () => {
+                }}
+                onPointerUp={() => {
                   playSound("/sounds/click1.mp3");
-                } }
-                as={ Link }
+                }}
+                as={Link}
                 to="/login"
-                style={ { color: location.pathname === "/login" ? "white" : "" } }
+                style={{ color: location.pathname === "/login" ? "white" : "" }}
               >
                 Login
               </Nav.Link>
               <Nav.Link
-                onPointerDown={ () => {
+                onPointerDown={() => {
                   playSound("/sounds/click2.mp3");
-                } }
-                onPointerUp={ () => {
+                }}
+                onPointerUp={() => {
                   playSound("/sounds/click1.mp3");
-                } }
-                as={ Link }
+                }}
+                as={Link}
                 to="/signup"
-                style={ {
+                style={{
                   color: location.pathname === "/signup" ? "white" : "",
-                } }
+                }}
               >
                 Sign Up
               </Nav.Link>
             </>
-          ) }
+          )}
         </Nav>
       </Navbar>
       <div
-        style={ { height: navbarsize.height + (isElectron() ? 30 : 0) } }
+        style={{ height: navbarsize.height + (isElectron() ? 30 : 0) }}
       ></div>
     </>
   );

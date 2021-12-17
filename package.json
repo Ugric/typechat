@@ -54,7 +54,7 @@
     "asyncScriptTags": true
   },
   "scripts": {
-    "dev": "set NODE_ENV=development&& nodemon app.ts",
+    "dev": "NODE_ENV=development nodemon app.ts",
     "pro": "set NODE_ENV=production&& ts-node app.ts"
   },
   "name": "typechat",
