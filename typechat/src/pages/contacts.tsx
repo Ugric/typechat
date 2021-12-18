@@ -232,7 +232,7 @@ function Contacts() {
         style={{
           margin: "auto",
           borderRadius: "10px",
-          padding: "1rem",
+          padding: "1rem 2rem",
           maxWidth: "700px",
         }}
       >

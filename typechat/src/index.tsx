@@ -46,8 +46,8 @@ import LogRocket from "logrocket";
 import TandC from "./pages/T&C";
 LogRocket.init("b1hvjh/typechat");
 
-if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development"))
-  ReactGA.initialize("G-26D01FTK1T");
+if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development")) ReactGA.initialize("G-26D01FTK1T");
+
 
 if (!JSON.parse(String(localStorage.getItem("tabCount")))) {
   localStorage.setItem("tabCount", JSON.stringify(0));
@@ -57,32 +57,14 @@ localStorage.setItem(
   JSON.stringify(JSON.parse(String(localStorage.getItem("tabCount"))) + 1)
 );
 
-if (window.navigator && navigator.serviceWorker) {
-  navigator.serviceWorker.getRegistrations().then(function (registrations) {
-    for (let registration of registrations) {
-      registration.unregister();
-    }
-  });
-}
-window.onunload = function () {
-  if (
-    "serviceWorker" in navigator &&
-    JSON.parse(String(localStorage.getItem("tabCount"))) - 1 <= 0
-  ) {
-    navigator.serviceWorker
-      .register("/sw.js", { scope: "/" })
-      .catch(console.error);
-  }
-  localStorage.setItem(
-    "tabCount",
-    JSON.stringify(JSON.parse(String(localStorage.getItem("tabCount"))) - 1)
-  );
-};
+navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(console.error);
 
 function App() {
   const { data, error, loading, reload } = useApi<any>("/api/userdata");
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
+  const [deferredprompt, setdeferredprompt] = useState<any>(null);
+  const [alreadyshownInstall, setalreadyshownInstall] = useState(false);
   const [getuserdataonupdate, setgetuserdataonupdate] = useState(false);
   const [userdata, setuserdata] = useState(data);
   const [catchedcontacts, setcachedcontacts] = useState<any>(null);
@@ -113,14 +95,61 @@ function App() {
       }
     })();
   });
-
+  useEffect(() => {
+    window.addEventListener("beforeinstallprompt", (event: any) => {
+      setdeferredprompt(event)
+      return false;
+    });
+    window.addEventListener("appinstalled", (event: any) => {
+      setalreadyshownInstall(true)
+      store.addNotification({
+        title: "Installed TypeChat",
+        message: "TypeChat has been successfully installed",
+        type: "success",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          pauseOnHover: true,
+          onScreen: true,
+        },
+      });
+      return false;
+    });
+  }, [])
   useEffect(() => {
     if (userdata?.loggedin) {
+      console.log(userdata);
       LogRocket.identify(userdata.user.id, {
         name: `${userdata.user.username}#${userdata.user.tag}`,
       });
+      if (!alreadyshownInstall && deferredprompt) {
+        setalreadyshownInstall(true);
+        store.addNotification({
+          title: "Install TypeChat",
+          message: "Click to install TypeChat to get the best experience!",
+          type: "info",
+          insert: "top",
+          container: "top-right",
+          animationIn: ["animated", "fadeIn"],
+          animationOut: ["animated", "fadeOut"],
+          onRemoval: (_: string, type: any) => {
+            if (type === "click") {
+              deferredprompt.prompt();
+              setdeferredprompt(null);
+            }
+          },
+          dismiss: {
+            duration: 10000,
+            pauseOnHover: true,
+            onScreen: true,
+          },
+        });
+      }
     }
-  }, [userdata]);
+  }, [userdata, deferredprompt, alreadyshownInstall, setalreadyshownInstall]);
   function NotificationAPI(
     options: ReactNotificationOptions,
     onclick: () => {}
