@@ -1,5 +1,5 @@
-const response = new Response(
-        `<!DOCTYPE html>
+const offlineRESP = new Response(
+  `<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
@@ -55,12 +55,11 @@ const response = new Response(
       </div>
     </body>
     </html>`,
-        { status: 503, headers: { "Content-Type": "text/html" } }
-      )
-self.addEventListener("fetch", async(event) => {
-  if (!self.navigator.onLine) {
-    event.respondWith(
-      response
-    );
+  { status: 503, headers: { "Content-Type": "text/html" } }
+);
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.destination == 'document') {
+    event.respondWith(fetch(event.request).catch(() => offlineRESP));
   }
 });
