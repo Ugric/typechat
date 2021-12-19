@@ -985,6 +985,7 @@ function updateFromAccountID(accountID: string) {
                       typing: msg.typing,
                       length: msg.length,
                       specialchars: msg.specialchars,
+                      by: accountdata.accountID,
                     })
                   );
                 }

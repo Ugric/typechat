@@ -74,3 +74,6 @@ p, pre {
 .paypal-checkout-sandbox-iframe {
   border: none;
 }
+.swiper-button-disabled {
+  display: none !important;
+}

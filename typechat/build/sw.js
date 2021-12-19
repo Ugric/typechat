@@ -1,5 +1,7 @@
-const offlineRESP = new Response(
-  `<!DOCTYPE html>
+self.addEventListener("fetch", (event) => {
+  if (event.request.destination == 'document') {
+    event.respondWith(fetch(event.request).catch(() => { console.log('offline mode');return new Response(
+      `<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
@@ -55,11 +57,7 @@ const offlineRESP = new Response(
       </div>
     </body>
     </html>`,
-  { status: 503, headers: { "Content-Type": "text/html" } }
-);
-
-self.addEventListener("fetch", (event) => {
-  if (event.request.destination == 'document') {
-    event.respondWith(fetch(event.request).catch(() => offlineRESP));
+      { status: 503, headers: { "Content-Type": "text/html" } }
+    ); }));
   }
 });

@@ -23,6 +23,7 @@ import SwiperCore, {
   EffectCoverflow,
   Navigation
 } from "swiper";
+import isMobileDevice from "../isMobile";
 
 SwiperCore.use([Pagination, Mousewheel, Virtual, EffectCoverflow, Navigation]);
 
@@ -320,8 +321,8 @@ function SwiperPages() {
     <>
       <Swiper
         effect={"coverflow"}
-        navigation
-        pagination
+        navigation={!isMobileDevice()}
+        pagination={isMobileDevice()}
         direction="horizontal"
         mousewheel={{
           forceToAxis: true,
@@ -338,12 +339,12 @@ function SwiperPages() {
           height: `calc(100vh - ${navbarsize.height}px)`,
           overflow: "hidden",
         }}
-        onSlideChangeTransitionEnd={(e) => {
+        onTransitionEnd={(e) => {
           if (e.activeIndex !== 0) {
             setcontactsShow(false);
           }
         }}
-        onSlideChangeTransitionStart={()=>{
+        onTransitionStart={()=>{
           setcontactsShow(true);
         }}
       >

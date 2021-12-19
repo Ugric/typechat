@@ -36,7 +36,9 @@ localStorage.setItem(
   JSON.stringify(JSON.parse(String(localStorage.getItem("tabCount"))) + 1)
 );
 
-navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(console.error);
+navigator.serviceWorker
+  ?.register("/sw.js", { scope: "/" })
+  .catch(console.error);
 
 function App() {
   const { data, reload } = useApi<any>(
@@ -46,7 +48,10 @@ function App() {
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
   const [deferredprompt, setdeferredprompt] = useState<any>(null);
   const [alreadyshownInstall, setalreadyshownInstall] = useState(false);
-  const [hideInstallPrompt, sethideInstallPrompt] = useLocalStorage('hideInstallPrompt',false);
+  const [hideInstallPrompt, sethideInstallPrompt] = useLocalStorage(
+    "hideInstallPrompt",
+    false
+  );
   const [getuserdataonupdate, setgetuserdataonupdate] = useState(false);
   const [userdata, setuserdata] = useLocalStorage<any>("localuserdata", {
     loggedin: false,
@@ -104,6 +109,36 @@ function App() {
       });
       return false;
     });
+    window.addEventListener("offline", () => {
+      store.addNotification({
+        title: "Offline",
+        type: "danger",
+        insert: "top",
+        container: "top-left",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          pauseOnHover: true,
+          onScreen: true,
+        },
+      });
+    });
+    window.addEventListener("online", () => {
+      store.addNotification({
+        title: "Online",
+        type: "success",
+        insert: "top",
+        container: "top-left",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          pauseOnHover: true,
+          onScreen: true,
+        },
+      });
+    });
   }, []);
   useEffect(() => {
     if (userdata?.loggedin) {
@@ -154,30 +189,26 @@ function App() {
   return (
     <GoogleReCaptchaProvider reCaptchaKey="6LcHJdYcAAAAAHmOyGZbVAVkLNdeG0Pe2Rl3RVDV">
       <Router>
-        <div style={{ overflowWrap: "anywhere" }}>
-          <datahook.Provider
-            value={{
-              loggedin: userdata.loggedin,
-              user: userdata.user,
-              rechecklogged: reload,
-              setnavbarsize,
-              navbarsize,
-              chattingto,
-              setchattingto,
-              notifications: store,
-              catchedcontacts,
-              setcachedcontacts,
-              NotificationAPI,
-            }}
-          >
-            <PageNav />
-            <ReactNotification />
-            <NotificationComponent />
-            <div>
-              <Switches />
-            </div>
-          </datahook.Provider>
-        </div>
+        <datahook.Provider
+          value={{
+            loggedin: userdata.loggedin,
+            user: userdata.user,
+            rechecklogged: reload,
+            setnavbarsize,
+            navbarsize,
+            chattingto,
+            setchattingto,
+            notifications: store,
+            catchedcontacts,
+            setcachedcontacts,
+            NotificationAPI,
+          }}
+        >
+          <PageNav />
+          <ReactNotification />
+          <NotificationComponent />
+          <Switches />
+        </datahook.Provider>
       </Router>
     </GoogleReCaptchaProvider>
   );

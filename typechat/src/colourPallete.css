@@ -7,6 +7,8 @@
   --dark-glass-bg-colour: #3c3cd380;
   --primary-text-colour: #ffff00;
   --secondary-text-colour: #ffaa56;
+  --swiper-navigation-color: var(--main-bg-colour);
+  --swiper-pagination-color: var(--main-bg-colour);
   --dark-mode: #121212;
   --online: #90ee90;
   --offline: #5c5c5c;
