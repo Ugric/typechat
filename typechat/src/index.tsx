@@ -46,6 +46,7 @@ function App() {
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
   const [deferredprompt, setdeferredprompt] = useState<any>(null);
   const [alreadyshownInstall, setalreadyshownInstall] = useState(false);
+  const [hideInstallPrompt, sethideInstallPrompt] = useLocalStorage('hideInstallPrompt',false);
   const [getuserdataonupdate, setgetuserdataonupdate] = useState(false);
   const [userdata, setuserdata] = useLocalStorage<any>("localuserdata", {
     loggedin: false,
@@ -85,14 +86,14 @@ function App() {
       setdeferredprompt(event);
       return false;
     });
-    window.addEventListener("appinstalled", (event: any) => {
+    window.addEventListener("appinstalled", () => {
       setalreadyshownInstall(true);
       store.addNotification({
         title: "Installed TypeChat",
         message: "TypeChat has been successfully installed",
         type: "success",
         insert: "top",
-        container: "top-right",
+        container: "top-left",
         animationIn: ["animated", "fadeIn"],
         animationOut: ["animated", "fadeOut"],
         dismiss: {
@@ -109,24 +110,26 @@ function App() {
       LogRocket.identify(userdata.user.id, {
         name: `${userdata.user.username}#${userdata.user.tag}`,
       });
-      if (!alreadyshownInstall && deferredprompt) {
+      if (!alreadyshownInstall && !hideInstallPrompt && deferredprompt) {
         setalreadyshownInstall(true);
         store.addNotification({
           title: "Install TypeChat",
           message: "Click to install TypeChat to get the best experience!",
           type: "info",
           insert: "top",
-          container: "top-right",
+          container: "top-left",
           animationIn: ["animated", "fadeIn"],
           animationOut: ["animated", "fadeOut"],
           onRemoval: (_: string, type: any) => {
             if (type === "click") {
               deferredprompt.prompt();
               setdeferredprompt(null);
+            } else {
+              sethideInstallPrompt(true);
             }
           },
           dismiss: {
-            duration: 10000,
+            duration: 30000,
             pauseOnHover: true,
             onScreen: true,
           },

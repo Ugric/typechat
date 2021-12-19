@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.02893640.chunk.css",
-    "main.js": "/static/js/main.1d6e39e5.chunk.js",
+    "main.js": "/static/js/main.1735259c.chunk.js",
     "reactPlayerDailyMotion.js": "/static/js/reactPlayerDailyMotion.75b6e67c.chunk.js",
     "reactPlayerFacebook.js": "/static/js/reactPlayerFacebook.72591743.chunk.js",
     "reactPlayerFilePlayer.js": "/static/js/reactPlayerFilePlayer.5ca43855.chunk.js",
@@ -40,6 +40,6 @@
     "static/css/15.00ceed35.chunk.css",
     "static/js/15.8b93d3a5.chunk.js",
     "static/css/main.02893640.chunk.css",
-    "static/js/main.1d6e39e5.chunk.js"
+    "static/js/main.1735259c.chunk.js"
   ]
 }
