@@ -112,11 +112,15 @@ function Signup() {
               }
             }}
           >
-            <GoogleReCaptcha
-              onVerify={(token) => {
-                setRecapToken(token);
-              }}
-            />{" "}
+            {navigator.userAgent != "ReactSnap" ? (
+              <GoogleReCaptcha
+                onVerify={(token) => {
+                  setRecapToken(token);
+                }}
+              />
+            ) : (
+              <></>
+            )}{" "}
             <p
               style={{
                 textAlign: "end",

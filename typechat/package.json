@@ -58,9 +58,10 @@
     "react-player": "^2.9.0",
     "react-qr-reader": "^2.2.1",
     "react-router-dom": "^5.2.0",
+    "react-router-sitemap-generator": "^0.0.8",
     "react-scripts": "4.0.3",
     "react-secure-link": "^3.0.3",
-    "react-snap": "^1.23.0",
+    "react-snap": "1.10.0",
     "react-syntax-highlighter": "^11.0.3",
     "react-textarea-autosize": "^8.3.3",
     "react-timeago": "^6.2.1",
@@ -76,10 +77,18 @@
     "web-vitals": "^1.1.2"
   },
   "scripts": {
+    "postbuild": "react-snap",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "reactSnap": {
+    "source": "build",
+    "minifyHtml": {
+      "collapseWhitespace": false,
+      "removeComments": false
+    }
   },
   "eslintConfig": {
     "extends": [
