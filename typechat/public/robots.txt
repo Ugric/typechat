@@ -1,0 +1,11 @@
+User-Agent: *
+Allow: /
+Allow: /blast
+Allow: /login
+Allow: /signup
+Disallow: /contacts
+Disallow: /settings
+Disallow: /requestNewPassword
+
+Sitemap: sitemap.xml
+
