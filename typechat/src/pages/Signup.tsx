@@ -112,7 +112,7 @@ function Signup() {
               }
             }}
           >
-            {navigator.userAgent != "ReactSnap" ? (
+            {navigator.userAgent !== "ReactSnap" ? (
               <GoogleReCaptcha
                 onVerify={(token) => {
                   setRecapToken(token);

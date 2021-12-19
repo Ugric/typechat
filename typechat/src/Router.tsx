@@ -13,13 +13,9 @@ import UserSettings from "./pages/usersettings";
 import Error404 from "./pages/404";
 import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
-import {
-  Switch,
-  Route,
-  Redirect,
-} from "react-router-dom";
+import { Switch, Route, Redirect } from "react-router-dom";
 
-export default ({ chattingto }: {chattingto?: string})=>(
+export default ({ chattingto }: { chattingto?: string }) => (
   <Switch>
     <Route path="/" exact>
       <Home />

@@ -180,7 +180,9 @@ const PageNav = () => {
                   <img
                     alt="Profile"
                     src={"/files/" + user.profilePic}
-                    style={{ height: "40px", borderRadius: "50%" }}
+                    width='40px'
+                    height='40px'
+                    style={{ height: "40px", width: '40px', borderRadius: "50%" }}
                   />
                 </Dropdown.Toggle>
 

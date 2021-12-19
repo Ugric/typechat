@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
 import "./index.css";
 import "./pages/css/toggleswitch.css";
-import { BrowserRouter as Router, Switch } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import "./pages/css/scrollbar.css";
 import { data as datahook } from "./hooks/datahook";
 import PageNav from "./pages/Navbar";
@@ -10,7 +9,6 @@ import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import "./colourPallete.css";
 import reportWebVitals from "./reportWebVitals";
 import useApi from "./hooks/useapi";
-import Loader from "./pages/loader";
 import "./pages/css/highlight.css";
 import useLocalStorage from "./hooks/useLocalStorage";
 import snooze from "./snooze";
@@ -21,11 +19,10 @@ import ReactNotification, {
 
 import "react-notifications-component/dist/theme.css";
 import NotificationComponent from "./notification";
-import LoadError from "./pages/error";
 import ReactGA from "react-ga4";
 import LogRocket from "logrocket";
 import Switches from "./Router";
-import { hydrate, render } from "react-dom";
+import { render } from "react-dom";
 LogRocket.init("b1hvjh/typechat");
 
 if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development"))
@@ -43,7 +40,7 @@ navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(console.error);
 
 function App() {
   const { data, reload } = useApi<any>(
-    navigator.userAgent != "ReactSnap" ? "/api/userdata" : null
+    navigator.userAgent !== "ReactSnap" ? "/api/userdata" : null
   );
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
   const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
@@ -56,6 +53,7 @@ function App() {
   const [catchedcontacts, setcachedcontacts] = useState<any>(null);
   useEffect(() => {
     if (data) setuserdata(data);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
   useEffect(() => {
     if ("Notification" in window && userdata?.loggedin) {
