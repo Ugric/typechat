@@ -261,6 +261,7 @@ function Image() {
     filename: string;
     mimetype: string;
   }>("/api/getimagedata?" + new URLSearchParams({ id }));
+  const { notifications } = useData();
   const mimetype = data?.mimetype;
   const file = data?.id;
   useEffect(() => {
@@ -291,8 +292,27 @@ function Image() {
         <h1 data-private>{data.filename}</h1>
         <div
           onClick={() => {
-            navigator.clipboard.writeText("https://tchat.us.to/drive/" + file);
-            alert("Copied share link to clipboard.");
+            navigator.clipboard.writeText("https://tchat.us.to/drive/" + file).then(() => {
+              notifications.addNotification({
+                title: "Copied",
+                message: "Link copied to clipboard",
+                type: "success",
+                insert: "top",
+                container: "top-right",
+                animationIn: ["animate__animated", "animate__fadeIn"],
+                animationOut: ["animate__animated", "animate__fadeOut"],
+              });
+            }).catch(() => {
+              notifications.addNotification({
+                title: "Error",
+                message: "Could not copy link",
+                type: "danger",
+                insert: "top",
+                container: "top-right",
+                animationIn: ["animate__animated", "animate__fadeIn"],
+                animationOut: ["animate__animated", "animate__fadeOut"],
+              });
+          });
           }}
           style={{
             color: "var(--secondary-text-colour)",
@@ -304,8 +324,28 @@ function Image() {
         </div>
         <div
           onClick={() => {
-            navigator.clipboard.writeText("https://tchat.us.to/files/" + file);
-            alert("Copied media source to clipboard.");
+            navigator.clipboard.writeText("https://tchat.us.to/files/" + file).then(() => {
+              notifications.addNotification({
+                title: "Copied",
+                message: "Link copied to clipboard",
+                type: "success",
+                insert: "top",
+                container: "top-right",
+                animationIn: ["animate__animated", "animate__fadeIn"],
+                animationOut: ["animate__animated", "animate__fadeOut"],
+              });
+            }).catch(() => {
+              notifications.addNotification({
+                title: "Error",
+                message: "Could not copy link",
+                type: "danger",
+                insert: "top",
+                container: "top-right",
+                animationIn: ["animate__animated", "animate__fadeIn"],
+                animationOut: ["animate__animated", "animate__fadeOut"],
+              });
+            });
+            
           }}
           style={{
             color: "var(--secondary-text-colour)",

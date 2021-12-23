@@ -101,6 +101,8 @@ const messagefunctions = {};
 
 const toVerify: { [key: string]: string } = {};
 
+const toVerifyAccountID: { [key: string]: string } = {};
+
 const updateFunctions: { [key: string]: { [key: string]: Function } } = {};
 
 function updateFromAccountID(accountID: string) {
@@ -1034,6 +1036,7 @@ function updateFromAccountID(accountID: string) {
       }
       return res.send({ filelimit: 0, limitused: 0, timeleft: 0 });
     });
+    app.post('/api/deltefile', )
     app.post("/api/uploadfile", async (req: any, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1222,6 +1225,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
           }
         );
         delete toVerify[req.params.verificationID];
+        delete toVerifyAccountID[accountdata.accountID];
         if (accountdata) {
           return res.send({
             verified: true,
@@ -1763,7 +1767,7 @@ WHERE friends.accountID == :accountID
       if (accountdata) {
         const discordID = linkurls.linkID[req.params.id];
         if (discordID) {
-          if (!toVerify[accountdata.accountID]) {
+          if (!toVerifyAccountID[accountdata.accountID]) {
             const link = await db.get(
               "SELECT * FROM discordAccountLink WHERE accountID=:accountID",
               { ":accountID": accountdata.accountID }
@@ -2090,6 +2094,7 @@ WHERE friends.accountID == :accountID
           res.send({ resp: true, token });
           const verificationID = generate(100);
           toVerify[verificationID] = accountID;
+          toVerifyAccountID[accountID] = verificationID;
           VerificationEmail(req.body.email, verificationID);
           await snooze(3600000);
           if (toVerify[verificationID]) {
@@ -2129,7 +2134,7 @@ WHERE friends.accountID == :accountID
     });
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
-      res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
+      res.sendFile(path.join(__dirname, "typechat", "build", "200.html"));
     });
   };
   console.log(process.env.NODE_ENV, "boot up");

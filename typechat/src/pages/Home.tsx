@@ -1,6 +1,6 @@
 import { Redirect, useHistory } from "react-router-dom";
 import { useData } from "../hooks/datahook";
-import appPage from "./images/app page.png";
+import appPage from "./images/app page-compressed.png";
 import "./css/home.css";
 import playSound from "../playsound";
 
@@ -30,26 +30,41 @@ function Home() {
           style={{
             color: "var(--secondary-text-colour)",
             animationDuration: "2s",
-            animationDelay: "1s",
+            animationDelay: "1.5s",
           }}
         >
           Welcome to TypeChat.
         </h1>
-        <p
+        <h3
           className="slideinright"
           style={{
             animationDuration: "2s",
-            animationDelay: "2s",
+            animationDelay: "3s",
             paddingBottom: "1rem",
           }}
         >
           Type to your friends. Powered by TypeScript.
+        </h3>
+        <p
+          className="slideinleft"
+          style={{
+            animationDuration: "2s",
+            animationDelay: "4.5s",
+            maxWidth: "35rem",
+            paddingBottom: "1rem",
+            margin: 'auto'
+          }}
+        >
+          TypeChat is a free, cross-platform, and secure chat app that lets you
+          chat with your friends. It's free to use, and you can even download it
+          for free. TypeChat is powered by TypeScript, and you can use it on any
+          platform.
         </p>
         <div
           className="logindraw"
           style={{
             animationDuration: "2s",
-            animationDelay: standalone ? "3s" : "5s",
+            animationDelay: standalone ? "6s" : "7.5s",
           }}
         >
           <div>
@@ -113,14 +128,14 @@ function Home() {
           <></>
         ) : (
           <img
-            className="slideinleft"
+            className="slideinright"
             alt="phone app"
             src={appPage}
             style={{
               width: "100%",
               maxWidth: "350px",
               animationDuration: "2s",
-              animationDelay: "3s",
+              animationDelay: "6s",
             }}
           ></img>
         )}

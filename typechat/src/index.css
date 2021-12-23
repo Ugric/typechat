@@ -40,8 +40,8 @@ input:focus, select:focus, textarea:focus, button:focus {
   color: white;
 }
 
-p, pre {
-  margin: 0 !important;
+body p, body pre {
+  margin: 0;
 }
 
 .noselect {

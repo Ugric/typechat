@@ -237,7 +237,7 @@ function Signup() {
             <p
               style={{
                 fontSize: "13px",
-                marginBottom: "1rem !important",
+
               }}
             >
               By creating an account, you agree to the{" "}
@@ -262,7 +262,7 @@ function Signup() {
               }}
             />
             <p style={{ margin: "1rem 0", color: "red" }}>{error}</p>
-            <p style={{ margin: "1rem 0", color: "white" }}>
+            <p style={{ margin: "1rem 0 0 0", color: "white" }}>
               already have an account?{" "}
               <span>
                 <Link

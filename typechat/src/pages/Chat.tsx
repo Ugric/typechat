@@ -12,6 +12,7 @@ import {
   faSadCry,
   faTimes,
   faTrash,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMinusCircle, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
@@ -53,7 +54,7 @@ import GiftIcon from "./images/gift.svg";
 import ReactGA from "react-ga4";
 import useWindowVisable from "../hooks/useWindowVisable";
 import isMobileDevice from "../isMobile";
-
+import snooze from "../snooze";
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
   exists: boolean;
@@ -558,6 +559,13 @@ function Message({
                         scrolltobottom();
                       }
                     }}
+                    onClick={() => {
+                      window.open(
+                        `/drive/${file}`,
+                        file,
+                        "width=600,height=400"
+                      );
+                    }}
                   ></img>
                 ) : mimetype.split("/")[0] === "video" ? (
                   <video
@@ -587,7 +595,7 @@ function Message({
                   <div
                     onClick={() => {
                       window.open(
-                        `/files/${file}`,
+                        `/drive/${file}`,
                         file,
                         "width=600,height=400"
                       );
@@ -598,6 +606,7 @@ function Message({
                     }}
                   >
                     <FontAwesomeIcon icon={faFile}></FontAwesomeIcon> File
+                    (click to open in new window/tab)
                   </div>
                 )
               ) : (
@@ -792,90 +801,93 @@ function MessageMaker({
 }) {
   const { user } = useData();
   const { users } = useContext(usersContext);
-  const output = useMemo(() => {
-    console.time("chatrender");
-    const output = [];
-    let lastmessage: messageWithText | messageWithFile | giftMessage | null =
-      null;
-    for (let i = 0; i < messages.length; i++) {
-      if (
-        (!lastmessage && !canloadmore) ||
-        (lastmessage && messages[i].time - lastmessage.time > 300000)
-      ) {
-        output.push(
-          <p
-            key={messages[i].time}
-            style={{
-              margin: "0",
-              color: `lightgray`,
-              fontSize: "10px",
-              textAlign: "center",
-            }}
-          >
-            {new Date(messages[i].time).toLocaleString()}
-          </p>
-        );
-      }
-      if (!lastmessage || messages[i].from !== lastmessage.from) {
-        output.push(
-          messages[i].from === user.id || users[messages[i].from] ? (
-            <div
-              data-private
-              key={messages[i].ID + "topname"}
+  const [output, setoutput] = useState<JSX.Element[]>([]);
+  useEffect(() => {
+    (async () => {
+      console.time("chatrender");
+      const output = [];
+      let lastmessage: messageWithText | messageWithFile | giftMessage | null =
+        null;
+      for (let i = 0; i < messages.length; i++) {
+        if (
+          (!lastmessage && !canloadmore) ||
+          (lastmessage && messages[i].time - lastmessage.time > 300000)
+        ) {
+          output.push(
+            <p
+              key={messages[i].time}
               style={{
-                alignSelf:
-                  messages[i].from === user.id ? "flex-end" : "flex-start",
+                margin: "0",
+                color: `lightgray`,
+                fontSize: "10px",
+                textAlign: "center",
               }}
             >
-              {messages[i].from === user.id ? (
-                <span style={{ marginRight: "5px" }}>{user.username}</span>
-              ) : (
-                <></>
-              )}
-              <img
-                src={`/files/${
-                  messages[i].from === user.id
-                    ? user.profilePic
-                    : users[messages[i].from].profilePic
-                }`}
+              {new Date(messages[i].time).toLocaleString()}
+            </p>
+          );
+        }
+        if (!lastmessage || messages[i].from !== lastmessage.from) {
+          output.push(
+            messages[i].from === user.id || users[messages[i].from] ? (
+              <div
+                data-private
+                key={messages[i].ID + "topname"}
                 style={{
-                  width: "25px",
-                  height: "25px",
-                  margin: "3px",
-                  borderRadius: "50%",
+                  alignSelf:
+                    messages[i].from === user.id ? "flex-end" : "flex-start",
                 }}
-                alt=""
-              />
-              {users[messages[i].from] ? (
-                <span style={{ marginLeft: "5px" }}>
-                  {users[messages[i].from].username}
-                </span>
-              ) : (
-                <></>
-              )}
-            </div>
-          ) : (
-            <></>
-          )
+              >
+                {messages[i].from === user.id ? (
+                  <span style={{ marginRight: "5px" }}>{user.username}</span>
+                ) : (
+                  <></>
+                )}
+                <img
+                  src={`/files/${
+                    messages[i].from === user.id
+                      ? user.profilePic
+                      : users[messages[i].from].profilePic
+                  }`}
+                  style={{
+                    width: "25px",
+                    height: "25px",
+                    margin: "3px",
+                    borderRadius: "50%",
+                  }}
+                  alt=""
+                />
+                {users[messages[i].from] ? (
+                  <span style={{ marginLeft: "5px" }}>
+                    {users[messages[i].from].username}
+                  </span>
+                ) : (
+                  <></>
+                )}
+              </div>
+            ) : (
+              <></>
+            )
+          );
+        }
+        output.push(
+          <Message
+            key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+            messages={messages}
+            deleteFromID={deleteFromID}
+            i={i}
+            user={user}
+            toscroll={toscroll}
+            scrolltobottom={scrolltobottom}
+            sendJsonMessage={sendJsonMessage}
+            editFromID={editFromID}
+          ></Message>
         );
+        lastmessage = messages[i];
       }
-      output.push(
-        <Message
-          key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-          messages={messages}
-          deleteFromID={deleteFromID}
-          i={i}
-          user={user}
-          toscroll={toscroll}
-          scrolltobottom={scrolltobottom}
-          sendJsonMessage={sendJsonMessage}
-          editFromID={editFromID}
-        ></Message>
-      );
-      lastmessage = messages[i];
-    }
-    console.timeEnd("chatrender");
-    return output;
+      console.timeEnd("chatrender");
+      setoutput(output);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, canloadmore, loadingmore, chatUpdateID]);
   const { id: chattingto } = useParams<{ id: string }>();
@@ -1059,8 +1071,8 @@ function ChatPage() {
     undefined | { exists: boolean; users: { [key: string]: any } }
   >();
   const [groupchatdata /*setgroupchatdata*/] = useState({
-    picture: "",
-    name: "",
+    picture: "hi",
+    name: "loading...",
   });
   const [oldmetypingdata, setoldmetypingdata] = useState({
     type: "typing",
@@ -1523,7 +1535,6 @@ function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metypingdata]);
-  window.onload = () => setTimeout(scrolltobottom, 0);
   useEffect(() => {
     setTimeout(scrolltobottom, 0);
   }, [usersdata, readyState]);
@@ -1600,29 +1611,49 @@ function ChatPage() {
                 borderRadius: "100%",
                 aspectRatio: "1/1",
               }}
-              alt={usersdata.users[chattingto].username}
+              alt={
+                isGroupChat
+                  ? groupchatdata.name
+                  : usersdata.users[chattingto].username
+              }
             />
             <p style={{ textAlign: "center" }} data-private>
-              {usersdata.users[chattingto].username}{" "}
-              <FontAwesomeIcon
-                style={{
-                  color: isonline === "0" ? "var(--offline)" : "var(--online)",
-                }}
-                icon={
-                  isonline === "1"
-                    ? faDesktop
-                    : isonline === "M"
-                    ? faMobileAlt
-                    : faEyeSlash
-                }
-              ></FontAwesomeIcon>
+              {!isGroupChat ? (
+                <>
+                  {usersdata.users[chattingto].username}{" "}
+                  <FontAwesomeIcon
+                    style={{
+                      color:
+                        isonline === "0" ? "var(--offline)" : "var(--online)",
+                    }}
+                    icon={
+                      isonline === "1"
+                        ? faDesktop
+                        : isonline === "M"
+                        ? faMobileAlt
+                        : faEyeSlash
+                    }
+                  ></FontAwesomeIcon>
+                  <div data-private>
+                    <Badge
+                      badges={usersdata.users[chattingto].badges}
+                      size="20px"
+                    ></Badge>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {groupchatdata.name}{" "}
+                  <FontAwesomeIcon
+                    style={{
+                      color:
+                        isonline === "0" ? "var(--offline)" : "var(--online)",
+                    }}
+                    icon={faUsers}
+                  ></FontAwesomeIcon>
+                </>
+              )}
             </p>
-            <div data-private>
-              <Badge
-                badges={usersdata.users[chattingto].badges}
-                size="20px"
-              ></Badge>
-            </div>
           </>
         ) : (
           <p style={{ margin: "1rem", textAlign: "center" }}>

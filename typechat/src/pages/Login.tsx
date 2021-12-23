@@ -176,7 +176,6 @@ function Login() {
             <p
               style={{
                 fontSize: "13px",
-                marginBottom: "1rem !important",
               }}
             >
               By logging in, you agree to the{" "}
@@ -202,7 +201,7 @@ function Login() {
               }}
             />
             <p style={{ margin: "1rem 0", color: "red" }}>{error}</p>
-            <p style={{ margin: "1rem 0", color: "white" }}>
+            <p style={{ margin: "1rem 0 0 0", color: "white" }}>
               dont already have an account?{" "}
               <span>
                 <Link
@@ -213,7 +212,7 @@ function Login() {
                 </Link>
               </span>
             </p>
-            <p style={{ margin: "1rem 0", color: "white" }}>
+            <p style={{ margin: "0", color: "white" }}>
               Forgot your password?{" "}
               <span>
                 <Link
