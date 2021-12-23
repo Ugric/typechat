@@ -1430,7 +1430,7 @@ FROM friends
 JOIN accounts ON friends.toAccountID=accounts.accountID
 WHERE friends.accountID == :accountID
     and toAccountID in friendrequestlist ORDER BY
-    (SELECT time FROM friendsChatLastMessageSent WHERE friendsChatLastMessageSent.accountID == :accountID and friendsChatLastMessageSent.toAccountID == toAccountID LIMIT 1) DESC`,
+    (SELECT time FROM friendsChatLastMessageSent WHERE friendsChatLastMessageSent.accountID == :accountID and friendsChatLastMessageSent.toAccountID == accountID LIMIT 1) DESC`,
           { ":accountID": accountdata.accountID }
         );
 
