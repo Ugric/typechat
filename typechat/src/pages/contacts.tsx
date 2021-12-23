@@ -109,11 +109,9 @@ function Contact({
             alt="profile"
             loading="lazy"
             src={"/files/" + user.profilePic}
+            width="50px"
+            height="50px"
             style={{
-              maxHeight: "50px",
-              maxWidth: "100%",
-              height: "auto",
-              width: "auto",
               borderRadius: "50%",
             }}
             onLoad={(e: any) => {

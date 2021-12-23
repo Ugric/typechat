@@ -49,11 +49,9 @@ function ProfilePage({
         <img
           alt="profile"
           src={"/files/" + user.profilePic}
+          width='75px'
+          height='75px'
           style={{
-            maxHeight: "75px",
-            maxWidth: "100%",
-            height: "auto",
-            width: "auto",
             borderRadius: "50%",
           }}
           onLoad={(e: any) => {

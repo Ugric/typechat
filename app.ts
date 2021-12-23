@@ -2200,7 +2200,7 @@ WHERE friends.accountID == :accountID and account.accountID != :accountID
                 ":accountID": defaultaccount.accountID,
                 ":toAccountID": accountID,
                 ":message":
-                  "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://tchat.us.to/blast",
+                  "Dont forget to check out Blast 🚀!\n\nTypechat is and always will be free, however to help us pay for the costs of our platform we rely on the Blast 🚀 subscription service.\n\nTo learn more go to https://typechat.world/blast",
                 ":time": time,
               }
             ),
