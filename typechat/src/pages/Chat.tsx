@@ -456,52 +456,54 @@ function Message({
               </>
             ) : (
               <>
-                {onlyemojis ? (
-                  (longmessage && messagecharlist && !fullyopened
-                    ? messagecharlist.slice(0, 500).join("")
-                    : message
-                  )
-                    .split("```")
-                    .map((value: string, index: number) =>
-                      index % 2 === 0 ? (
-                        <React.Fragment key={index}>
-                          <Linkify
-                            componentDecorator={(
-                              decoratedHref,
-                              decoratedText,
-                              key
-                            ) => {
-                              if (!donekeys.includes(key)) {
-                                links.push({
-                                  decoratedHref,
-                                  decoratedText,
-                                  key,
-                                });
-                                donekeys.push(key);
-                              }
-                              return (
-                                <a
-                                  target="blank"
-                                  href={decoratedHref}
-                                  key={key}
-                                >
-                                  {decoratedText}
-                                </a>
-                              );
-                            }}
-                          >
-                            {value.trim()}
-                          </Linkify>
-                        </React.Fragment>
-                      ) : (
-                        <SyntaxHighlighter key={index}>
-                          {value.trim()}
-                        </SyntaxHighlighter>
-                      )
+                <div>
+                  {onlyemojis ? (
+                    (longmessage && messagecharlist && !fullyopened
+                      ? messagecharlist.slice(0, 500).join("")
+                      : message
                     )
-                ) : (
-                  <h1 className="emojimessage">{message}</h1>
-                )}
+                      .split("```")
+                      .map((value: string, index: number) =>
+                        index % 2 === 0 ? (
+                          <React.Fragment key={index}>
+                            <Linkify
+                              componentDecorator={(
+                                decoratedHref,
+                                decoratedText,
+                                key
+                              ) => {
+                                if (!donekeys.includes(key)) {
+                                  links.push({
+                                    decoratedHref,
+                                    decoratedText,
+                                    key,
+                                  });
+                                  donekeys.push(key);
+                                }
+                                return (
+                                  <a
+                                    target="blank"
+                                    href={decoratedHref}
+                                    key={key}
+                                  >
+                                    {decoratedText}
+                                  </a>
+                                );
+                              }}
+                            >
+                              {value.trim()}
+                            </Linkify>
+                          </React.Fragment>
+                        ) : (
+                          <SyntaxHighlighter key={index}>
+                            {value.trim()}
+                          </SyntaxHighlighter>
+                        )
+                      )
+                  ) : (
+                    <h1 className="emojimessage">{message}</h1>
+                  )}
+                </div>
                 {longmessage && !fullyopened ? "..." : ""}
                 {!longmessage || fullyopened ? (
                   <MessageFaviconOrVideoRenderer
@@ -808,6 +810,7 @@ function MessageMaker({
       const output = [];
       let lastmessage: messageWithText | messageWithFile | giftMessage | null =
         null;
+      let topIndex = 0
       for (let i = 0; i < messages.length; i++) {
         if (
           (!lastmessage && !canloadmore) ||
@@ -827,48 +830,50 @@ function MessageMaker({
             </p>
           );
         }
-        if (!lastmessage || messages[i].from !== lastmessage.from) {
+        if (
+          (!lastmessage ||
+          messages[i].from !== lastmessage.from) &&
+            (messages[i].from === user.id ||
+          users[messages[i].from])
+        ) {
           output.push(
-            messages[i].from === user.id || users[messages[i].from] ? (
-              <div
-                data-private
-                key={messages[i].ID + "topname"}
+            <div
+              data-private
+              key={topIndex}
+              style={{
+                alignSelf:
+                  messages[i].from === user.id ? "flex-end" : "flex-start",
+              }}
+            >
+              {messages[i].from === user.id ? (
+                <span style={{ marginRight: "5px" }}>{user.username}</span>
+              ) : (
+                <></>
+              )}
+              <img
+                src={`/files/${
+                  messages[i].from === user.id
+                    ? user.profilePic
+                    : users[messages[i].from].profilePic
+                }`}
                 style={{
-                  alignSelf:
-                    messages[i].from === user.id ? "flex-end" : "flex-start",
+                  width: "25px",
+                  height: "25px",
+                  margin: "3px",
+                  borderRadius: "50%",
                 }}
-              >
-                {messages[i].from === user.id ? (
-                  <span style={{ marginRight: "5px" }}>{user.username}</span>
-                ) : (
-                  <></>
-                )}
-                <img
-                  src={`/files/${
-                    messages[i].from === user.id
-                      ? user.profilePic
-                      : users[messages[i].from].profilePic
-                  }`}
-                  style={{
-                    width: "25px",
-                    height: "25px",
-                    margin: "3px",
-                    borderRadius: "50%",
-                  }}
-                  alt=""
-                />
-                {users[messages[i].from] ? (
-                  <span style={{ marginLeft: "5px" }}>
-                    {users[messages[i].from].username}
-                  </span>
-                ) : (
-                  <></>
-                )}
-              </div>
-            ) : (
-              <></>
-            )
+                alt=""
+              />
+              {users[messages[i].from] ? (
+                <span style={{ marginLeft: "5px" }}>
+                  {users[messages[i].from].username}
+                </span>
+              ) : (
+                <></>
+              )}
+            </div>
           );
+          topIndex++
         }
         output.push(
           <Message
@@ -2131,7 +2136,7 @@ function Chat({
   if (!loggedin) {
     return (
       <Redirect
-        to={"/login?" + new URLSearchParams({ to: "/chat/"+chattingto })}
+        to={"/login?" + new URLSearchParams({ to: "/chat/" + chattingto })}
       ></Redirect>
     );
   } else if (chattingto && chattingto !== user.id) {

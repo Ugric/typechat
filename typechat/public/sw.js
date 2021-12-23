@@ -1,7 +1,10 @@
 self.addEventListener("fetch", (event) => {
-  if (event.request.destination == 'document') {
-    event.respondWith(fetch(event.request).catch(() => { console.log('offline mode');return new Response(
-      `<!DOCTYPE html>
+  if (event.request.destination == "document") {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        console.log("offline mode");
+        return new Response(
+          `<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
@@ -57,7 +60,9 @@ self.addEventListener("fetch", (event) => {
       </div>
     </body>
     </html>`,
-      { status: 503, headers: { "Content-Type": "text/html" } }
-    ); }));
+          { status: 503, headers: { "Content-Type": "text/html" } }
+        );
+      })
+    );
   }
 });

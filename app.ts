@@ -19,24 +19,39 @@ import { client, roleID, serverID, unlinkedroleID } from "./typechatbot";
 import { MessageEmbed } from "discord.js";
 import urlMetadata from "url-metadata";
 import greenlockexpress from "greenlock-express";
-import paypal from '@paypal/checkout-server-sdk';
-import fetch from 'node-fetch';
+import paypal from "@paypal/checkout-server-sdk";
+import fetch from "node-fetch";
 import { URLSearchParams } from "url";
 console.time("express boot");
 
-const testRECAP3 = (secret: string, response: string) => fetch(`https://www.google.com/recaptcha/api/siteverify?` + new URLSearchParams({ secret, response })).then((resp: { json: () => Promise<any>; }) => resp.json()).then((json: { success: any; }) => { console.log(json); return json.success }).catch(() => false)
+const testRECAP3 = (secret: string, response: string) =>
+  fetch(
+    `https://www.google.com/recaptcha/api/siteverify?` +
+      new URLSearchParams({ secret, response })
+  )
+    .then((resp: { json: () => Promise<any> }) => resp.json())
+    .then((json: { success: any }) => {
+      console.log(json);
+      return json.success;
+    })
+    .catch(() => false);
 
-const environment = process.env.NODE_ENV === "development" ?
-  new paypal.core.SandboxEnvironment("AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0",
-    "EAmkLLRgEYRvV7-3ijZry_bQPK82UwkKrKT9SQjTZJGHkb7Lu9sVDVUjJJWFUt5l-4v8ejCyU2LRhlur")
-  : new paypal.core.LiveEnvironment("Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
-    "EA87J47CS97x5ThWeC332UEkgh1voNVc4uQJA5vNXvFpJ1tKIkispLVuzWiFM5X03cNUpwI14ztYK44K")
+const environment =
+  process.env.NODE_ENV === "development"
+    ? new paypal.core.SandboxEnvironment(
+        "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0",
+        "EAmkLLRgEYRvV7-3ijZry_bQPK82UwkKrKT9SQjTZJGHkb7Lu9sVDVUjJJWFUt5l-4v8ejCyU2LRhlur"
+      )
+    : new paypal.core.LiveEnvironment(
+        "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
+        "EA87J47CS97x5ThWeC332UEkgh1voNVc4uQJA5vNXvFpJ1tKIkispLVuzWiFM5X03cNUpwI14ztYK44K"
+      );
 const PPclient = new paypal.core.PayPalHttpClient(environment);
 
 const tempmetadata: { [key: string]: urlMetadata.Result } = {};
 
 const ev = new EmailValidation();
-const RECAPsecret = "6LcHJdYcAAAAAG2S8MePwtuTv0RqZLcJ2QG6zLfw"
+const RECAPsecret = "6LcHJdYcAAAAAG2S8MePwtuTv0RqZLcJ2QG6zLfw";
 
 const discordserver = "https://discord.gg/R6FnAaX8rC";
 
@@ -69,6 +84,7 @@ function parseCookies(request: http.IncomingMessage) {
 
   return list;
 }
+
 function mulberry32(a: number) {
   return function () {
     var t = (a += 0x6d2b79f5);
@@ -78,7 +94,9 @@ function mulberry32(a: number) {
   };
 }
 
-const blastSaleOff = (startofweek: number = (Math.trunc(new Date().getTime() / 6.048e8) * 6.048e8)) => ((5 * Math.round(mulberry32(startofweek + 99556484639)() * 5)) / 100)
+const blastSaleOff = (
+  startofweek: number = Math.trunc(new Date().getTime() / 6.048e8) * 6.048e8
+) => (5 * Math.round(mulberry32(startofweek + 99556484639)() * 5)) / 100;
 
 async function checkFileExists(file: fs.PathLike) {
   try {
@@ -91,19 +109,18 @@ async function checkFileExists(file: fs.PathLike) {
 const truncate = (input: string, limit: number) =>
   input.length > limit ? `${input.substring(0, limit)}...` : input;
 
-const notificationsockets: {
-  [key: string]: {
-    [key: string]: { focus: boolean;[key: string]: any };
-  };
-} = {};
+const notificationsockets: Record<
+  string,
+  Record<string, { [key: string]: any; focus: boolean }>
+> = {};
 
 const messagefunctions = {};
 
-const toVerify: { [key: string]: string } = {};
+const toVerify: Record<string, string> = {};
 
-const toVerifyAccountID: { [key: string]: string } = {};
+const toVerifyAccountID: Record<string, string> = {};
 
-const updateFunctions: { [key: string]: { [key: string]: Function } } = {};
+const updateFunctions: Record<string, Record<string, Function>> = {};
 
 function updateFromAccountID(accountID: string) {
   try {
@@ -112,7 +129,7 @@ function updateFromAccountID(accountID: string) {
         updateFunctions[accountID][connectionID]();
       }
     }
-  } catch { }
+  } catch {}
 }
 
 (async () => {
@@ -251,39 +268,75 @@ function updateFromAccountID(accountID: string) {
     db.run(
       "CREATE TABLE IF NOT EXISTS badges (accountID, name, added, expires)"
     ),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS friendsChatLastMessageSent (accountID, toAccountID, time)"
+    ),
   ]);
   db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(
-    () => { }
+    () => {}
   );
   db.run("ALTER TABLE friendsChatMessages ADD edited DEFAULT false").catch(
-    () => { }
+    () => {}
   );
-  db.run("ALTER TABLE images ADD mimetype").catch(() => { });
-  db.run("ALTER TABLE images ADD originalfilename").catch(() => { });
-  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
-  db.run("ALTER TABLE friendsChatMessages ADD gift").catch(() => { });
-  db.run("ALTER TABLE friendsChatMessages ADD amount").catch(() => { });
-  db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => { });
-  db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => { });
+  db.run("ALTER TABLE images ADD mimetype").catch(() => {});
+  db.run("ALTER TABLE images ADD originalfilename").catch(() => {});
+  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => {});
+  db.run("ALTER TABLE friendsChatMessages ADD gift").catch(() => {});
+  db.run("ALTER TABLE friendsChatMessages ADD amount").catch(() => {});
+  db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => {});
+  db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => {});
   db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(
-    () => { }
+    () => {}
   );
   db.run("ALTER TABLE accounts ADD emailnotification DEFAULT true").catch(
-    () => { }
+    () => {}
   );
-  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => { });
-  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => { });
+  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => {});
+  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => {});
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
       ":email": autoaccountdetails.email,
     }
   );
+
+  async function updateFriendMessageTiming(
+    accountID: string,
+    toAccountID: string
+  ) {
+    if (
+      await db.get(
+        "SELECT * FROM friendsChatLastMessageSent WHERE accountID=:accountID AND toAccountID=:toAccountID",
+        {
+          ":accountID": accountID,
+          ":toAccountID": toAccountID,
+        }
+      )
+    ) {
+      db.run(
+        "UPDATE friendsChatLastMessageSent SET time=:time WHERE accountID=:accountID AND toAccountID=:toAccountID",
+        {
+          ":accountID": accountID,
+          ":toAccountID": toAccountID,
+          ":time": Date.now(),
+        }
+      );
+    } else {
+      db.run(
+        "INSERT INTO friendsChatLastMessageSent (accountID, toAccountID, time) VALUES (:accountID, :toAccountID, :time)",
+        {
+          ":accountID": accountID,
+          ":toAccountID": toAccountID,
+          ":time": Date.now(),
+        }
+      );
+    }
+  }
   function getBadgesFromAccountID(accountID: string) {
     return db.all(
       "SELECT name FROM badges WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
       { ":accountID": accountID, ":time": new Date().getTime() }
-    )
+    );
   }
 
   if (!defaultaccount) {
@@ -322,7 +375,7 @@ function updateFromAccountID(accountID: string) {
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'Blast')"
     );
   }
-  (async () => {
+  async () => {
     for (const user of await db.all(
       "SELECT * FROM accounts WHERE accountID!='TypeChat'"
     )) {
@@ -332,14 +385,16 @@ function updateFromAccountID(accountID: string) {
           { ":accountID": user.accountID }
         ))
       ) {
-        const topromise = []
+        const topromise = [];
         for (let i = 0; i < 1; i++) {
-          topromise.push(db.run(
-            "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
-            { ":accountID": user.accountID }
-          ));
+          topromise.push(
+            db.run(
+              "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
+              { ":accountID": user.accountID }
+            )
+          );
         }
-        await Promise.all(topromise)
+        await Promise.all(topromise);
       }
       if (
         !(await db.get(
@@ -353,7 +408,7 @@ function updateFromAccountID(accountID: string) {
         );
       }
     }
-  });
+  };
   if (
     !(await db.get("SELECT * FROM blast WHERE accountID=:accountID", {
       ":accountID": defaultaccount.accountID,
@@ -364,12 +419,12 @@ function updateFromAccountID(accountID: string) {
     });
   }
   const app = express();
-  app.use(require('morgan')('combined'))
+  app.use(require("morgan")("tiny"));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const getAllOnline = (sockets: {
-    [key: string]: { focus: boolean;[key: string]: any };
-  }): { focus: boolean;[key: string]: any }[] => {
+    [key: string]: { focus: boolean; [key: string]: any };
+  }): { focus: boolean; [key: string]: any }[] => {
     const online = [];
     for (const socket of Object.keys(sockets)) {
       if (sockets[socket].focus) {
@@ -410,7 +465,7 @@ function updateFromAccountID(accountID: string) {
         const connectionID = generate(20);
         const pingpong = async () => {
           await snooze(10000);
-          ws.send(JSON.stringify({ type: "ping" }), () => { });
+          ws.send(JSON.stringify({ type: "ping" }), () => {});
           await snooze(2500);
           const time = new Date().getTime();
           if (time - lastping > 5000) {
@@ -461,7 +516,7 @@ function updateFromAccountID(accountID: string) {
         let lastping = 0;
         const pingpong = async () => {
           await snooze(10000);
-          ws.send(JSON.stringify({ type: "ping" }),console.error);
+          ws.send(JSON.stringify({ type: "ping" }), console.error);
           await snooze(2500);
           const time = new Date().getTime();
           if (time - lastping > 5000) {
@@ -560,7 +615,6 @@ function updateFromAccountID(accountID: string) {
                 }
               );
               if (users) {
-
                 const badges = await getBadgesFromAccountID(users.accountID);
                 ws.send(
                   JSON.stringify({
@@ -572,7 +626,8 @@ function updateFromAccountID(accountID: string) {
                         id: users.accountID,
                         profilePic: users.profilePic,
                         tag: users.tag,
-                        backgroundImage: users.backgroundImage, badges
+                        backgroundImage: users.backgroundImage,
+                        badges,
                       },
                     },
                   })
@@ -779,7 +834,7 @@ function updateFromAccountID(accountID: string) {
               if (
                 (!msg.focus
                   ? getAllOnline(messagefunctions[accountdata.accountID][to])
-                    .length <= 0
+                      .length <= 0
                   : true) &&
                 messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
@@ -800,7 +855,6 @@ function updateFromAccountID(accountID: string) {
               lastping = new Date().getTime();
               pingpong();
             } else if (msg.type === "gift") {
-
               const rocketFuel: any = (
                 await db.all(
                   "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
@@ -812,9 +866,16 @@ function updateFromAccountID(accountID: string) {
               if (rocketFuel >= msg.amount) {
                 const time = new Date().getTime();
                 const id = generate(100);
-                await db.run("UPDATE rocketFuelPoints SET accountID=:toAccountID WHERE rowid in (SELECT rowid FROM rocketFuelPoints WHERE accountID=:accountID and used=false LIMIT :limit)", { ":accountID": accountdata.accountID, ":toAccountID": to, ":limit": msg.amount })
-                updateFromAccountID(accountdata.accountID)
-                updateFromAccountID(to)
+                await db.run(
+                  "UPDATE rocketFuelPoints SET accountID=:toAccountID WHERE rowid in (SELECT rowid FROM rocketFuelPoints WHERE accountID=:accountID and used=false LIMIT :limit)",
+                  {
+                    ":accountID": accountdata.accountID,
+                    ":toAccountID": to,
+                    ":limit": msg.amount,
+                  }
+                );
+                updateFromAccountID(accountdata.accountID);
+                updateFromAccountID(to);
                 if (
                   messagefunctions[to] &&
                   messagefunctions[to][accountdata.accountID]
@@ -830,7 +891,7 @@ function updateFromAccountID(accountID: string) {
                           time,
                           message: msg.message,
                           ID: id,
-                          amount: msg.amount
+                          amount: msg.amount,
                         },
                       })
                     );
@@ -855,7 +916,7 @@ function updateFromAccountID(accountID: string) {
                             time,
                             message: msg.message,
                             ID: id,
-                            amount: msg.amount
+                            amount: msg.amount,
                           },
                         })
                       );
@@ -885,14 +946,15 @@ function updateFromAccountID(accountID: string) {
                       ":toAccountID": to,
                       ":message": msg.message,
                       ":time": time,
-                      ":amount": msg.amount
+                      ":amount": msg.amount,
                     }
                   )
                   .catch(console.error);
-                ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
+                ws.send(
+                  JSON.stringify({ type: "sent", tempid: msg.tempid, id })
+                );
               }
-            }
-            else if (msg.type === "message" || msg.type === "file") {
+            } else if (msg.type === "message" || msg.type === "file") {
               const time = new Date().getTime();
               const id = generate(100);
               if (
@@ -972,6 +1034,7 @@ function updateFromAccountID(accountID: string) {
                   }
                 )
                 .catch(console.error);
+              updateFriendMessageTiming(accountdata.accountID, to);
               ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
             } else if (msg.type === "typing") {
               if (
@@ -1036,7 +1099,7 @@ function updateFromAccountID(accountID: string) {
       }
       return res.send({ filelimit: 0, limitused: 0, timeleft: 0 });
     });
-    app.post('/api/deltefile', )
+    app.post("/api/deltefile");
     app.post("/api/uploadfile", async (req: any, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1362,15 +1425,15 @@ WHERE friends.toAccountID == :accountID
     FROM friends
     WHERE toAccountID == :accountID
 )
-SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage, (SELECT time FROM friendsChatMessages WHERE (friendsChatMessages.accountID == :accountID and friendsChatMessages.toAccountID == friends.toAccountID) LIMIT 1) as time, (SELECT fuel FROM blast WHERE accountID=accounts.accountID and (expires is NULL or expires>=:time) LIMIT 1) as blast
+SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage, (SELECT time FROM friendsChatLastMessageSent WHERE accountID == :accountID and toAccountID == toAccountID) as time, (SELECT fuel FROM blast WHERE accountID=accounts.accountID and (expires is NULL or expires>=:time) LIMIT 1) as blast
 FROM friends 
 JOIN accounts ON friends.toAccountID=accounts.accountID
 WHERE friends.accountID == :accountID
     and toAccountID in friendrequestlist ORDER BY
-    (SELECT time FROM friendsChatMessages WHERE (friendsChatMessages.accountID == :accountID and friendsChatMessages.toAccountID == friends.toAccountID) or (friendsChatMessages.accountID == friends.toAccountID and friendsChatMessages.toAccountID == :accountID) ORDER BY time DESC LIMIT 1) DESC`,
+    (SELECT time FROM friendsChatLastMessageSent WHERE accountID == :accountID and toAccountID == toAccountID LIMIT 1) DESC`,
           { ":accountID": accountdata.accountID }
         );
-        
+
         for (const contact of contacts) {
           contact.badges = await getBadgesFromAccountID(contact.id);
         }
@@ -1415,7 +1478,9 @@ WHERE friends.accountID == :accountID
                 }
               )
             )?.fuel;
-            const badges = await getBadgesFromAccountID(newaccountdata.accountID);
+            const badges = await getBadgesFromAccountID(
+              newaccountdata.accountID
+            );
             const rocketFuel = (
               await db.all(
                 "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
@@ -1442,7 +1507,7 @@ WHERE friends.accountID == :accountID
               loggedin: false,
             });
           }
-        } catch { }
+        } catch {}
       }
       if (accountdata) {
         if (!updateFunctions[accountdata.accountID]) {
@@ -1500,58 +1565,55 @@ WHERE friends.accountID == :accountID
         });
       }
     });
-    app.post(
-      "/api/requestnewpassword",
-      async (req, res) => {
-        const requestaccount = await db.get(
-          "SELECT * FROM accounts WHERE email=:email",
-          { ":email": req.body.email }
+    app.post("/api/requestnewpassword", async (req, res) => {
+      const requestaccount = await db.get(
+        "SELECT * FROM accounts WHERE email=:email",
+        { ":email": req.body.email }
+      );
+      if (requestaccount) {
+        const passwordUpdateID = generate(30);
+        updatepassword[passwordUpdateID] = requestaccount.accountID;
+        PasswordEmail(req.body.email, passwordUpdateID).catch(console.error);
+        setTimeout(() => {
+          if (updatepassword[passwordUpdateID])
+            delete updatepassword[passwordUpdateID];
+        }, 3600000);
+      }
+      console.log(requestaccount);
+      return res.send(true);
+    });
+    app.post("/api/changepassword", async (req, res) => {
+      if (
+        testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) ||
+        process.env.NODE_ENV === "development"
+      ) {
+        const accountdata = await db.get(
+          "SELECT * FROM accounts WHERE accountID=:accountID",
+          { ":accountID": updatepassword[req.body.updateID] }
         );
-        if (requestaccount) {
-          const passwordUpdateID = generate(30);
-          updatepassword[passwordUpdateID] = requestaccount.accountID;
-          PasswordEmail(req.body.email, passwordUpdateID).catch(console.error);
-          setTimeout(() => {
-            if (updatepassword[passwordUpdateID])
-              delete updatepassword[passwordUpdateID];
-          }, 3600000);
+        if (accountdata) {
+          const salt = generate(150);
+          const password = hasher(req.body.pass + salt);
+          updateFromAccountID(accountdata.accountID);
+          await Promise.all([
+            db.run(
+              "UPDATE accounts SET password=:password, salt=:salt WHERE accountID=:accountID",
+              {
+                ":salt": salt,
+                ":password": password,
+                ":accountID": updatepassword[req.body.updateID],
+              }
+            ),
+            db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
+              ":accountID": accountdata.accountID,
+            }),
+          ]);
+          delete updatepassword[req.body.updateID];
+          return res.send(true);
         }
-        console.log(requestaccount)
-        return res.send(true);
       }
-    );
-    app.post(
-      "/api/changepassword",
-      async (req, res) => {
-        if (testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) || process.env.NODE_ENV === "development") {
-          const accountdata = await db.get(
-            "SELECT * FROM accounts WHERE accountID=:accountID",
-            { ":accountID": updatepassword[req.body.updateID] }
-          );
-          if (accountdata) {
-            const salt = generate(150);
-            const password = hasher(req.body.pass + salt);
-            updateFromAccountID(accountdata.accountID);
-            await Promise.all([
-              db.run(
-                "UPDATE accounts SET password=:password, salt=:salt WHERE accountID=:accountID",
-                {
-                  ":salt": salt,
-                  ":password": password,
-                  ":accountID": updatepassword[req.body.updateID],
-                }
-              ),
-              db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
-                ":accountID": accountdata.accountID,
-              }),
-            ]);
-            delete updatepassword[req.body.updateID];
-            return res.send(true);
-          }
-        }
-        return res.send(false);
-      }
-    );
+      return res.send(false);
+    });
     app.get("/api/getNotificationsOn", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1678,7 +1740,7 @@ WHERE friends.accountID == :accountID
             );
             memberonguild
               ?.setNickname(req.body.username, "rename")
-              .catch(() => { });
+              .catch(() => {});
           }
           res.send({ resp: true });
         } else {
@@ -1798,13 +1860,13 @@ WHERE friends.accountID == :accountID
                   delete linkurls.linkID[req.params.id];
                   await memberonguild
                     .setNickname(accountdata.username, "linked")
-                    .catch(() => { });
+                    .catch(() => {});
                   await memberonguild.roles
                     .add(roleID, "linked")
-                    .catch(() => { });
+                    .catch(() => {});
                   await memberonguild.roles
                     .remove(unlinkedroleID, "linked")
-                    .catch(() => { });
+                    .catch(() => {});
                   discordAccount.dmChannel.send({
                     embeds: [
                       new MessageEmbed()
@@ -1885,7 +1947,10 @@ WHERE friends.accountID == :accountID
       }
     });
     app.post("/login", async (req, res) => {
-      if (testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) || process.env.NODE_ENV === "development") {
+      if (
+        testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) ||
+        process.env.NODE_ENV === "development"
+      ) {
         const accounts = await db.all("SELECT * FROM accounts");
         let accountdata: any;
         for (let i = 0; i < accounts.length; i++) {
@@ -1919,77 +1984,125 @@ WHERE friends.accountID == :accountID
           ":token": req.cookies.token,
         }
       );
-      const rocketFuel: any = (
-        await db.all(
-          "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
-          {
-            ":accountID": accountdata.accountID,
+      if (accountdata) {
+        const rocketFuel: any = (
+          await db.all(
+            "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
+            {
+              ":accountID": accountdata.accountID,
+            }
+          )
+        ).length;
+        let blast = Number(
+          (
+            await db.get(
+              "SELECT fuel FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+              {
+                ":accountID": accountdata.accountID,
+                ":time": new Date().getTime(),
+              }
+            )
+          )?.fuel
+        );
+        blast = blast ? blast : 0;
+        const fuel = Number(JSON.parse(req.body.fuel));
+        if (rocketFuel >= fuel && fuel + blast <= 20) {
+          const topromise = [];
+          topromise.push(
+            db.run(
+              "UPDATE rocketFuelPoints SET used=true WHERE rowid in (SELECT rowid FROM rocketFuelPoints WHERE accountID=:accountID and used=false LIMIT :limit)",
+              { ":accountID": accountdata.accountID, ":limit": fuel }
+            )
+          );
+          if (blast) {
+            console.log("adding to");
+            topromise.push(
+              db.run(
+                "UPDATE blast SET fuel=:fuel WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
+                {
+                  ":fuel": blast + fuel,
+                  ":accountID": accountdata.accountID,
+                  ":time": new Date().getTime(),
+                }
+              )
+            );
+          } else {
+            console.log("creating");
+            topromise.push(
+              db.run(
+                "INSERT INTO blast (accountID, fuel, expires) VALUES (:accountID, :fuel, :expires)",
+                {
+                  ":fuel": fuel,
+                  ":expires": new Date().getTime() + 2.628e9,
+                  ":accountID": accountdata.accountID,
+                }
+              )
+            );
+            if (
+              !(await db.get(
+                "SELECT * FROM badges WHERE accountID=:accountID and name='Blast'",
+                { ":accountID": accountdata.accountID }
+              ))
+            ) {
+              topromise.push(
+                db.run(
+                  "INSERT INTO badges (accountID, name) VALUES (:accountID, 'Blast')",
+                  { ":accountID": accountdata.accountID }
+                )
+              );
+            }
           }
-        )
-      ).length;
-      let blast = Number((
-        await db.get(
-          "SELECT fuel FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
-          {
-            ":accountID": accountdata.accountID,
-            ":time": new Date().getTime(),
-          }
-        )
-      )?.fuel);
-      blast = blast ? blast : 0
-      const fuel = Number(JSON.parse(req.body.fuel))
-      if (accountdata && rocketFuel >= fuel && fuel + blast <= 20) {
-        const topromise = []
-        topromise.push(db.run("UPDATE rocketFuelPoints SET used=true WHERE rowid in (SELECT rowid FROM rocketFuelPoints WHERE accountID=:accountID and used=false LIMIT :limit)", { ":accountID": accountdata.accountID, ":limit": fuel }))
-        if (blast) {
-          console.log("adding to")
-          topromise.push(db.run("UPDATE blast SET fuel=:fuel WHERE accountID=:accountID and (expires is NULL or expires>=:time)", { ":fuel": blast + fuel, ":accountID": accountdata.accountID, ":time": new Date().getTime() }))
+          await Promise.all(topromise);
+          updateFromAccountID(accountdata.accountID);
+          return res.send(true);
         } else {
-          console.log("creating")
-          topromise.push(db.run("INSERT INTO blast (accountID, fuel, expires) VALUES (:accountID, :fuel, :expires)", { ":fuel": fuel, ":expires": new Date().getTime() + 2.628e+9, ":accountID": accountdata.accountID }))
-          if (!(await db.get("SELECT * FROM badges WHERE accountID=:accountID and name='Blast'", { ":accountID": accountdata.accountID }))) {
-            topromise.push(db.run(
-              "INSERT INTO badges (accountID, name) VALUES (:accountID, 'Blast')", { ":accountID": accountdata.accountID }
-            ));
-          }
+          return res.send(false);
         }
-        await Promise.all(topromise)
-        updateFromAccountID(accountdata.accountID)
-        return res.send(true);
       } else {
         return res.send(false);
       }
-    })
+    });
     app.post("/api/paypal-buy-rocket-fuel", async (req, res) => {
       try {
         const accountdata = await db.get(
           "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
           { ":token": req.cookies.token }
         );
-        if ((testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) || process.env.NODE_ENV === "development") && accountdata) {
-          const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID)
-          const details = (await PPclient.execute(request))
-          console.log(details.result.status + ":", details.result)
-          const topromise = []
+        if (
+          (testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) ||
+            process.env.NODE_ENV === "development") &&
+          accountdata
+        ) {
+          const request = new paypal.orders.OrdersCaptureRequest(
+            req.body.orderID
+          );
+          const details = await PPclient.execute(request);
+          console.log(details.result.status + ":", details.result);
+          const topromise = [];
           for (let i = 0; i < req.body.quantity; i++) {
-            topromise.push(db.run(
-              "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
-              { ":accountID": accountdata.accountID }
-            ));
+            topromise.push(
+              db.run(
+                "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
+                { ":accountID": accountdata.accountID }
+              )
+            );
           }
-          await Promise.all(topromise)
-          updateFromAccountID(accountdata.accountID)
-          console.log("added")
-          res.status(200).send()
+          await Promise.all(topromise);
+          updateFromAccountID(accountdata.accountID);
+          console.log("added");
+          res.status(200).send();
         } else {
-          res.status(403).send()
+          res.status(403).send();
         }
       } catch {
-        res.status(403).send()
+        res.status(403).send();
       }
-    })
+    });
     app.post("/signup", async (req: any, res) => {
-      if (testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) || process.env.NODE_ENV === "development") {
+      if (
+        testRECAP3(RECAPsecret, req.body["g-recaptcha-response"]) ||
+        process.env.NODE_ENV === "development"
+      ) {
         const emailInUse =
           (await db.get("SELECT * FROM accounts WHERE email=:email", {
             ":email": req.body.email,
@@ -2076,7 +2189,7 @@ WHERE friends.accountID == :accountID
               "INSERT INTO badges (accountID, name, expires) VALUES (:accountID, 'new', :expires)",
               {
                 ":accountID": accountID,
-                ":expires": new Date().getTime() + 6.048e+8
+                ":expires": new Date().getTime() + 6.048e8,
               }
             ),
             db.run(
@@ -2105,9 +2218,12 @@ WHERE friends.accountID == :accountID
               db.run(`DELETE FROM tokens WHERE accountID = :accountID`, {
                 ":accountID": accountID,
               }),
-              db.run(`DELETE FROM friends WHERE accountID = :accountID and toAccountID = :accountID`, {
-                ":accountID": accountID,
-              }),
+              db.run(
+                `DELETE FROM friends WHERE accountID = :accountID and toAccountID = :accountID`,
+                {
+                  ":accountID": accountID,
+                }
+              ),
             ]);
             sendNotification(defaultaccount.accountID, {
               title: "Not verified lol",
@@ -2128,9 +2244,14 @@ WHERE friends.accountID == :accountID
       res.sendFile(path.join(__dirname, "logo.png"))
     );
     app.get("/invite", (_, res) => res.redirect(discordserver));
-    app.use(function (_: any, __: any, res: { status: (arg0: number) => void; send: (arg0: string) => void; }, ___: any) {
-        res.status(500);
-        res.send("Oops, something went wrong.")
+    app.use(function (
+      _: any,
+      __: any,
+      res: { status: (arg0: number) => void; send: (arg0: string) => void },
+      ___: any
+    ) {
+      res.status(500);
+      res.send("Oops, something went wrong.");
     });
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
@@ -2142,7 +2263,7 @@ WHERE friends.accountID == :accountID
     serverboot({
       httpsServer: () => http.createServer(app),
       httpServer: () => {
-        return { listen: () => { } };
+        return { listen: () => {} };
       },
     });
   } else {
@@ -2156,4 +2277,8 @@ WHERE friends.accountID == :accountID
       .ready(serverboot);
   }
 })();
+
+process
+  .on("unhandledRejection", console.error)
+  .on("uncaughtException", console.error);
 export default database;

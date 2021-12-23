@@ -24,7 +24,6 @@ import useComponentSize from "@rehooks/component-size";
 import playSound from "../playsound";
 import isElectron from "is-electron";
 const PageNav = () => {
-  const { width } = useWindowSize();
   const Navbarref = useRef(null);
   const navbarsize = useComponentSize(Navbarref);
   const { loggedin, user, rechecklogged, setnavbarsize, chattingto } =
@@ -54,7 +53,16 @@ const PageNav = () => {
         >
           <img
             alt="TypeChat"
-            src={width > 700 ? bigLogo : smallLogo}
+            id="bigLogo"
+            src={bigLogo}
+            style={{
+              height: "40px",
+            }}
+          />
+          <img
+            alt="TypeChat"
+            id='smallLogo'
+            src={smallLogo}
             style={{
               height: "40px",
             }}
@@ -180,9 +188,13 @@ const PageNav = () => {
                   <img
                     alt="Profile"
                     src={"/files/" + user.profilePic}
-                    width='40px'
-                    height='40px'
-                    style={{ height: "40px", width: '40px', borderRadius: "50%" }}
+                    width="40px"
+                    height="40px"
+                    style={{
+                      height: "40px",
+                      width: "40px",
+                      borderRadius: "50%",
+                    }}
                   />
                 </Dropdown.Toggle>
 

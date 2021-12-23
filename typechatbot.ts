@@ -72,7 +72,6 @@ client.on("messageCreate", async (message) => {
     command.shift()
     let account = link
     if (command[0]) {
-      console.log(command[0], command[0].replace(/[\\<>@#&!]/g, ""))
       account = await db.db.get(
         "SELECT * FROM discordAccountLink WHERE discordID=:discordID",
         { ":discordID": command[0].replace(/[\\<>@#&!]/g, "") }

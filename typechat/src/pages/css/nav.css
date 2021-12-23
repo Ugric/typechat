@@ -21,3 +21,17 @@
 .dropdown-item:hover {
   background-color: #546bd0 !important;
 }
+
+
+#smallLogo {
+  display: none;
+}
+
+@media only screen and (max-width: 700px) {
+  #smallLogo {
+    display: block;
+  }
+  #bigLogo {
+    display: none;
+  }
+}
