@@ -1426,7 +1426,7 @@ WHERE friends.toAccountID == :accountID
     FROM friends
     WHERE toAccountID == :accountID
 )
-SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage, (SELECT time FROM friendsChatLastMessageSent WHERE accountID == :accountID and toAccountID == toAccountID) as time, (SELECT fuel FROM blast WHERE accountID=accounts.accountID and (expires is NULL or expires>=:time) LIMIT 1) as blast
+SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage, (SELECT time FROM friendsChatLastMessageSent WHERE friendsChatLastMessageSent.accountID == :accountID and friendsChatLastMessageSent.toAccountID == accounts.accountID LIMIT 1) as time, (SELECT fuel FROM blast WHERE accountID=accounts.accountID and (expires is NULL or expires>=:time) LIMIT 1) as blast
 FROM friends 
 JOIN accounts ON friends.toAccountID=accounts.accountID
 WHERE friends.accountID == :accountID and accounts.accountID != :accountID
