@@ -27,6 +27,11 @@ self.addEventListener("fetch", (event) => {
             text-align: center;
         }
       </style>
+      <script>
+        window.addEventListener('online', () => {
+          window.location.reload();
+        })
+      </script>
     </head>
     <body>
       <div class="container">
