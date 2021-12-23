@@ -2129,7 +2129,11 @@ function Chat({
   const { loggedin, user } = useData();
   const time = useMemo(() => new Date().getTime(), []);
   if (!loggedin) {
-    return <Redirect to="/"></Redirect>;
+    return (
+      <Redirect
+        to={"/login?" + new URLSearchParams({ to: "/chat/"+chattingto })}
+      ></Redirect>
+    );
   } else if (chattingto && chattingto !== user.id) {
     return (
       <chatSettings.Provider value={{ isGroupChat, time }}>
