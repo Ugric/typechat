@@ -1035,6 +1035,7 @@ function updateFromAccountID(accountID: string) {
                 )
                 .catch(console.error);
               updateFriendMessageTiming(accountdata.accountID, to);
+              updateFriendMessageTiming(to, accountdata.accountID);
               ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
             } else if (msg.type === "typing") {
               if (
@@ -1428,7 +1429,7 @@ WHERE friends.toAccountID == :accountID
 SELECT username, accounts.accountID as id, profilePic, tag, backgroundImage, (SELECT time FROM friendsChatLastMessageSent WHERE accountID == :accountID and toAccountID == toAccountID) as time, (SELECT fuel FROM blast WHERE accountID=accounts.accountID and (expires is NULL or expires>=:time) LIMIT 1) as blast
 FROM friends 
 JOIN accounts ON friends.toAccountID=accounts.accountID
-WHERE friends.accountID == :accountID
+WHERE friends.accountID == :accountID and account.accountID != :accountID
     and toAccountID in friendrequestlist ORDER BY
     (SELECT time FROM friendsChatLastMessageSent WHERE friendsChatLastMessageSent.accountID == :accountID and friendsChatLastMessageSent.toAccountID == accounts.accountID LIMIT 1) DESC`,
           { ":accountID": accountdata.accountID }
