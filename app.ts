@@ -175,7 +175,6 @@ function updateFromAccountID(accountID: string) {
   };
   const hasher = (string: string) =>
     createHash("sha256").update(string).digest("hex");
-
   async function DiscordNotification(
     accoutID: string,
     data: { title: string; message: string; to: string; sound?: string }
@@ -271,6 +270,9 @@ function updateFromAccountID(accountID: string) {
     db.run(
       "CREATE TABLE IF NOT EXISTS friendsChatLastMessageSent (accountID, toAccountID, time)"
     ),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS christmasOpened (accountID, year)"
+    )
   ]);
   db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(
     () => {}
@@ -338,7 +340,6 @@ function updateFromAccountID(accountID: string) {
       { ":accountID": accountID, ":time": new Date().getTime() }
     );
   }
-
   if (!defaultaccount) {
     const salt = generate(150);
     const password = hasher(autoaccountdetails.pass + salt);
@@ -1522,7 +1523,83 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         }
       }
     });
-
+    app.get("/api/hasopened", async (req, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (!accountdata) return res.send(false);
+      const date = new Date();
+      if (!(date.getDate() == 25 && date.getMonth() == 11))
+        return res.send(true);
+      const alreadyOpened = await db.get(
+        "SELECT * FROM christmasOpened WHERE accountID=:accountID and year=:year",
+        {
+          ":accountID": accountdata.accountID,
+          ":year": date.getFullYear(),
+        }
+      );
+      console.log
+      return res.send(Boolean(alreadyOpened));
+    });
+    app.post("/api/openchristmaspresent", async (req, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+      if (!accountdata) return res.status(401).send();
+      const date = new Date();
+      if (!(date.getDate() == 25 && date.getMonth() == 11))
+        return res.status(401).send();
+      const alreadyOpened = await db.get(
+        "SELECT * FROM christmasOpened WHERE accountID=:accountID and year=:year",
+        {
+          ":accountID": accountdata.accountID,
+          ":year": date.getFullYear(),
+        }
+      );
+      if (!alreadyOpened) {
+        const numberOfPoints =Math.round(Math.random() * 4) + 1;
+        const toPromise = [];
+        toPromise.push(
+          db.run(
+            "INSERT INTO christmasOpened (accountID, year) VALUES (:accountID, :year)",
+            {
+              ":accountID": accountdata.accountID,
+              ":year": date.getFullYear(),
+            }
+          )
+        );
+        toPromise.push(
+          db.run(
+            'INSERT INTO badges (accountID, name, added, expires) VALUES (:accountID, :badge, :date, null)', 
+            {
+              ":accountID": accountdata.accountID,
+              ":date": date.getTime(),
+              ':badge': 'xmas'+date.getFullYear(),
+            }
+          )
+        );
+        for (let i = 0; i < numberOfPoints; i++) {
+          toPromise.push(
+            db.run(
+              "INSERT INTO rocketFuelPoints (accountID, used) VALUES (:accountID, false)",
+              {
+                ":accountID": accountdata.accountID,
+              }
+            )
+          );
+        }
+        await Promise.all(toPromise);
+        updateFromAccountID(accountdata.accountID);
+        return res.status(200).send({ points: numberOfPoints });
+      }
+      return res.status(401).send();
+    });
     app.get("/api/userdata", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",

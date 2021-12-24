@@ -23,6 +23,7 @@ import ReactGA from "react-ga4";
 import LogRocket from "logrocket";
 import Switches from "./Router";
 import { render } from "react-dom";
+import { Snowflakes } from "./pages/christmas";
 LogRocket.init("b1hvjh/typechat");
 
 if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development"))
@@ -204,6 +205,7 @@ function App() {
             NotificationAPI,
           }}
         >
+          <Snowflakes amount={5} />
           <PageNav />
           <ReactNotification />
           <NotificationComponent />

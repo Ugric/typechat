@@ -16,6 +16,7 @@ import {
   faRocket,
   faUserCog,
   faPhotoVideo,
+  faGifts,
 } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { Link, useLocation } from "react-router-dom";
@@ -23,7 +24,9 @@ import { useEffect, useRef } from "react";
 import useComponentSize from "@rehooks/component-size";
 import playSound from "../playsound";
 import isElectron from "is-electron";
+import useIsChistmas from "../hooks/usIsChristmas";
 const PageNav = () => {
+  const isChristmas = useIsChistmas();
   const Navbarref = useRef(null);
   const navbarsize = useComponentSize(Navbarref);
   const { loggedin, user, rechecklogged, setnavbarsize, chattingto } =
@@ -61,7 +64,7 @@ const PageNav = () => {
           />
           <img
             alt="TypeChat"
-            id='smallLogo'
+            id="smallLogo"
             src={smallLogo}
             style={{
               height: "40px",
@@ -131,6 +134,20 @@ const PageNav = () => {
           )}
         </Nav>
         <Nav>
+          {isChristmas?
+          <Nav.Link
+            onPointerDown={() => {
+              playSound("/sounds/click2.mp3");
+            }}
+            onPointerUp={() => {
+              playSound("/sounds/click1.mp3");
+            }}
+            as={Link}
+            to="/christmas"
+            style={{ color: location.pathname === "/christmas" ? "white" : "" }}
+          >
+            <FontAwesomeIcon icon={faGifts} />
+          </Nav.Link>:<></>}
           <Nav.Link
             onPointerDown={() => {
               playSound("/sounds/click2.mp3");

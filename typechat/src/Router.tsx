@@ -14,6 +14,7 @@ import Error404 from "./pages/404";
 import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
 import { Switch, Route, Redirect } from "react-router-dom";
+import Christmas from "./pages/christmas";
 
 export default ({ chattingto }: { chattingto?: string }) => (
   <Switch>
@@ -47,6 +48,9 @@ export default ({ chattingto }: { chattingto?: string }) => (
     </Route>
     <Route path="/login" exact>
       <Login />
+    </Route>
+    <Route path="/christmas" exact>
+      <Christmas></Christmas>
     </Route>
     <Route path="/link/:id" exact>
       <LinkDiscord />

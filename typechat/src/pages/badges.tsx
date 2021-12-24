@@ -16,6 +16,7 @@ import {
   IconDefinition,
   faCheck,
   faBug,
+  faSnowflake,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMemo } from "react";
@@ -27,6 +28,12 @@ const badgestype: {
   color: string;
   link?: string;
 }[] = [
+  {
+    name: "xmas2021",
+    desc: "Christmas 2021",
+    icon: faSnowflake,
+    color: "rgb(96 181 255)",
+  },
   {
     name: "Beta Tester",
     desc: "Beta Tester",
