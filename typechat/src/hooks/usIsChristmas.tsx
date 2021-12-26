@@ -20,9 +20,13 @@ function useIsChistmas() {
       christmas.setDate(25);
       christmas.setHours(0);
       christmas.setMinutes(0);
-      christmas.setSeconds(0);
-      christmas.setMilliseconds(0);
-      const timeToChristmas = christmas.getTime() - date.getTime();
+          christmas.setSeconds(0);
+          christmas.setMilliseconds(0);
+      let timeToChristmas = christmas.getTime() - date.getTime();
+          if (timeToChristmas < 0) {
+              christmas.setFullYear(christmas.getFullYear() + 1);
+              timeToChristmas = christmas.getTime() - date.getTime();
+            }
           timeout = setTimeout(() => {
           setIsChristmas(true);
         timeout = setTimeout(() => {
