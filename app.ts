@@ -1532,7 +1532,13 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       );
       if (!accountdata) return res.send(false);
       const date = new Date();
-      if (!(date.getDate() == 25 && date.getMonth() == 11))
+      if (
+        !(
+          date.getMonth() === 11 &&
+          date.getDate() >= 25 &&
+          date.getDate() <= 31
+        )
+      )
         return res.send(true);
       const alreadyOpened = await db.get(
         "SELECT * FROM christmasOpened WHERE accountID=:accountID and year=:year",
@@ -1553,7 +1559,13 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       );
       if (!accountdata) return res.status(401).send();
       const date = new Date();
-      if (!(date.getDate() == 25 && date.getMonth() == 11))
+      if (
+        !(
+          date.getMonth() === 11 &&
+          date.getDate() >= 25 &&
+          date.getDate() <= 31
+        )
+      )
         return res.status(401).send();
       const alreadyOpened = await db.get(
         "SELECT * FROM christmasOpened WHERE accountID=:accountID and year=:year",

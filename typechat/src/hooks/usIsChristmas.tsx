@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 function useIsChistmas() {
   const date = new Date();
   const [isChristmas, setIsChristmas] = useState(
-    date.getMonth() === 11 && date.getDate() > 25 && date.getDate() < 31
+    date.getMonth() === 11 && date.getDate() >= 25 && date.getDate() <= 31
   );
   useEffect(() => {
     const date = new Date();
     let timeout: any;
-      if (date.getMonth() === 11 && date.getDate()>25 && date.getDate()<31) {
+      if (date.getMonth() === 11 && date.getDate()>=25 && date.getDate()<=31) {
         setIsChristmas(true);
         timeout = setTimeout(() => {
           setIsChristmas(false);
