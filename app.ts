@@ -270,9 +270,7 @@ function updateFromAccountID(accountID: string) {
     db.run(
       "CREATE TABLE IF NOT EXISTS friendsChatLastMessageSent (accountID, toAccountID, time)"
     ),
-    db.run(
-      "CREATE TABLE IF NOT EXISTS christmasOpened (accountID, year)"
-    )
+    db.run("CREATE TABLE IF NOT EXISTS christmasOpened (accountID, year)"),
   ]);
   db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(
     () => {}
@@ -1547,7 +1545,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           ":year": date.getFullYear(),
         }
       );
-      console.log
+      console.log;
       return res.send(Boolean(alreadyOpened));
     });
     app.post("/api/openchristmaspresent", async (req, res) => {
@@ -1575,7 +1573,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         }
       );
       if (!alreadyOpened) {
-        const numberOfPoints =Math.round(Math.random() * 4) + 1;
+        const numberOfPoints = Math.round(Math.random() * 4) + 1;
         const toPromise = [];
         toPromise.push(
           db.run(
@@ -1588,11 +1586,11 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         );
         toPromise.push(
           db.run(
-            'INSERT INTO badges (accountID, name, added, expires) VALUES (:accountID, :badge, :date, null)', 
+            "INSERT INTO badges (accountID, name, added, expires) VALUES (:accountID, :badge, :date, null)",
             {
               ":accountID": accountdata.accountID,
               ":date": date.getTime(),
-              ':badge': 'xmas'+date.getFullYear(),
+              ":badge": "xmas" + date.getFullYear(),
             }
           )
         );
@@ -2343,7 +2341,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       res.status(500);
       res.send("Oops, something went wrong.");
     });
-    app.get('/', async(req, res, next) => {
+    app.get("/", async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -2351,20 +2349,56 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         }
       );
 
-      if (accountdata) {
-        return res.redirect('/contacts')
-      }
+      if (accountdata) return res.redirect("/contacts");
 
-      
-      next()
-    });
-    app.use((req, res) =>
       res.sendFile(
         path.join(__dirname, "typechat", "build", req.path, "index.html")
-      )
-    );
+      );
+    });
+    app.get("/contacts", async (req, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+
+      if (!accountdata) return res.redirect("/");
+
+      res.sendFile(
+        path.join(__dirname, "typechat", "build", req.path, "200.html")
+      );
+    });
+
+    app.get("/chat/:id", async (req, res) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+
+      if (!accountdata) return res.redirect("/");
+      res.sendFile(
+        path.join(__dirname, "typechat", "build", req.path, "200.html")
+      );
+    });
+    app.use((req, res, next) => {
+      const temppath = path.join(
+        __dirname,
+        "typechat",
+        "build",
+        req.path,
+        "index.html"
+      );
+      fs.access(temppath, function (err) {
+        if (err) return next()
+        res.sendFile(temppath);
+      });
+    });
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
+      console.log();
       res.sendFile(path.join(__dirname, "typechat", "build", "200.html"));
     });
   };
