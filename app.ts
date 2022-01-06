@@ -2343,6 +2343,26 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       res.status(500);
       res.send("Oops, something went wrong.");
     });
+    app.get('/', async(req, res, next) => {
+      const accountdata = await db.get(
+        "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+        {
+          ":token": req.cookies.token,
+        }
+      );
+
+      if (accountdata) {
+        return res.redirect('/contacts')
+      }
+
+      
+      next()
+    });
+    app.use((req, res) =>
+      res.sendFile(
+        path.join(__dirname, "typechat", "build", req.path, "index.html")
+      )
+    );
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
       res.sendFile(path.join(__dirname, "typechat", "build", "200.html"));
