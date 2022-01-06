@@ -2352,7 +2352,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       if (accountdata) return res.redirect("/contacts");
 
       res.sendFile(
-        path.join(__dirname, "typechat", "build", req.path, "index.html")
+        path.join(__dirname, "typechat", "build", "index.html")
       );
     });
     app.get("/contacts", async (req, res) => {
@@ -2366,7 +2366,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       if (!accountdata) return res.redirect("/");
 
       res.sendFile(
-        path.join(__dirname, "typechat", "build", req.path, "200.html")
+        path.join(__dirname, "typechat", "build", "200.html")
       );
     });
 
@@ -2380,7 +2380,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
 
       if (!accountdata) return res.redirect("/");
       res.sendFile(
-        path.join(__dirname, "typechat", "build", req.path, "200.html")
+        path.join(__dirname, "typechat", "build", "200.html")
       );
     });
     app.use((req, res, next) => {
