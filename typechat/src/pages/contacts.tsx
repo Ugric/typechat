@@ -304,7 +304,7 @@ function Contacts() {
 
 function SwiperPages() {
   const { navbarsize } = useData();
-  const [contactsShow, setcontactsShow] = useState(true);
+  const [contactsKey, setcontactsKey] = useState(0);
   useEffect(() => {
     ReactGA.event({
       category: "contacts",
@@ -338,16 +338,13 @@ function SwiperPages() {
           overflow: "hidden",
         }}
         onTransitionEnd={(e) => {
-          if (e.activeIndex !== 0) {
-            setcontactsShow(false);
+          if (e.activeIndex === 0) {
+            setcontactsKey(contactsKey+1);
           }
-        }}
-        onTransitionStart={()=>{
-          setcontactsShow(true);
         }}
       >
         <SwiperSlide virtualIndex={0}>
-          {contactsShow? <Contacts />: <></>}
+          <Contacts key={contactsKey}></Contacts>
         </SwiperSlide>
         <SwiperSlide virtualIndex={1}>
           <Groups />

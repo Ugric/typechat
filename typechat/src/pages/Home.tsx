@@ -52,13 +52,13 @@ function Home() {
             animationDelay: "4.5s",
             maxWidth: "35rem",
             paddingBottom: "1rem",
-            margin: 'auto'
+            margin: "auto",
           }}
         >
-          TypeChat is a free, cross-platform, and secure chat app that lets you
-          chat with your friends. It's free to use, and you can even download it
-          for free. TypeChat is powered by TypeScript, and you can use it on any
-          platform.
+          Chatting with your friends has never been easier, thanks to TypeChat,
+          a free, cross-platform, and secure chat app that lets you chat with
+          your friends. You can download TypeChat for free, and it runs on all
+          platforms.
         </p>
         <div
           className="logindraw"

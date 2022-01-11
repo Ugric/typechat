@@ -31,7 +31,6 @@ const testRECAP3 = (secret: string, response: string) =>
   )
     .then((resp: { json: () => Promise<any> }) => resp.json())
     .then((json: { success: any }) => {
-      console.log(json);
       return json.success;
     })
     .catch(() => false);
@@ -459,7 +458,8 @@ function updateFromAccountID(accountID: string) {
           ":token": parseCookies(req).token,
         }
       );
-      if (req.url == "/notifications") {
+      console.log('ws connection', req.url);
+      if (["/notifications", '/notifications-bg'].includes(req.url)) {
         let lastping = 0;
         const connectionID = generate(20);
         const pingpong = async () => {
@@ -496,7 +496,7 @@ function updateFromAccountID(accountID: string) {
         }
         notificationsockets[accountdata.accountID][connectionID] = {
           ws,
-          focus: true,
+          focus: req.url!=='/notifications-bg',
         };
 
         pingpong();
@@ -515,7 +515,7 @@ function updateFromAccountID(accountID: string) {
         let lastping = 0;
         const pingpong = async () => {
           await snooze(10000);
-          ws.send(JSON.stringify({ type: "ping" }), console.error);
+          ws.send(JSON.stringify({ type: "ping" }), () => {});
           await snooze(2500);
           const time = new Date().getTime();
           if (time - lastping > 5000) {
@@ -1545,7 +1545,6 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           ":year": date.getFullYear(),
         }
       );
-      console.log;
       return res.send(Boolean(alreadyOpened));
     });
     app.post("/api/openchristmaspresent", async (req, res) => {
@@ -2398,7 +2397,6 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
     });
     app.use(express.static(path.join(__dirname, "typechat", "build")));
     app.use((_: any, res: any) => {
-      console.log();
       res.sendFile(path.join(__dirname, "typechat", "build", "200.html"));
     });
   };
