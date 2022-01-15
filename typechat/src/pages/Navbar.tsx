@@ -17,6 +17,7 @@ import {
   faUserCog,
   faPhotoVideo,
   faGifts,
+  faPuzzlePiece,
 } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { Link, useLocation } from "react-router-dom";
@@ -134,20 +135,25 @@ const PageNav = () => {
           )}
         </Nav>
         <Nav>
-          {isChristmas?
-          <Nav.Link
-            onPointerDown={() => {
-              playSound("/sounds/click2.mp3");
-            }}
-            onPointerUp={() => {
-              playSound("/sounds/click1.mp3");
-            }}
-            as={Link}
-            to="/christmas"
-            style={{ color: location.pathname === "/christmas" ? "white" : "" }}
-          >
-            <FontAwesomeIcon icon={faGifts} />
-          </Nav.Link>:<></>}
+          {isChristmas ? (
+            <Nav.Link
+              onPointerDown={() => {
+                playSound("/sounds/click2.mp3");
+              }}
+              onPointerUp={() => {
+                playSound("/sounds/click1.mp3");
+              }}
+              as={Link}
+              to="/christmas"
+              style={{
+                color: location.pathname === "/christmas" ? "white" : "",
+              }}
+            >
+              <FontAwesomeIcon icon={faGifts} />
+            </Nav.Link>
+          ) : (
+            <></>
+          )}
           <Nav.Link
             onPointerDown={() => {
               playSound("/sounds/click2.mp3");
