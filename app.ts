@@ -22,6 +22,10 @@ import greenlockexpress from "greenlock-express";
 import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import { URLSearchParams } from "url";
+import sharp = require("sharp");
+
+
+
 console.time("express boot");
 
 const testRECAP3 = (secret: string, response: string) =>
@@ -436,7 +440,7 @@ function updateFromAccountID(accountID: string) {
     const httpsServer = glx.httpsServer(null, app);
 
     httpsServer.listen(
-      process.env.NODE_ENV === "development" ? 5000 : 443,
+      process.env.NODE_ENV === "development" ? 5000 : 8080,
       "0.0.0.0",
       function () {
         console.info("Listening on ", httpsServer.address());
@@ -2340,7 +2344,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       res.status(500);
       res.send("Oops, something went wrong.");
     });
-    app.get("/", async (req, res) => {
+    app.get(['/', '/login', '/signup'], async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {

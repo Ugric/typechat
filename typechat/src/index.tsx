@@ -22,7 +22,7 @@ import NotificationComponent from "./notification";
 import ReactGA from "react-ga4";
 import LogRocket from "logrocket";
 import Switches from "./Router";
-import { render } from "react-dom";
+import { hydrate, render } from "react-dom";
 import { Snowflakes } from "./pages/christmas";
 LogRocket.init("b1hvjh/typechat");
 
@@ -219,11 +219,7 @@ function App() {
 const rootElement = document.getElementById("app");
 console.log(rootElement);
 
-render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  rootElement
-);
+render(<App />, rootElement);
+
 reportWebVitals();
 export default App;

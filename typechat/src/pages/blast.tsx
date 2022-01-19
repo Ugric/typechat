@@ -218,6 +218,7 @@ function Blast() {
                     height="35px"
                     alt="🚀"
                     className="icon"
+                    
                   />
                 </h1>
                 <div style={{ textAlign: "end" }}>
@@ -228,6 +229,7 @@ function Blast() {
                       height="35px"
                       alt="⛽"
                       className="icon"
+                      
                     />
                   </h3>
                   {data.sale ? (
@@ -239,6 +241,7 @@ function Blast() {
                           height="35px"
                           alt="☄"
                           className="icon"
+                          
                         />
                       </p>
                       <p style={{ fontSize: "15px" }}>
@@ -274,6 +277,7 @@ function Blast() {
                       height="25px"
                       alt="⛽"
                       className="icon"
+                      
                     />
                   </h5>
                 ) : (
@@ -358,6 +362,7 @@ function Blast() {
                       height="20px"
                       alt="⛽"
                       className="icon"
+                      
                     />
                   </h5>
                   <button
@@ -377,6 +382,7 @@ function Blast() {
                       height="25px"
                       alt="⛽"
                       className="icon"
+                      
                     />
                   </button>
                 </div>
@@ -396,6 +402,7 @@ function Blast() {
                       height="20px"
                       alt="🚀"
                       className="icon"
+                      
                     />
                   </h5>
                   <StartButton
@@ -451,6 +458,7 @@ function Blast() {
                     height="35px"
                     alt="🚀"
                     className="icon"
+                    
                   />
                 </h1>
                 <div
@@ -542,7 +550,7 @@ function Blast() {
               <>
                 <GoogleReCaptcha
                   onVerify={(token) => {
-                    recapToken.current = (token);
+                    recapToken.current = token;
                   }}
                 />
                 <FontAwesomeIcon
@@ -556,7 +564,13 @@ function Blast() {
                 />
                 <h1 style={{ textAlign: "center" }}>
                   Buy Rocket Fuel{" "}
-                  <img src={fuelIcon} height="35px" alt="⛽" className="icon" />
+                  <img
+                    src={fuelIcon}
+                    height="35px"
+                    alt="⛽"
+                    className="icon"
+                    
+                  />
                 </h1>
                 <div style={{ textAlign: "end" }}>
                   <h3>
@@ -566,6 +580,7 @@ function Blast() {
                       height="35px"
                       alt="⛽"
                       className="icon"
+                      
                     />
                   </h3>
                   {data.sale ? (
@@ -577,6 +592,7 @@ function Blast() {
                           height="35px"
                           alt="☄"
                           className="icon"
+                          
                         />
                       </p>
                       <p style={{ fontSize: "15px" }}>
@@ -639,63 +655,47 @@ function Blast() {
                   <h2 style={{ textAlign: "end", color: "var(--dark-mode)" }}>
                     Total: £{(Number(price) * buyfuel).toFixed(2)}
                   </h2>
-                    <PayPalButton
-                      amount={(Number(price) * buyfuel).toFixed(2)}
-                      shippingPreference="NO_SHIPPING"
-                      onApprove={async (
-                        data: {
-                          orderID: string | Blob;
-                          payerID: string | Blob;
-                        },
-                        actions: { order: { capture: () => Promise<any> } }
-                      ) => {
-                        if (recapToken.current) {
-                          // Capture the funds from the transaction
-                          console.log(actions);
-                          const formdata = new FormData();
-                          formdata.append("orderID", data.orderID);
-                          formdata.append("payerID", data.payerID);
-                          formdata.append("g-recaptcha-response", recapToken.current);
-                          formdata.append("quantity", JSON.stringify(buyfuel));
-                          console.log(data);
-                          return await fetch("/api/paypal-buy-rocket-fuel", {
-                            method: "post",
-                            body: formdata,
-                          })
-                            .then(async (resp) => {
-                              if (resp.status === 200) {
-                                ReactGA.event({
-                                  category: "blast",
-                                  action: "buy rocket fuel",
-                                  label: JSON.stringify(buyfuel),
-                                });
-                                console.log("success");
-                                setmenupage("buyTY");
-                              } else {
-                                console.log("error");
-                                notifications.addNotification({
-                                  title: "Failed!",
-                                  message:
-                                    "Sorry, there was an issue buying the Rocket Fuel, you have not been charged.",
-                                  type: "danger",
-                                  insert: "top",
-                                  container: "top-right",
-                                  animationIn: [
-                                    "animate__animated",
-                                    "animate__fadeIn",
-                                  ],
-                                  animationOut: [
-                                    "animate__animated",
-                                    "animate__fadeOut",
-                                  ],
-                                });
-                              }
-                            })
-                            .catch(() =>
+                  <PayPalButton
+                    amount={(Number(price) * buyfuel).toFixed(2)}
+                    shippingPreference="NO_SHIPPING"
+                    onApprove={async (
+                      data: {
+                        orderID: string | Blob;
+                        payerID: string | Blob;
+                      },
+                      actions: { order: { capture: () => Promise<any> } }
+                    ) => {
+                      if (recapToken.current) {
+                        // Capture the funds from the transaction
+                        console.log(actions);
+                        const formdata = new FormData();
+                        formdata.append("orderID", data.orderID);
+                        formdata.append("payerID", data.payerID);
+                        formdata.append(
+                          "g-recaptcha-response",
+                          recapToken.current
+                        );
+                        formdata.append("quantity", JSON.stringify(buyfuel));
+                        console.log(data);
+                        return await fetch("/api/paypal-buy-rocket-fuel", {
+                          method: "post",
+                          body: formdata,
+                        })
+                          .then(async (resp) => {
+                            if (resp.status === 200) {
+                              ReactGA.event({
+                                category: "blast",
+                                action: "buy rocket fuel",
+                                label: JSON.stringify(buyfuel),
+                              });
+                              console.log("success");
+                              setmenupage("buyTY");
+                            } else {
+                              console.log("error");
                               notifications.addNotification({
                                 title: "Failed!",
                                 message:
-                                  "Sorry, there was an issue buying the Rocket Fuel, you have not been charged. Please try again in a moment!",
+                                  "Sorry, there was an issue buying the Rocket Fuel, you have not been charged.",
                                 type: "danger",
                                 insert: "top",
                                 container: "top-right",
@@ -707,31 +707,32 @@ function Blast() {
                                   "animate__animated",
                                   "animate__fadeOut",
                                 ],
-                              })
-                            );
-                        } else {
-                          notifications.addNotification({
-                            title: "Failed!",
-                            message: "Sorry, there was an issue buying the Rocket Fuel, you have not been charged. Please try again in a moment!",
-                            type: "danger",
-                            insert: "top",
-                            container: "top-right",
-                            animationIn: [
-                              "animate__animated",
-                              "animate__fadeIn",
-                            ],
-                            animationOut: [
-                              "animate__animated",
-                              "animate__fadeOut",
-                            ],
-                          });
-                        }
-                      }}
-                      onError={() => {
+                              });
+                            }
+                          })
+                          .catch(() =>
+                            notifications.addNotification({
+                              title: "Failed!",
+                              message:
+                                "Sorry, there was an issue buying the Rocket Fuel, you have not been charged. Please try again in a moment!",
+                              type: "danger",
+                              insert: "top",
+                              container: "top-right",
+                              animationIn: [
+                                "animate__animated",
+                                "animate__fadeIn",
+                              ],
+                              animationOut: [
+                                "animate__animated",
+                                "animate__fadeOut",
+                              ],
+                            })
+                          );
+                      } else {
                         notifications.addNotification({
                           title: "Failed!",
                           message:
-                            "Sorry, there was an issue buying the Rocket Fuel, you have not been charged.",
+                            "Sorry, there was an issue buying the Rocket Fuel, you have not been charged. Please try again in a moment!",
                           type: "danger",
                           insert: "top",
                           container: "top-right",
@@ -740,23 +741,36 @@ function Blast() {
                             "animate__animated",
                             "animate__fadeOut",
                           ],
-                          dismiss: {
-                            pauseOnHover: true,
-                            duration: 5000,
-                            onScreen: true,
-                          },
                         });
-                      }}
-                      currency={"GBP"}
-                      options={{
-                        currency: "GBP",
-                        clientId:
-                          !process.env.NODE_ENV ||
-                          process.env.NODE_ENV === "development"
-                            ? "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0"
-                            : "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
-                      }}
-                    />
+                      }
+                    }}
+                    onError={() => {
+                      notifications.addNotification({
+                        title: "Failed!",
+                        message:
+                          "Sorry, there was an issue buying the Rocket Fuel, you have not been charged.",
+                        type: "danger",
+                        insert: "top",
+                        container: "top-right",
+                        animationIn: ["animate__animated", "animate__fadeIn"],
+                        animationOut: ["animate__animated", "animate__fadeOut"],
+                        dismiss: {
+                          pauseOnHover: true,
+                          duration: 5000,
+                          onScreen: true,
+                        },
+                      });
+                    }}
+                    currency={"GBP"}
+                    options={{
+                      currency: "GBP",
+                      clientId:
+                        !process.env.NODE_ENV ||
+                        process.env.NODE_ENV === "development"
+                          ? "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0"
+                          : "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
+                    }}
+                  />
                   {!process.env.NODE_ENV ||
                   process.env.NODE_ENV === "development" ? (
                     <p style={{ color: "red" }}>dev mode</p>

@@ -30,6 +30,7 @@
     "howler": "^2.2.3",
     "is-electron": "^2.2.0",
     "jimp": "^0.16.1",
+    "js-crypto-rsa": "^1.0.3",
     "jsqr": "^1.4.0",
     "jsqrcode": "^0.0.7",
     "logrocket": "^2.1.1",

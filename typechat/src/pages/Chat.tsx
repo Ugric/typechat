@@ -219,6 +219,7 @@ function MetaPage({
             size: "24",
             domain: urldata.hostname,
           })}`}
+          
         />
         {data.title ? data.title : decoratedText}
       </a>
@@ -228,6 +229,7 @@ function MetaPage({
           src={new URL(data.image, url).href}
           style={{ width: "100%", borderRadius: "10px" }}
           alt={data.title ? data.title : decoratedText}
+          
         ></img>
       ) : (
         <></>
@@ -550,6 +552,7 @@ function Message({
                   <img
                     alt={file}
                     src={`/files/${file}`}
+                    
                     style={{
                       maxWidth: "100%",
                       maxHeight: "300px",
@@ -743,6 +746,7 @@ function Message({
         {message ? <p data-private>Message: {message.trim()}</p> : <></>}
         <img
           src={GiftIcon}
+          
           alt="🎁"
           style={{
             padding: "1rem",
@@ -863,6 +867,7 @@ function MessageMaker({
                   borderRadius: "50%",
                 }}
                 alt=""
+                
               />
               {users[messages[i].from] ? (
                 <span style={{ marginLeft: "5px" }}>
@@ -975,6 +980,7 @@ function MessageMaker({
                     margin: "3px",
                     borderRadius: "50%",
                   }}
+                  
                   alt=""
                 />
                 <span style={{ marginLeft: "5px" }}>{users[key].username}</span>
@@ -1608,6 +1614,7 @@ function ChatPage() {
                     : usersdata.users[chattingto].profilePic
                 )
               }
+              
               data-private
               style={{
                 display: "block",
@@ -1932,7 +1939,13 @@ function ChatPage() {
               >
                 <div className="btnBox">
                   GIFT{" "}
-                  <img src={GiftIcon} height="30px" alt="🎁" className="icon" />
+                  <img
+                    src={GiftIcon}
+                    height="30px"
+                    alt="🎁"
+                    className="icon"
+                    
+                  />
                 </div>
                 <div className="btnBottom"></div>
               </button>

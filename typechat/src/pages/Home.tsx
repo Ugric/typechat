@@ -137,6 +137,7 @@ function Home() {
               animationDuration: "2s",
               animationDelay: "6s",
             }}
+            
           ></img>
         )}
       </div>

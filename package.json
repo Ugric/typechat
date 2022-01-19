@@ -37,6 +37,7 @@
     "paypal__checkout-server-sdk": "^1.0.0",
     "randomstring": "^1.2.1",
     "selfsigned": "^1.10.11",
+    "sharp": "^0.29.3",
     "sqlite": "^4.0.23",
     "sqlite3": "^5.0.2",
     "url-metadata": "^2.5.0",

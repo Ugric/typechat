@@ -61,6 +61,7 @@ function UserListing({
           width: "auto",
           borderRadius: "50%",
         }}
+        
         onLoad={async (e: any) => {
           const resp = colorThief.getColor(e.target);
           setbackgroundcolour({ r: resp[0], g: resp[1], b: resp[2] });

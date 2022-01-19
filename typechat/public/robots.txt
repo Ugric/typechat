@@ -7,5 +7,5 @@ Disallow: /contacts
 Disallow: /settings
 Disallow: /requestNewPassword
 
-Sitemap: sitemap.xml
+Sitemap: /sitemap.xml
 

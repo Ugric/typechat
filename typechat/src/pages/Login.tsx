@@ -58,6 +58,7 @@ function Login() {
           src={logo}
           style={{ width: "150px", borderRadius: "10px" }}
           alt="logo"
+          
         ></img>
         <h1
           style={{

@@ -60,6 +60,7 @@ function Signup() {
           src={logo}
           alt="logo"
           style={{ width: "150px", borderRadius: "10px" }}
+          
         ></img>
         <h1
           style={{
