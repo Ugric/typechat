@@ -22,7 +22,6 @@ import greenlockexpress from "greenlock-express";
 import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import { URLSearchParams } from "url";
-import sharp = require("sharp");
 
 
 
