@@ -440,7 +440,7 @@ function updateFromAccountID(accountID: string) {
     const httpsServer = glx.httpsServer(null, app);
 
     httpsServer.listen(
-      process.env.NODE_ENV === "development" ? 5000 : 8080,
+      process.env.NODE_ENV === "development" ? 5000 : 443,
       "0.0.0.0",
       function () {
         console.info("Listening on ", httpsServer.address());
