@@ -30,7 +30,7 @@ console.time("express boot");
 const testRECAP3 = (secret: string, response: string) =>
   fetch(
     `https://www.google.com/recaptcha/api/siteverify?` +
-      new URLSearchParams({ secret, response })
+    new URLSearchParams({ secret, response })
   )
     .then((resp: { json: () => Promise<any> }) => resp.json())
     .then((json: { success: any }) => {
@@ -41,13 +41,13 @@ const testRECAP3 = (secret: string, response: string) =>
 const environment =
   process.env.NODE_ENV === "development"
     ? new paypal.core.SandboxEnvironment(
-        "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0",
-        "EAmkLLRgEYRvV7-3ijZry_bQPK82UwkKrKT9SQjTZJGHkb7Lu9sVDVUjJJWFUt5l-4v8ejCyU2LRhlur"
-      )
+      "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0",
+      "EAmkLLRgEYRvV7-3ijZry_bQPK82UwkKrKT9SQjTZJGHkb7Lu9sVDVUjJJWFUt5l-4v8ejCyU2LRhlur"
+    )
     : new paypal.core.LiveEnvironment(
-        "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
-        "EA87J47CS97x5ThWeC332UEkgh1voNVc4uQJA5vNXvFpJ1tKIkispLVuzWiFM5X03cNUpwI14ztYK44K"
-      );
+      "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
+      "EA87J47CS97x5ThWeC332UEkgh1voNVc4uQJA5vNXvFpJ1tKIkispLVuzWiFM5X03cNUpwI14ztYK44K"
+    );
 const PPclient = new paypal.core.PayPalHttpClient(environment);
 
 const tempmetadata: { [key: string]: urlMetadata.Result } = {};
@@ -131,7 +131,7 @@ function updateFromAccountID(accountID: string) {
         updateFunctions[accountID][connectionID]();
       }
     }
-  } catch {}
+  } catch { }
 }
 
 (async () => {
@@ -275,26 +275,26 @@ function updateFromAccountID(accountID: string) {
     db.run("CREATE TABLE IF NOT EXISTS christmasOpened (accountID, year)"),
   ]);
   db.run("ALTER TABLE friendsChatMessages ADD deleted DEFAULT false").catch(
-    () => {}
+    () => { }
   );
   db.run("ALTER TABLE friendsChatMessages ADD edited DEFAULT false").catch(
-    () => {}
+    () => { }
   );
-  db.run("ALTER TABLE images ADD mimetype").catch(() => {});
-  db.run("ALTER TABLE images ADD originalfilename").catch(() => {});
-  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => {});
-  db.run("ALTER TABLE friendsChatMessages ADD gift").catch(() => {});
-  db.run("ALTER TABLE friendsChatMessages ADD amount").catch(() => {});
-  db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => {});
-  db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => {});
+  db.run("ALTER TABLE images ADD mimetype").catch(() => { });
+  db.run("ALTER TABLE images ADD originalfilename").catch(() => { });
+  db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => { });
+  db.run("ALTER TABLE friendsChatMessages ADD gift").catch(() => { });
+  db.run("ALTER TABLE friendsChatMessages ADD amount").catch(() => { });
+  db.run("ALTER TABLE rocketFuelPoints ADD used DEFAULT false").catch(() => { });
+  db.run("ALTER TABLE blast ADD fuel DEFAULT 1").catch(() => { });
   db.run("ALTER TABLE accounts ADD discordnotification DEFAULT true").catch(
-    () => {}
+    () => { }
   );
   db.run("ALTER TABLE accounts ADD emailnotification DEFAULT true").catch(
-    () => {}
+    () => { }
   );
-  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => {});
-  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => {});
+  db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => { });
+  db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => { });
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
@@ -424,8 +424,8 @@ function updateFromAccountID(accountID: string) {
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const getAllOnline = (sockets: {
-    [key: string]: { focus: boolean; [key: string]: any };
-  }): { focus: boolean; [key: string]: any }[] => {
+    [key: string]: { focus: boolean;[key: string]: any };
+  }): { focus: boolean;[key: string]: any }[] => {
     const online = [];
     for (const socket of Object.keys(sockets)) {
       if (sockets[socket].focus) {
@@ -439,7 +439,7 @@ function updateFromAccountID(accountID: string) {
     const httpsServer = glx.httpsServer(null, app);
 
     httpsServer.listen(
-      process.env.NODE_ENV === "development" ? 5000 : 443,
+      5000,
       "0.0.0.0",
       function () {
         console.info("Listening on ", httpsServer.address());
@@ -467,7 +467,7 @@ function updateFromAccountID(accountID: string) {
         const connectionID = generate(20);
         const pingpong = async () => {
           await snooze(10000);
-          ws.send(JSON.stringify({ type: "ping" }), () => {});
+          ws.send(JSON.stringify({ type: "ping" }), () => { });
           await snooze(2500);
           const time = new Date().getTime();
           if (time - lastping > 5000) {
@@ -499,7 +499,7 @@ function updateFromAccountID(accountID: string) {
         }
         notificationsockets[accountdata.accountID][connectionID] = {
           ws,
-          focus: req.url!=='/notifications-bg',
+          focus: req.url !== '/notifications-bg',
         };
 
         pingpong();
@@ -518,7 +518,7 @@ function updateFromAccountID(accountID: string) {
         let lastping = 0;
         const pingpong = async () => {
           await snooze(10000);
-          ws.send(JSON.stringify({ type: "ping" }), () => {});
+          ws.send(JSON.stringify({ type: "ping" }), () => { });
           await snooze(2500);
           const time = new Date().getTime();
           if (time - lastping > 5000) {
@@ -836,7 +836,7 @@ function updateFromAccountID(accountID: string) {
               if (
                 (!msg.focus
                   ? getAllOnline(messagefunctions[accountdata.accountID][to])
-                      .length <= 0
+                    .length <= 0
                   : true) &&
                 messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
@@ -1510,7 +1510,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               loggedin: false,
             });
           }
-        } catch {}
+        } catch { }
       }
       if (accountdata) {
         if (!updateFunctions[accountdata.accountID]) {
@@ -1830,7 +1830,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
             );
             memberonguild
               ?.setNickname(req.body.username, "rename")
-              .catch(() => {});
+              .catch(() => { });
           }
           res.send({ resp: true });
         } else {
@@ -1950,13 +1950,13 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                   delete linkurls.linkID[req.params.id];
                   await memberonguild
                     .setNickname(accountdata.username, "linked")
-                    .catch(() => {});
+                    .catch(() => { });
                   await memberonguild.roles
                     .add(roleID, "linked")
-                    .catch(() => {});
+                    .catch(() => { });
                   await memberonguild.roles
                     .remove(unlinkedroleID, "linked")
-                    .catch(() => {});
+                    .catch(() => { });
                   discordAccount.dmChannel.send({
                     embeds: [
                       new MessageEmbed()
@@ -2404,23 +2404,12 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
     });
   };
   console.log(process.env.NODE_ENV, "boot up");
-  if (process.env.NODE_ENV === "development") {
-    serverboot({
-      httpsServer: () => http.createServer(app),
-      httpServer: () => {
-        return { listen: () => {} };
-      },
-    });
-  } else {
-    greenlockexpress
-      .init({
-        packageRoot: __dirname,
-        configDir: "./greenlock.d",
-        maintainerEmail: "epicugric@gmail.com",
-        cluster: false,
-      })
-      .ready(serverboot);
-  }
+  serverboot({
+    httpsServer: () => http.createServer(app),
+    httpServer: () => {
+      return { listen: () => { } };
+    },
+  });
 })();
 
 process
