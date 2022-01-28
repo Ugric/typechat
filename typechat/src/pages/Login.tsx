@@ -1,5 +1,5 @@
 import { useData } from "../hooks/datahook";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Loader from "./loader";
 import { useHistory, Link, useLocation } from "react-router-dom";
 import logo from "../images/logos/TS.svg";
@@ -19,7 +19,7 @@ function validateEmail(email: string) {
 function Login() {
   const { rechecklogged, loggedin } = useData();
   const [error, seterror] = useState("");
-  const [recapToken, setRecapToken] = useState<null | string>(null);
+  const recaptoken = useRef<null|string>(null)
   const history = useHistory();
   const location = useLocation();
   const query: { [key: string]: string | string[] } = parse(
@@ -72,7 +72,7 @@ function Login() {
           <RouterForm
             action={"/login"}
             beforecallback={(e: any) => {
-              if (recapToken) {
+              if (recaptoken.current) {
                 if (e.target[0].value !== "" && e.target[1].value !== "") {
                   if (validateEmail(e.target[0].value)) {
                     setloading(true);
@@ -88,7 +88,8 @@ function Login() {
               }
             }}
             appendtoformdata={(fd) => {
-              if (recapToken) fd.append("g-recaptcha-response", recapToken);
+              if (recaptoken.current)
+                fd.append("g-recaptcha-response", recaptoken.current);
               return fd;
             }}
             style={{
@@ -112,7 +113,7 @@ function Login() {
             {navigator.userAgent !== "ReactSnap" ? (
               <GoogleReCaptcha
                 onVerify={(token) => {
-                  setRecapToken(token);
+                  recaptoken.current = (token);
                 }}
               />
             ) : (

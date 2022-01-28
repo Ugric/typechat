@@ -1,5 +1,5 @@
 import { useData } from "../hooks/datahook";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Loader from "./loader";
 import { useHistory, Link, useLocation } from "react-router-dom";
 import logo from "../images/logos/TS.svg";
@@ -22,7 +22,7 @@ function Signup() {
   const [error, seterror] = useState("");
   const [profile, setprofile] = useState<Blob | null>(null);
   const history = useHistory();
-  const [recapToken, setRecapToken] = useState<null | string>(null);
+  const recaptoken = useRef<null | string>(null)
   const [loading, setloading] = useState(false);
   const location = useLocation();
   const query: { [key: string]: string | string[] } = parse(
@@ -74,7 +74,7 @@ function Signup() {
           <RouterForm
             action={"/signup"}
             beforecallback={(e: any) => {
-              if (recapToken) {
+              if (recaptoken.current) {
                 if (
                   e.target[0].value !== "" &&
                   e.target[1].value !== "" &&
@@ -95,7 +95,7 @@ function Signup() {
               }
             }}
             appendtoformdata={(fd: FormData) => {
-              if (recapToken) fd.append("g-recaptcha-response", recapToken);
+              if (recaptoken.current) fd.append("g-recaptcha-response", recaptoken.current);
               fd.append("profile", profile ? profile : "");
               return fd;
             }}
@@ -116,7 +116,7 @@ function Signup() {
             {navigator.userAgent !== "ReactSnap" ? (
               <GoogleReCaptcha
                 onVerify={(token) => {
-                  setRecapToken(token);
+                  recaptoken.current=(token);
                 }}
               />
             ) : (
