@@ -62,6 +62,7 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development nodemon app.ts",
+    "gl": "set NODE_ENV=greenlock && ts-node app.ts",
     "pro": "set NODE_ENV=production&& ts-node app.ts",
     "test": "jest"
   },

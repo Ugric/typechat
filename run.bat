@@ -1,5 +1,5 @@
 @echo off
 :loop
-npm run pro
+npm run gl
 pause
 goto loop
