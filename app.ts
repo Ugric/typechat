@@ -23,7 +23,7 @@ import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import { URLSearchParams } from "url";
 
-
+console.log()
 
 console.time("express boot");
 
@@ -2330,7 +2330,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
-    if (!(process.env.NODE_ENV === "development")) {
+    if (!['production', 'development'].includes(process.env.NODE_ENV)) {
       app.use(forceDomain({ hostname: "typechat.world" }));
     }
     app.get("/logo.png", (_, res) =>
