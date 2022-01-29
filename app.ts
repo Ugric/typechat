@@ -420,7 +420,7 @@ function updateFromAccountID(accountID: string) {
     });
   }
   const app = express();
-  app.use(require("morgan")("tiny"));
+  app.use(require("morgan")("combined"));
   app.use(cookieParser());
   app.use(require("express-fileupload")());
   const getAllOnline = (sockets: {
