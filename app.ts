@@ -1285,6 +1285,16 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     app.get("/sounds/:filename", async (req, res) => {
       res.sendFile(path.join(__dirname, "sounds", req.params.filename));
     });
+    app.get('/heartbeat', async (req, res) => {
+      res.send({
+        resp: true,
+        data: {
+          uptime: process.uptime(),
+          memory: process.memoryUsage(),
+          cpu: process.cpuUsage(),
+        },
+      });
+    });
     app.get("/api/verify/:verificationID", async (req, res) => {
       if (toVerify[req.params.verificationID]) {
         const accountdata = await db.get(
