@@ -1786,7 +1786,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           if (imagedata && (await checkFileExists(filepath))) {
             if (
               req.query.size && (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
-              imagedata.mimetype.startsWith("image/")
+              (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
             ) {
               const image = sharp(filepath)
               const metadata = await image.metadata();
