@@ -1285,7 +1285,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     app.get("/sounds/:filename", async (req, res) => {
       res.sendFile(path.join(__dirname, "sounds", req.params.filename));
     });
-    app.get('/heartbeat', async (req, res) => {
+    app.get('/healthcheck', async (req, res) => {
       res.send({
         resp: true,
         data: {
