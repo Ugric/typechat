@@ -21,6 +21,7 @@ import urlMetadata from "url-metadata";
 import greenlockexpress from "greenlock-express";
 import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
+import sharp from "sharp";
 import { URLSearchParams } from "url";
 
 console.log()
@@ -196,8 +197,8 @@ function updateFromAccountID(accountID: string) {
               .setColor("#5656ff")
               .setTitle("New Notification 🎉")
               .addField(data.title, data.message)
-              .setURL(new URL(data.to, "https://tchat.us.to/").href)
-              .setThumbnail("https://tchat.us.to/logo.png"),
+              .setURL(new URL(data.to, "https://typechat.world/").href)
+              .setThumbnail("https://typechat.world/logo.png"),
           ],
         });
       }
@@ -1774,17 +1775,30 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
 
     app.get("/files/:id", async (req, res) => {
       const imagedata = await db.get(
-        `SELECT filename FROM images WHERE imageID=:id`,
+        `SELECT filename, mimetype FROM images WHERE imageID=:id`,
         {
           ":id": req.params.id,
         }
       );
-      if (imagedata) {
-        const filepath = path.join(__dirname, "files", imagedata.filename);
-        if (imagedata && (await checkFileExists(filepath))) {
-          return res.sendFile(filepath);
+      try {
+        if (imagedata) {
+          const filepath = path.join(__dirname, "files", imagedata.filename);
+          if (imagedata && (await checkFileExists(filepath))) {
+            if (
+              req.query.size && (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
+              imagedata.mimetype.startsWith("image/")
+            ) {
+              const image = sharp(filepath)
+              const metadata = await image.metadata();
+              const width = Number(req.query.size);
+              res.setHeader("Content-Type", imagedata.mimetype);
+              return res.send(await image.resize(width<metadata.width?width:metadata.width)
+                .toBuffer());
+            }
+            return res.sendFile(filepath);
+          }
         }
-      }
+      } catch {}
       return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
     });
     app.get("/getprofilepicfromid", async (req, res) => {
@@ -1979,7 +1993,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                           `your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`
                         )
                         .setThumbnail(
-                          `https://tchat.us.to/files/${accountdata.profilePic}`
+                          `https://typechat.world/files/${accountdata.profilePic}`
                         ),
                     ],
                   });

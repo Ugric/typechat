@@ -35,7 +35,7 @@ function UserListing({
     <div
       style={{
         backgroundImage: user.backgroundImage
-          ? `url(/files/${user.backgroundImage})`
+          ? `url(/files/${user.backgroundImage}?size=350)`
           : "",
         backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
         padding: "1rem",
@@ -53,13 +53,13 @@ function UserListing({
       <img
         alt="profile"
         loading="lazy"
-        src={"/files/" + user.profilePic}
+        src={"/files/" + user.profilePic + '?size=35'}
         style={{
           maxHeight: "75px",
           maxWidth: "100%",
-          height: "auto",
-          width: "auto",
           borderRadius: "50%",
+          width: '50px',
+          height: '50px',
         }}
         
         onLoad={async (e: any) => {

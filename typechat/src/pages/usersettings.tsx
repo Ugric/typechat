@@ -142,9 +142,10 @@ function UserSettings() {
         >
           <img
             alt="profile"
-            src={ "/files/" + user.profilePic }
+            src={ "/files/" + user.profilePic+'?size=75' }
             style={ {
               height: "75px",
+              width: "75px",
               margin: "0 1rem 0 0",
               borderRadius: "50%",
             } }

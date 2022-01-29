@@ -29,7 +29,7 @@ const linkaccount = (member: { id: any }) => {
     .setDescription(
       "Link your Discord and TypeChat account to get the best experience with the Platform!"
     )
-    .setURL(`https://tchat.us.to/link/${id}`);
+    .setURL(`https://typechat.world/link/${id}`);
 };
 
 const serverID =
@@ -84,9 +84,9 @@ client.on("messageCreate", async (message) => {
           ":accountID": account.accountID,
         }
       );
-      const embed = new discord.MessageEmbed().setTitle(accountdata.username + "#" + accountdata.tag).setColor("#5656ff").setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`)
+      const embed = new discord.MessageEmbed().setTitle(accountdata.username + "#" + accountdata.tag).setColor("#5656ff").setThumbnail(`https://typechat.world/files/${accountdata.profilePic}`)
       if (accountdata.backgroundImage) {
-        embed.setImage(`https://tchat.us.to/files/${accountdata.backgroundImage}`)
+        embed.setImage(`https://typechat.world/files/${accountdata.backgroundImage}`)
       }
       message.reply({ embeds: [embed] });
 
@@ -182,7 +182,7 @@ client.on("guildMemberAdd", async (member) => {
           .setColor("#5656ff")
           .setTitle(`hello ${member.displayName} 👋`)
           .setDescription("Welcome to the TypeChat Discord Server!")
-          .setThumbnail("https://tchat.us.to/logo.png"),
+          .setThumbnail("https://typechat.world/logo.png"),
         linkaccount(member),
       ],
     });
@@ -200,14 +200,14 @@ client.on("guildMemberAdd", async (member) => {
           .setColor("#5656ff")
           .setTitle(`hello ${member.displayName} 👋`)
           .setDescription("Welcome back to the TypeChat Discord Server!")
-          .setThumbnail("https://tchat.us.to/logo.png"),
+          .setThumbnail("https://typechat.world/logo.png"),
         new discord.MessageEmbed()
           .setColor("#5656ff")
           .setTitle(`${accountdata.username}#${accountdata.tag}`)
           .setDescription(
             `your account has been linked with \`${accountdata.username}#${accountdata.tag}\`, type \`!unlink\` to unlink your discord account from your typechat account!`
           )
-          .setThumbnail(`https://tchat.us.to/files/${accountdata.profilePic}`),
+          .setThumbnail(`https://typechat.world/files/${accountdata.profilePic}`),
       ],
     });
     await member.setNickname(accountdata.username, "rejoin").catch(() => { });

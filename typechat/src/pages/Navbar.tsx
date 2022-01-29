@@ -210,7 +210,7 @@ const PageNav = () => {
                 >
                   <img
                     alt="Profile"
-                    src={"/files/" + user.profilePic}
+                    src={"/files/" + user.profilePic+'?size=40'}
                     width="40px"
                     height="40px"
                     style={{

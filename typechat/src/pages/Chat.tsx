@@ -551,12 +551,13 @@ function Message({
                 mimetype.split("/")[0] === "image" ? (
                   <img
                     alt={file}
-                    src={`/files/${file}`}
+                    src={`/files/${file}?size=615`}
                     
                     style={{
                       maxWidth: "100%",
                       maxHeight: "300px",
                       borderRadius: "20px",
+                      height:'100vh'
                     }}
                     loading="lazy"
                     onLoad={() => {
@@ -859,7 +860,7 @@ function MessageMaker({
                   messages[i].from === user.id
                     ? user.profilePic
                     : users[messages[i].from].profilePic
-                }`}
+                }?size=25`}
                 style={{
                   width: "25px",
                   height: "25px",
@@ -973,7 +974,7 @@ function MessageMaker({
                 }}
               >
                 <img
-                  src={`/files/${users[key].profilePic}`}
+                  src={`/files/${users[key].profilePic}?size=25`}
                   style={{
                     width: "25px",
                     height: "25px",
@@ -1611,17 +1612,18 @@ function ChatPage() {
                 String(
                   isGroupChat
                     ? groupchatdata.picture
-                    : usersdata.users[chattingto].profilePic
+                    : usersdata.users[chattingto].profilePic+'?size=45'
                 )
               }
               
               data-private
               style={{
                 display: "block",
-                height: "65%",
                 margin: "auto",
                 borderRadius: "100%",
                 aspectRatio: "1/1",
+                width: '45px',
+                height: '45px',
               }}
               alt={
                 isGroupChat

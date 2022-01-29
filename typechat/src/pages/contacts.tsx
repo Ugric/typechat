@@ -79,7 +79,7 @@ function Contact({
         }}
         style={{
           backgroundImage: user.backgroundImage
-            ? `url(/files/${user.backgroundImage})`
+            ? `url(/files/${user.backgroundImage}?size=500)`
             : "",
           backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
           padding: "1rem",
@@ -108,7 +108,7 @@ function Contact({
           <img
             alt="profile"
             loading="lazy"
-            src={"/files/" + user.profilePic}
+            src={"/files/" + user.profilePic+'?size=50'}
             width="50px"
             height="50px"
             style={{
@@ -337,6 +337,7 @@ function SwiperPages() {
           height: `calc(100vh - ${navbarsize.height}px)`,
           overflow: "hidden",
         }}
+        allowTouchMove={isMobileDevice()}
         onTransitionEnd={(e) => {
           if (e.activeIndex === 0) {
             setcontactsKey(contactsKey+1);

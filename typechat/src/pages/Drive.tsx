@@ -73,7 +73,7 @@ function FilePreview({
           </div>
         ) : (
           <img
-            src={"/files/" + id}
+            src={"/files/" + id+'?size=75&force=true'}
             alt={name}
             loading="lazy"
             style={{ width: "100%", borderRadius: "10px" }}
@@ -292,7 +292,7 @@ function Image() {
         <h1 data-private>{data.filename}</h1>
         <div
           onClick={() => {
-            navigator.clipboard.writeText("https://tchat.us.to/drive/" + file).then(() => {
+            navigator.clipboard.writeText("https://typechat.world/drive/" + file).then(() => {
               notifications.addNotification({
                 title: "Copied",
                 message: "Link copied to clipboard",
@@ -324,7 +324,7 @@ function Image() {
         </div>
         <div
           onClick={() => {
-            navigator.clipboard.writeText("https://tchat.us.to/files/" + file).then(() => {
+            navigator.clipboard.writeText("https://typechat.world/files/" + file).then(() => {
               notifications.addNotification({
                 title: "Copied",
                 message: "Link copied to clipboard",
@@ -380,7 +380,7 @@ function Image() {
             mimetype.split("/")[0] === "image" ? (
               <img
                 alt={file}
-                src={`/files/${file}`}
+                src={`/files/${file}?size=666`}
                 style={{ width: "100%", borderRadius: "20px" }}
                 loading="lazy"
               ></img>

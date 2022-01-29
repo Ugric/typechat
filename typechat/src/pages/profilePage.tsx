@@ -26,7 +26,7 @@ function ProfilePage({
     <div
       style={{
         backgroundImage: user.backgroundImage
-          ? `url(/files/${user.backgroundImage})`
+          ? `url(/files/${user.backgroundImage}?size=666)`
           : undefined,
         backgroundColor: `rgb(${backgroundcolour.r}, ${backgroundcolour.g}, ${backgroundcolour.b})`,
         padding: "1rem",
