@@ -1798,7 +1798,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
             return res.sendFile(filepath);
           }
         }
-      } catch {}
+      } catch (e){console.error(e)}
       return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
     });
     app.get("/getprofilepicfromid", async (req, res) => {
