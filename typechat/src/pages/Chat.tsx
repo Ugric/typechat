@@ -557,7 +557,6 @@ function Message({
                       maxWidth: "100%",
                       maxHeight: "300px",
                       borderRadius: "20px",
-                      height:'100vh'
                     }}
                     loading="lazy"
                     onLoad={() => {
