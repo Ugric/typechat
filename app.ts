@@ -23,6 +23,7 @@ import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import sharp from "sharp";
 import { URLSearchParams } from "url";
+import os from'os'
 
 console.log();
 
@@ -1795,14 +1796,14 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                 imagedata.mimetype !== "image/gif") &&
               (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
             ) {
-              const resizesave = `${filepath}.${req.query.size}`
+              const resizesave = path.join(os.tmpdir(),`${imagedata.filename}.${req.query.size}`);
               if (!(await checkFileExists(resizesave))) {
                 const image = sharp(filepath);
                 const metadata = await image.metadata();
                 const width = Number(req.query.size);
                 if (metadata.width > width) {
                   console.log('saving resized image to:', resizesave)
-                  await image.resize(width).toFile(resizesave);
+                  await image.withMetadata().resize(width).toFile(resizesave);
                   res.setHeader("Content-Type", imagedata.mimetype);
                 } else {
                   return res.sendFile(filepath);
