@@ -1786,10 +1786,10 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           ":id": req.params.id,
         }
       );
-      try {
         if (imagedata) {
           const filepath = path.join(__dirname, "files", imagedata.filename);
           if (imagedata && (await checkFileExists(filepath))) {
+            
             if (
               req.query.size &&
               (Boolean(req.query.force) ||
@@ -1802,9 +1802,15 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                 const metadata = await image.metadata();
                 const width = Number(req.query.size);
                 if (metadata.width > width) {
-                  console.log('saving resized image to:', resizesave)
-                  await image.withMetadata().resize(width).toFile(resizesave);
-                  res.setHeader("Content-Type", imagedata.mimetype);
+
+                  try {
+                    console.log("saving resized image to:", resizesave);
+                    await image.withMetadata().resize(width).toFile(resizesave);
+                    res.setHeader("Content-Type", imagedata.mimetype);
+                  } catch (e) {
+                    console.error(e);
+                    return res.sendFile(filepath);
+                  }
                 } else {
                   return res.sendFile(filepath);
                 }
@@ -1814,9 +1820,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
             return res.sendFile(filepath);
           }
         }
-      } catch (e) {
-        console.error(e);
-      }
+      
       return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
     });
     app.get("/getprofilepicfromid", async (req, res) => {
