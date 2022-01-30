@@ -1795,9 +1795,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               const metadata = await image.metadata();
               const width = Number(req.query.size);
               res.setHeader("Content-Type", imagedata.mimetype);
-              return res.pipe(
-                image.resize(width < metadata.width ? width : metadata.width)
-              );
+              return image.resize(width < metadata.width ? width : metadata.width).pipe(res)
             }
             return res.sendFile(filepath);
           }
