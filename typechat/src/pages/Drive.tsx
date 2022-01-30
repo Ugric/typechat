@@ -267,7 +267,7 @@ function Image() {
     filename: string;
     mimetype: string;
   }>("/api/getimagedata?" + new URLSearchParams({ id }));
-  const [drive, setDrive] = useLocalStorage <
+  const [drive] = useLocalStorage <
     {
     id: string;
     filename: string;
