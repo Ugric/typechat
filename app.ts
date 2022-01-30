@@ -1809,12 +1809,12 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                   } else {
                     return res.sendFile(filepath);
                   }
-                  return res.sendFile(resizesave);
                 } catch (e) {
                   console.error(e);
                   return res.sendFile(filepath);
                 }
               }
+              return res.sendFile(resizesave);
             }
             return res.sendFile(filepath);
           }
