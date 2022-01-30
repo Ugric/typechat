@@ -1798,24 +1798,25 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
             ) {
               const resizesave = path.join(os.tmpdir(),`${imagedata.filename}.${req.query.size}`);
               if (!(await checkFileExists(resizesave))) {
-                const image = sharp(filepath);
-                const metadata = await image.metadata();
-                const width = Number(req.query.size);
-                if (metadata.width > width) {
+                try {
+                  const image = sharp(filepath);
+                  const metadata = await image.metadata();
+                  const width = Number(req.query.size);
+                  if (metadata.width > width) {
 
-                  try {
+                  
                     console.log("saving resized image to:", resizesave);
                     await image.withMetadata().resize(width).toFile(resizesave);
                     res.setHeader("Content-Type", imagedata.mimetype);
-                  } catch (e) {
-                    console.error(e);
+                  } else {
                     return res.sendFile(filepath);
                   }
-                } else {
+                  return res.sendFile(resizesave);
+                } catch (e) {
+                  console.error(e);
                   return res.sendFile(filepath);
                 }
               }
-              return res.sendFile(resizesave);
             }
             return res.sendFile(filepath);
           }
