@@ -1803,8 +1803,6 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                   const metadata = await image.metadata();
                   const width = Number(req.query.size);
                   if (metadata.width > width) {
-
-                  
                     console.log("saving resized image to:", resizesave);
                     await image.withMetadata().resize(width).toFile(resizesave);
                     res.setHeader("Content-Type", imagedata.mimetype);
