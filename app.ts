@@ -1794,7 +1794,14 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               const image = await Jimp.read(filepath);
               const width = Number(req.query.size);
               res.setHeader("Content-Type", imagedata.mimetype);
-              return res.send(await image.resize(width<image.bitmap.width?width:image.bitmap.width, Jimp.AUTO).getBufferAsync(imagedata.mimetype));
+              return res.send(
+                await image
+                  .resize(
+                    width < image.bitmap.width ? width : image.bitmap.width,
+                    Jimp.AUTO
+                  )
+                  .getBufferAsync(image.getMIME())
+              );
             }
             return res.sendFile(filepath);
           }
