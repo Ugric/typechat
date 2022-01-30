@@ -48,7 +48,7 @@ function ProfilePage({
       >
         <img
           alt="profile"
-          src={"/files/" + user.profilePic}
+          src={"/files/" + user.profilePic+'?size=75'}
           width='75px'
           height='75px'
           style={{

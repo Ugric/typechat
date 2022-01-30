@@ -21,9 +21,9 @@ import urlMetadata from "url-metadata";
 import greenlockexpress from "greenlock-express";
 import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
-import sharp from "sharp";
 import { URLSearchParams } from "url";
-import { Http2SecureServer, Http2Server } from "http2";
+import Jimp from "jimp";
+
 
 console.log()
 
@@ -1791,11 +1791,10 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               req.query.size && (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
               (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
             ) {
-              const image = sharp(filepath)
-              const metadata = await image.metadata();
+              const image = await Jimp.read(filepath);
               const width = Number(req.query.size);
               res.setHeader("Content-Type", imagedata.mimetype);
-              return image.resize(width < metadata.width ? width : metadata.width).pipe(res)
+              return res.send(await image.resize(width<image.bitmap.width?width:image.bitmap.width, Jimp.AUTO).getBufferAsync(imagedata.mimetype));
             }
             return res.sendFile(filepath);
           }
