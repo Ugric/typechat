@@ -23,6 +23,7 @@ import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import sharp from "sharp";
 import { URLSearchParams } from "url";
+import { Http2SecureServer, Http2Server } from "http2";
 
 console.log()
 
@@ -435,11 +436,11 @@ function updateFromAccountID(accountID: string) {
     }
     return online;
   };
-  const serverboot = (glx: { httpsServer: any; httpServer: any }) => {
+  const serverboot = (glx: { httpsServer: (x?:any, y?:any)=>http.Server; httpServer: any }) => {
     console.log(glx);
     const httpsServer = glx.httpsServer(null, app);
 
-    httpsServer.listen(
+    const server = httpsServer.listen(
       process.env.NODE_ENV === "development" ||
         process.env.NODE_ENV === "production"
         ? 5000
@@ -449,6 +450,8 @@ function updateFromAccountID(accountID: string) {
         console.info("Listening on ", httpsServer.address());
       }
     );
+
+    server.setTimeout(60000)
 
     const httpServer = glx.httpServer();
 
