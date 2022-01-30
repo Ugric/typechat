@@ -21,11 +21,10 @@ import urlMetadata from "url-metadata";
 import greenlockexpress from "greenlock-express";
 import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
+import sharp from "sharp";
 import { URLSearchParams } from "url";
-import Jimp from "jimp";
 
-
-console.log()
+console.log();
 
 console.time("express boot");
 
@@ -436,7 +435,10 @@ function updateFromAccountID(accountID: string) {
     }
     return online;
   };
-  const serverboot = (glx: { httpsServer: (x?:any, y?:any)=>http.Server; httpServer: any }) => {
+  const serverboot = (glx: {
+    httpsServer: (x?: any, y?: any) => http.Server;
+    httpServer: any;
+  }) => {
     console.log(glx);
     const httpsServer = glx.httpsServer(null, app);
 
@@ -451,7 +453,7 @@ function updateFromAccountID(accountID: string) {
       }
     );
 
-    server.setTimeout(60000)
+    server.setTimeout(60000);
 
     const httpServer = glx.httpServer();
 
@@ -468,8 +470,8 @@ function updateFromAccountID(accountID: string) {
           ":token": parseCookies(req).token,
         }
       );
-      console.log('ws connection', req.url);
-      if (["/notifications", '/notifications-bg'].includes(req.url)) {
+      console.log("ws connection", req.url);
+      if (["/notifications", "/notifications-bg"].includes(req.url)) {
         let lastping = 0;
         const connectionID = generate(20);
         const pingpong = async () => {
@@ -506,7 +508,7 @@ function updateFromAccountID(accountID: string) {
         }
         notificationsockets[accountdata.accountID][connectionID] = {
           ws,
-          focus: req.url!=='/notifications-bg',
+          focus: req.url !== "/notifications-bg",
         };
 
         pingpong();
@@ -1289,7 +1291,7 @@ WHERE accountID == :accountID and toAccountID==:toAccountID
     app.get("/sounds/:filename", async (req, res) => {
       res.sendFile(path.join(__dirname, "sounds", req.params.filename));
     });
-    app.get('/healthcheck', async (req, res) => {
+    app.get("/healthcheck", async (req, res) => {
       res.send({
         resp: true,
         data: {
@@ -1788,25 +1790,32 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           const filepath = path.join(__dirname, "files", imagedata.filename);
           if (imagedata && (await checkFileExists(filepath))) {
             if (
-              req.query.size && (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
+              req.query.size &&
+              (Boolean(req.query.force) ||
+                imagedata.mimetype !== "image/gif") &&
               (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
             ) {
-              const image = await Jimp.read(filepath);
-              const width = Number(req.query.size);
-              res.setHeader("Content-Type", imagedata.mimetype);
-              return res.send(
-                await image
-                  .resize(
-                    width < image.bitmap.width ? width : image.bitmap.width,
-                    Jimp.AUTO
-                  )
-                  .getBufferAsync(image.getMIME())
-              );
+              const resizesave = `${filepath}.${req.query.size}`
+              if (!(await checkFileExists(resizesave))) {
+                const image = sharp(filepath);
+                const metadata = await image.metadata();
+                const width = Number(req.query.size);
+                if (metadata.width > width) {
+                  console.log('saving resized image to:', resizesave)
+                  await image.resize(width).toFile(resizesave);
+                  res.setHeader("Content-Type", imagedata.mimetype);
+                } else {
+                  return res.sendFile(filepath);
+                }
+              }
+              return res.sendFile(resizesave);
             }
             return res.sendFile(filepath);
           }
         }
-      } catch (e){console.error(e)}
+      } catch (e) {
+        console.error(e);
+      }
       return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
     });
     app.get("/getprofilepicfromid", async (req, res) => {
@@ -2362,7 +2371,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
-    if (!['production', 'development'].includes(process.env.NODE_ENV)) {
+    if (!["production", "development"].includes(process.env.NODE_ENV)) {
       app.use(forceDomain({ hostname: "typechat.world" }));
     }
     app.get("/logo.png", (_, res) =>
@@ -2378,7 +2387,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       res.status(500);
       res.send("Oops, something went wrong.");
     });
-    app.get(['/', '/login', '/signup'], async (req, res) => {
+    app.get(["/", "/login", "/signup"], async (req, res) => {
       const accountdata = await db.get(
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         {
@@ -2388,9 +2397,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
 
       if (accountdata) return res.redirect("/contacts");
 
-      res.sendFile(
-        path.join(__dirname, "typechat", "build", "index.html")
-      );
+      res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
     });
     app.get("/contacts", async (req, res) => {
       const accountdata = await db.get(
@@ -2402,9 +2409,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
 
       if (!accountdata) return res.redirect("/");
 
-      res.sendFile(
-        path.join(__dirname, "typechat", "build", "200.html")
-      );
+      res.sendFile(path.join(__dirname, "typechat", "build", "200.html"));
     });
 
     app.get("/chat/:id", async (req, res) => {
@@ -2416,9 +2421,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       );
 
       if (!accountdata) return res.redirect("/");
-      res.sendFile(
-        path.join(__dirname, "typechat", "build", "200.html")
-      );
+      res.sendFile(path.join(__dirname, "typechat", "build", "200.html"));
     });
     app.use((req, res, next) => {
       const temppath = path.join(
@@ -2429,7 +2432,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         "index.html"
       );
       fs.access(temppath, function (err) {
-        if (err) return next()
+        if (err) return next();
         res.sendFile(temppath);
       });
     });
@@ -2450,7 +2453,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
     serverboot({
       httpsServer: () => http.createServer(app),
       httpServer: () => {
-        return { listen: () => { } };
+        return { listen: () => {} };
       },
     });
   } else {
