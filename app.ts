@@ -2397,8 +2397,8 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       );
 
       if (accountdata) return res.redirect("/contacts");
-
-      res.sendFile(path.join(__dirname, "typechat", "build", "index.html"));
+      console.log(req.path);
+      res.sendFile(path.join(__dirname, "typechat", "build", req.path, "index.html"));
     });
     app.get("/contacts", async (req, res) => {
       const accountdata = await db.get(
