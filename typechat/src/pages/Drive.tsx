@@ -5,7 +5,7 @@ import {
   faShare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Redirect, useParams } from "react-router-dom";
 import { useData } from "../hooks/datahook";
 import useApi from "../hooks/useapi";
@@ -13,6 +13,7 @@ import Background from "./CustomBackground";
 import Loader from "./loader";
 import ReactGA from "react-ga4";
 import Error404 from "./404";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 function downloadURI(url: string, filename: string) {
   fetch(url)
@@ -99,11 +100,16 @@ function FilePreview({
 function Drive() {
   const fileref = useRef<any>();
   const { notifications, loggedin } = useData();
-  const { data, setData } =
+  const { data:resp, setData } =
     useApi<{ id: string; filename: string; mimetype: string }[]>(
       "/api/mydrive"
     );
-
+  const [data, setData2] = useLocalStorage<
+    { id: string; filename: string; mimetype: string }[]|undefined
+  >("drive", undefined);
+  useEffect(() => {
+  if (resp) setData2(resp);
+},[resp])
   useEffect(() => {
     ReactGA.event({
       category: "drive",
@@ -256,11 +262,22 @@ function Drive() {
 
 function Image() {
   const { id } = useParams<{ id: string }>();
-  const { data, error } = useApi<{
+  const { data:resp, error } = useApi<{
     id: string;
     filename: string;
     mimetype: string;
   }>("/api/getimagedata?" + new URLSearchParams({ id }));
+  const [drive, setDrive] = useLocalStorage <
+    {
+    id: string;
+    filename: string;
+    mimetype: string;
+  }[] | undefined
+    >('drive', undefined);
+  const [data, setData] = useState(drive?.find(x => x.id === id));
+  useEffect(() => {
+    if (resp) setData(resp);
+  }, [resp])
   const { notifications } = useData();
   const mimetype = data?.mimetype;
   const file = data?.id;
@@ -287,70 +304,80 @@ function Image() {
           backgroundColor: "var(--dark-bg-colour)",
           padding: "1rem",
           maxWidth: "700px",
+          wordBreak: "break-word",
         }}
       >
-        <h1 data-private>{data.filename}</h1>
+        <h3 data-private style={{
+          textAlign: "center",
+        }}>{data.filename}</h3>
         <div
           onClick={() => {
-            navigator.clipboard.writeText("https://typechat.world/drive/" + file).then(() => {
-              notifications.addNotification({
-                title: "Copied",
-                message: "Link copied to clipboard",
-                type: "success",
-                insert: "top",
-                container: "top-right",
-                animationIn: ["animate__animated", "animate__fadeIn"],
-                animationOut: ["animate__animated", "animate__fadeOut"],
+            navigator.clipboard
+              .writeText("https://typechat.world/drive/" + file)
+              .then(() => {
+                notifications.addNotification({
+                  title: "Copied",
+                  message: "Link copied to clipboard",
+                  type: "success",
+                  insert: "top",
+                  container: "top-right",
+                  animationIn: ["animate__animated", "animate__fadeIn"],
+                  animationOut: ["animate__animated", "animate__fadeOut"],
+                });
+              })
+              .catch(() => {
+                notifications.addNotification({
+                  title: "Error",
+                  message: "Could not copy link",
+                  type: "danger",
+                  insert: "top",
+                  container: "top-right",
+                  animationIn: ["animate__animated", "animate__fadeIn"],
+                  animationOut: ["animate__animated", "animate__fadeOut"],
+                });
               });
-            }).catch(() => {
-              notifications.addNotification({
-                title: "Error",
-                message: "Could not copy link",
-                type: "danger",
-                insert: "top",
-                container: "top-right",
-                animationIn: ["animate__animated", "animate__fadeIn"],
-                animationOut: ["animate__animated", "animate__fadeOut"],
-              });
-          });
           }}
           style={{
             color: "var(--secondary-text-colour)",
             cursor: "pointer",
             fontSize: "25px",
+            textAlign: "end",
           }}
         >
           <FontAwesomeIcon icon={faShare}></FontAwesomeIcon> Share
         </div>
         <div
           onClick={() => {
-            navigator.clipboard.writeText("https://typechat.world/files/" + file).then(() => {
-              notifications.addNotification({
-                title: "Copied",
-                message: "Link copied to clipboard",
-                type: "success",
-                insert: "top",
-                container: "top-right",
-                animationIn: ["animate__animated", "animate__fadeIn"],
-                animationOut: ["animate__animated", "animate__fadeOut"],
+            navigator.clipboard
+              .writeText("https://typechat.world/files/" + file)
+              .then(() => {
+                notifications.addNotification({
+                  title: "Copied",
+                  message: "Link copied to clipboard",
+                  type: "success",
+                  insert: "top",
+                  container: "top-right",
+                  animationIn: ["animate__animated", "animate__fadeIn"],
+                  animationOut: ["animate__animated", "animate__fadeOut"],
+                });
+              })
+              .catch(() => {
+                notifications.addNotification({
+                  title: "Error",
+                  message: "Could not copy link",
+                  type: "danger",
+                  insert: "top",
+                  container: "top-right",
+                  animationIn: ["animate__animated", "animate__fadeIn"],
+                  animationOut: ["animate__animated", "animate__fadeOut"],
+                });
               });
-            }).catch(() => {
-              notifications.addNotification({
-                title: "Error",
-                message: "Could not copy link",
-                type: "danger",
-                insert: "top",
-                container: "top-right",
-                animationIn: ["animate__animated", "animate__fadeIn"],
-                animationOut: ["animate__animated", "animate__fadeOut"],
-              });
-            });
-            
           }}
           style={{
             color: "var(--secondary-text-colour)",
             cursor: "pointer",
             fontSize: "25px",
+            textAlign: "end",
           }}
         >
           <FontAwesomeIcon icon={faPhotoVideo}></FontAwesomeIcon> Copy Source
@@ -363,6 +390,7 @@ function Image() {
             color: "var(--secondary-text-colour)",
             cursor: "pointer",
             fontSize: "25px",
+            textAlign: "end",
           }}
         >
           <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon> Download
