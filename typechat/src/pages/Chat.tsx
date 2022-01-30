@@ -1230,7 +1230,7 @@ function ChatPage() {
   }, []);
   useEffect(() => {
     if (usersdata) {
-      document.title = `${usersdata.users[chattingto].username} - TypeChat`;
+      document.title = `${usersdata.users[chattingto]?.username} - TypeChat`;
     }
     return () => {
       document.title = "TypeChat";
@@ -1611,29 +1611,29 @@ function ChatPage() {
                 String(
                   isGroupChat
                     ? groupchatdata.picture
-                    : usersdata.users[chattingto].profilePic+'?size=45'
-                )
+                    : usersdata.users[chattingto]?.profilePic
+                ) +
+                "?size=45"
               }
-              
               data-private
               style={{
                 display: "block",
                 margin: "auto",
                 borderRadius: "100%",
                 aspectRatio: "1/1",
-                width: '45px',
-                height: '45px',
+                width: "45px",
+                height: "45px",
               }}
               alt={
                 isGroupChat
                   ? groupchatdata.name
-                  : usersdata.users[chattingto].username
+                  : usersdata.users[chattingto]?.username
               }
             />
             <p style={{ textAlign: "center" }} data-private>
               {!isGroupChat ? (
                 <>
-                  {usersdata.users[chattingto].username}{" "}
+                  {usersdata.users[chattingto]?.username}{" "}
                   <FontAwesomeIcon
                     style={{
                       color:
@@ -1649,7 +1649,7 @@ function ChatPage() {
                   ></FontAwesomeIcon>
                   <div data-private>
                     <Badge
-                      badges={usersdata.users[chattingto].badges}
+                      badges={usersdata.users[chattingto]?.badges}
                       size="20px"
                     ></Badge>
                   </div>
@@ -1940,13 +1940,7 @@ function ChatPage() {
               >
                 <div className="btnBox">
                   GIFT{" "}
-                  <img
-                    src={GiftIcon}
-                    height="30px"
-                    alt="🎁"
-                    className="icon"
-                    
-                  />
+                  <img src={GiftIcon} height="30px" alt="🎁" className="icon" />
                 </div>
                 <div className="btnBottom"></div>
               </button>
@@ -1963,15 +1957,15 @@ function ChatPage() {
               color: "white",
               textAlign: "center",
               opacity:
-                usersdata && usersdata.users[chattingto].id !== "TypeChat"
+                usersdata && usersdata.users[chattingto]?.id !== "TypeChat"
                   ? 1
                   : 0.5,
             }}
             disabled={
-              !(usersdata && usersdata.users[chattingto].id !== "TypeChat")
+              !(usersdata && usersdata.users[chattingto]?.id !== "TypeChat")
             }
             onClick={
-              usersdata && usersdata.users[chattingto].id !== "TypeChat"
+              usersdata && usersdata.users[chattingto]?.id !== "TypeChat"
                 ? () => {
                     if (user.rocketFuel > 0) {
                       setgiftmodel(true);

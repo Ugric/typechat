@@ -46,7 +46,7 @@ function App() {
     navigator.userAgent !== "ReactSnap" ? "/api/userdata" : null
   );
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
-  const [chattingto, setchattingto] = useLocalStorage("chattingto", null);
+  const [chattingto, setchattingto] = useLocalStorage<string|undefined>("chattingto", undefined);
   const [deferredprompt, setdeferredprompt] = useState<any>(null);
   const [alreadyshownInstall, setalreadyshownInstall] = useState(false);
   const [hideInstallPrompt, sethideInstallPrompt] = useLocalStorage(
@@ -209,7 +209,7 @@ function App() {
           <PageNav />
           <ReactNotification />
           <NotificationComponent />
-          <Switches />
+          <Switches chattingto={chattingto} />
         </datahook.Provider>
       </Router>
     </GoogleReCaptchaProvider>
