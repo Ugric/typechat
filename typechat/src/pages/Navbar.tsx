@@ -18,6 +18,7 @@ import {
   faPhotoVideo,
   faGifts,
   faPuzzlePiece,
+  faUserTie,
 } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { Link, useLocation } from "react-router-dom";
@@ -129,6 +130,19 @@ const PageNav = () => {
               >
                 <FontAwesomeIcon icon={faPlus} />
               </Nav.Link>
+              {user.admin?<Nav.Link
+                onPointerDown={() => {
+                  playSound("/sounds/click2.mp3");
+                }}
+                onPointerUp={() => {
+                  playSound("/sounds/click1.mp3");
+                }}
+                as={Link}
+                to="/admin"
+                style={{ color: location.pathname === "/admin" ? "white" : "" }}
+              >
+                <FontAwesomeIcon icon={faUserTie} />
+              </Nav.Link>:<></>}
             </>
           ) : (
             <></>
@@ -210,7 +224,7 @@ const PageNav = () => {
                 >
                   <img
                     alt="Profile"
-                    src={"/files/" + user.profilePic+'?size=40'}
+                    src={"/files/" + user.profilePic + "?size=40"}
                     width="40px"
                     height="40px"
                     style={{

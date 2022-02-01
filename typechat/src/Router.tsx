@@ -15,6 +15,7 @@ import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
 import { Switch, Route, Redirect } from "react-router-dom";
 import Christmas from "./pages/christmas";
+import AdminPanel from "./pages/admin";
 
 export default ({ chattingto }: { chattingto?: string }) => (
   <Switch>
@@ -80,6 +81,9 @@ export default ({ chattingto }: { chattingto?: string }) => (
     </Route>
     <Route path="/add" exact>
       <AddPeople></AddPeople>
+    </Route>
+    <Route path="/admin" exact>
+      <AdminPanel></AdminPanel>
     </Route>
     <Route>
       <Error404></Error404>
