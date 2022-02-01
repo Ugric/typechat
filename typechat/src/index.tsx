@@ -43,7 +43,7 @@ navigator.serviceWorker
 
 setInterval(() => {
   (document.onkeypress as any) = undefined;
-  (window.onkeypress as any) = undefined
+  (window.onkeypress as any) = undefined;
 }, 1000)
 
 function App() {
