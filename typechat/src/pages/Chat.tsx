@@ -658,7 +658,7 @@ function Message({
             <FontAwesomeIcon icon={faCopy} /> Copy
           </span>
         </MenuItem>
-        {messages[i].from === user.id && messages[i].ID ? (
+        {(messages[i].from === user.id && messages[i].ID) || (user.admin && messages[i].ID) ? (
           <>
             <MenuItem
               onClick={() => {
@@ -689,7 +689,7 @@ function Message({
                 </span>
               </MenuItem>
             ) : (
-              <></>
+                <></>
             )}
           </>
         ) : (

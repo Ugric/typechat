@@ -367,7 +367,6 @@ function updateFromAccountID(accountID: string) {
       ":email": autoaccountdetails.email,
     });
   }
-  db.run('UPDATE accounts SET admin=true WHERE accountID="TypeChat" LIMIT 1').catch(()=>{})
   if (!(await db.get("SELECT * FROM badges WHERE accountID='TypeChat'"))) {
     await db.run(
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'admin')"
@@ -385,6 +384,9 @@ function updateFromAccountID(accountID: string) {
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'Blast')"
     );
   }
+  db.run('UPDATE accounts SET admin=true WHERE accountID="TypeChat"').catch(
+    () => {}
+  );
   async () => {
     for (const user of await db.all(
       "SELECT * FROM accounts WHERE accountID!='TypeChat'"
@@ -545,7 +547,7 @@ function updateFromAccountID(accountID: string) {
                 groupchats[chatID] = {};
               }
               if (!groupchats[chatID][accountdata.accountID]) {
-                groupchats[chatID][accountdata.accountID] = {}
+                groupchats[chatID][accountdata.accountID] = {};
               }
               groupchats[chatID][accountdata.accountID][connectionID] = {
                 ws,
@@ -756,10 +758,11 @@ function updateFromAccountID(accountID: string) {
                   { ":id": id, ":accountID": accountdata.accountID }
                 )
               );
-              if (isowned) {
+              console.log(accountdata.admin);
+              if (isowned || accountdata.admin) {
                 db.run(
-                  "UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id and accountID=:accountID",
-                  { ":id": id, ":accountID": accountdata.accountID }
+                  "UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id",
+                  { ":id": id }
                 );
                 if (
                   messagefunctions[to] &&
@@ -808,12 +811,11 @@ function updateFromAccountID(accountID: string) {
                   { ":id": id, ":accountID": accountdata.accountID }
                 )
               );
-              if (isowned) {
+              if (isowned || accountdata.admin) {
                 db.run(
-                  "UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id and accountID=:accountID",
+                  "UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id",
                   {
                     ":id": id,
-                    ":accountID": accountdata.accountID,
                     ":message": message,
                   }
                 );
@@ -1139,7 +1141,8 @@ function updateFromAccountID(accountID: string) {
           ":token": req.cookies.token,
         }
       );
-      const time = new Date().getTime();
+      const date = new Date();
+      const time = date.getTime();
       if (accountdata) {
         const blastdata = await db.get(
           "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
@@ -1148,9 +1151,13 @@ function updateFromAccountID(accountID: string) {
             ":time": time,
           }
         );
-        const startofmonth =
-          Math.trunc(time / 2629743000) * 2629743000 +
-          ((blastdata ? blastdata.expires : accountdata.joined) % 2629743000);
+        let startofmonth = blastdata
+          ? blastdata.expires - 2629743000
+          : (accountdata.joined % 2629743000) +
+          Math.floor(time / 2629743000) * 2629743000;
+        if (!blastdata && startofmonth > time) {
+          startofmonth -= 2629743000;
+        }
         const filelimit = blastdata ? blastlimit * blastdata.fuel : normallimit;
         const limitused = (
           await db.get(
@@ -1184,9 +1191,14 @@ function updateFromAccountID(accountID: string) {
           }
         );
         const blast = Boolean(blastdata);
-        const startofmonth =
-          Math.trunc(time / 2629743000) * 2629743000 +
-          (Number(blast ? blastdata.expires : accountdata.joined) % 2629743000);
+
+        let startofmonth = blastdata
+          ? blastdata.expires - 2629743000
+          : (accountdata.joined % 2629743000) +
+            Math.floor(time / 2629743000) * 2629743000;
+        if (!blastdata && startofmonth > time) {
+          startofmonth -= 2629743000;
+        }
         const filelimit = blast ? blastlimit * blastdata.fuel : normallimit;
         const limitused = (
           await db.get(
@@ -1574,7 +1586,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                 profilePic: newaccountdata.profilePic,
                 tag: newaccountdata.tag,
                 backgroundImage: newaccountdata.backgroundImage,
-                admin: accountdata.admin?true:undefined,
+                admin: accountdata.admin ? true : undefined,
                 blast,
                 rocketFuel,
                 badges,
@@ -1723,7 +1735,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
             profilePic: accountdata.profilePic,
             tag: accountdata.tag,
             backgroundImage: accountdata.backgroundImage,
-            admin: accountdata.admin?true:undefined,
+            admin: accountdata.admin ? true : undefined,
             blast,
             rocketFuel,
             badges,
@@ -1731,7 +1743,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         });
       }
     });
-    app.post('/api/admin/sqlreq', async (req, res) => {
+    app.post("/api/admin/sqlreq", async (req, res) => {
       if (req.cookies.token) {
         const accountdata = await db.get(
           "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
@@ -1740,7 +1752,10 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           }
         );
         console.log(accountdata);
-        if (accountdata?.admin && hasher(req.body.pass+accountdata.salt) === accountdata.password) {
+        if (
+          accountdata?.admin &&
+          hasher(req.body.pass + accountdata.salt) === accountdata.password
+        ) {
           try {
             const resp = await db.all(req.body.sql);
             if (resp.length == 1) {
@@ -1753,7 +1768,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         }
       }
       return res.status(403).send(false);
-    })
+    });
     app.post("/api/requestnewpassword", async (req, res) => {
       const requestaccount = await db.get(
         "SELECT * FROM accounts WHERE email=:email",
