@@ -55,7 +55,7 @@ const PPclient = new paypal.core.PayPalHttpClient(environment);
 const tempmetadata: { [key: string]: urlMetadata.Result } = {};
 
 const ev = new EmailValidation();
-const RECAPsecret = "6LcHJdYcAAAAAG2S8MePwtuTv0RqZLcJ2QG6zLfw";
+const RECAPsecret = "6LdiWnceAAAAAGMsTpKirnqVLcKHCBIw6rz_YlGA";
 
 const discordserver = "https://discord.gg/R6FnAaX8rC";
 
@@ -126,6 +126,7 @@ const groupchats: Record<
 > = {};
 
 const toVerify: Record<string, string> = {};
+const resizing: string[] = [];
 
 const toVerifyAccountID: Record<string, string> = {};
 
@@ -1154,7 +1155,7 @@ function updateFromAccountID(accountID: string) {
         let startofmonth = blastdata
           ? blastdata.expires - 2629743000
           : (accountdata.joined % 2629743000) +
-          Math.floor(time / 2629743000) * 2629743000;
+            Math.floor(time / 2629743000) * 2629743000;
         if (!blastdata && startofmonth > time) {
           startofmonth -= 2629743000;
         }
@@ -1882,7 +1883,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       );
       if (imagedata) {
         const filepath = path.join(__dirname, "files", imagedata.filename);
-        if (imagedata && (await checkFileExists(filepath))) {
+        if (await checkFileExists(filepath)) {
           if (
             req.query.size &&
             (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
@@ -1899,7 +1900,9 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                 const width = Number(req.query.size);
                 if (metadata.width > width) {
                   console.log("saving resized image to:", resizesave);
+                  resizing.push(resizesave);
                   await image.withMetadata().resize(width).toFile(resizesave);
+                  resizing.splice(resizing.indexOf(resizesave), 1);
                 } else {
                   return res.sendFile(filepath);
                 }
@@ -1909,6 +1912,11 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               }
             }
             res.setHeader("Content-Type", imagedata.mimetype);
+            if (resizing.includes(resizesave)) {
+              while (resizing.includes(resizesave)) {
+                await snooze(100);
+              }
+            }
             return res.sendFile(resizesave);
           }
           return res.sendFile(filepath);
