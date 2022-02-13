@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./index.css";
 import "./pages/css/toggleswitch.css";
 import { BrowserRouter as Router } from "react-router-dom";
