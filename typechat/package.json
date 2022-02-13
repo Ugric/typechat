@@ -36,6 +36,7 @@
     "jsqr": "^1.4.0",
     "jsqrcode": "^0.0.7",
     "logrocket": "^2.1.1",
+    "prismjs": "^1.26.0",
     "qr-scanner": "^1.2.0",
     "qrcode-decoder": "^0.2.2",
     "qrcode-reader": "^1.0.4",
@@ -69,6 +70,7 @@
     "react-secure-link": "^3.0.3",
     "react-simple-code-editor": "^0.11.0",
     "react-snap": "1.10.0",
+    "react-sql-editor": "^0.0.2",
     "react-syntax-highlighter": "^11.0.3",
     "react-textarea-autosize": "^8.3.3",
     "react-timeago": "^6.2.1",
@@ -119,6 +121,7 @@
   "devDependencies": {
     "@types/howler": "^2.2.3",
     "@types/node-notifier": "^8.0.1",
+    "@types/prismjs": "^1.26.0",
     "@types/qrcode.react": "^1.0.2",
     "@types/react-color": "^3.0.5",
     "@types/react-custom-scroll": "^4.3.1",

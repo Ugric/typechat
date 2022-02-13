@@ -38,6 +38,7 @@
     "paypal-rest-api": "^0.0.52",
     "paypal-rest-sdk": "^1.8.1",
     "paypal__checkout-server-sdk": "^1.0.0",
+    "prism-react-renderer": "^1.2.1",
     "randomstring": "^1.2.1",
     "selfsigned": "^1.10.11",
     "sharp": "^0.29.3",

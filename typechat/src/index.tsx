@@ -41,6 +41,11 @@ navigator.serviceWorker
   ?.register("/sw.js", { scope: "/" })
   .catch(console.error);
 
+setInterval(() => {
+  (document.onkeypress as any) = undefined;
+  (window.onkeypress as any) = undefined;
+}, 1000)
+
 function App() {
   const { data, reload } = useApi<any>(
     navigator.userAgent !== "ReactSnap" ? "/api/userdata" : null

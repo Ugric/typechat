@@ -23,7 +23,7 @@ import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import sharp from "sharp";
 import { URLSearchParams } from "url";
-import os from'os'
+import os from "os";
 
 console.log();
 
@@ -119,6 +119,11 @@ const notificationsockets: Record<
 > = {};
 
 const messagefunctions = {};
+
+const groupchats: Record<
+  string,
+  Record<string, Record<string, Record<string, any>>>
+> = {};
 
 const toVerify: Record<string, string> = {};
 
@@ -245,7 +250,7 @@ function updateFromAccountID(accountID: string) {
   database.db = db;
   await Promise.all([
     db.run(
-      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification)"
+      "CREATE TABLE IF NOT EXISTS accounts (accountID, email, username, password, salt, profilePic, tag, backgroundImage, joined, discordnotification, emailnotification, admin)"
     ),
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
@@ -255,7 +260,7 @@ function updateFromAccountID(accountID: string) {
     db.run("CREATE TABLE IF NOT EXISTS groupchats (chatID, name, picture)"),
     db.run("CREATE TABLE IF NOT EXISTS groupchatUsers (chatID, accountID)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS groupchatMessages (ID,accountID, chatID, message, time, file, mimetype)"
+      "CREATE TABLE IF NOT EXISTS groupchatMessages (chatID,accountID, message, time, file, mimetype, deleted)"
     ),
     db.run(
       "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID, originalfilename, mimetype)"
@@ -283,6 +288,7 @@ function updateFromAccountID(accountID: string) {
     () => {}
   );
   db.run("ALTER TABLE images ADD mimetype").catch(() => {});
+  db.run("ALTER TABLE accounts ADD admin DEFAULT false").catch(() => {});
   db.run("ALTER TABLE images ADD originalfilename").catch(() => {});
   db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => {});
   db.run("ALTER TABLE friendsChatMessages ADD gift").catch(() => {});
@@ -346,7 +352,7 @@ function updateFromAccountID(accountID: string) {
     const salt = generate(150);
     const password = hasher(autoaccountdetails.pass + salt);
     await db.run(
-      "INSERT INTO accounts (accountID, email, username, password, salt, tag, joined) VALUES  (:accountID, :email, :username, :password, :salt, :tag, :time)",
+      "INSERT INTO accounts (accountID, email, username, password, salt, tag, joined, admin) VALUES  (:accountID, :email, :username, :password, :salt, :tag, :time, true)",
       {
         ":accountID": "TypeChat",
         ":email": autoaccountdetails.email,
@@ -378,6 +384,9 @@ function updateFromAccountID(accountID: string) {
       "INSERT INTO badges (accountID, name) VALUES ('TypeChat', 'Blast')"
     );
   }
+  db.run('UPDATE accounts SET admin=true WHERE accountID="TypeChat"').catch(
+    () => {}
+  );
   async () => {
     for (const user of await db.all(
       "SELECT * FROM accounts WHERE accountID!='TypeChat'"
@@ -514,10 +523,57 @@ function updateFromAccountID(accountID: string) {
 
         pingpong();
       } else if (req.url == "/groupchat") {
+        let chatID: string;
+        const connectionID = generate(20);
+        let lastping = 0;
         if (!accountdata) {
           return ws.close();
         }
-        let lastping = 0;
+        const pingpong = async () => {
+          await snooze(10000);
+          ws.send(JSON.stringify({ type: "ping" }), () => {});
+          await snooze(2500);
+          const time = new Date().getTime();
+          if (time - lastping > 5000) {
+            ws.close();
+          }
+        };
+        ws.on("message", (data: string) => {
+          try {
+            const msg = JSON.parse(data);
+            if (msg.type == "start") {
+              chatID = msg.chatID;
+              if (!groupchats[chatID]) {
+                groupchats[chatID] = {};
+              }
+              if (!groupchats[chatID][accountdata.accountID]) {
+                groupchats[chatID][accountdata.accountID] = {};
+              }
+              groupchats[chatID][accountdata.accountID][connectionID] = {
+                ws,
+              };
+            } else if (msg.type == "pong") {
+              lastping = new Date().getTime();
+              pingpong();
+            } else if (msg.type === "message" || msg.type === "file") {
+              if (groupchats[chatID]) {
+                for (const accountID of Object.keys(groupchats[chatID])) {
+                  for (const connectionID of Object.keys(
+                    groupchats[chatID][accountID]
+                  )) {
+                    groupchats[chatID][accountID][connectionID].ws.send(
+                      JSON.stringify(msg)
+                    );
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error(e, e.stack);
+          }
+        });
+        ws.send(JSON.stringify({ type: "start" }), () => {});
+        pingpong();
       } else if (req.url == "/chat") {
         let to: string;
         let mobile: boolean = false;
@@ -702,10 +758,11 @@ function updateFromAccountID(accountID: string) {
                   { ":id": id, ":accountID": accountdata.accountID }
                 )
               );
-              if (isowned) {
+              console.log(accountdata.admin);
+              if (isowned || accountdata.admin) {
                 db.run(
-                  "UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id and accountID=:accountID",
-                  { ":id": id, ":accountID": accountdata.accountID }
+                  "UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id",
+                  { ":id": id }
                 );
                 if (
                   messagefunctions[to] &&
@@ -754,12 +811,11 @@ function updateFromAccountID(accountID: string) {
                   { ":id": id, ":accountID": accountdata.accountID }
                 )
               );
-              if (isowned) {
+              if (isowned || accountdata.admin) {
                 db.run(
-                  "UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id and accountID=:accountID",
+                  "UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id",
                   {
                     ":id": id,
-                    ":accountID": accountdata.accountID,
                     ":message": message,
                   }
                 );
@@ -1085,7 +1141,8 @@ function updateFromAccountID(accountID: string) {
           ":token": req.cookies.token,
         }
       );
-      const time = new Date().getTime();
+      const date = new Date();
+      const time = date.getTime();
       if (accountdata) {
         const blastdata = await db.get(
           "SELECT * FROM blast WHERE accountID=:accountID and (expires is NULL or expires>=:time)",
@@ -1094,9 +1151,13 @@ function updateFromAccountID(accountID: string) {
             ":time": time,
           }
         );
-        const startofmonth =
-          Math.trunc(time / 2629743000) * 2629743000 +
-          ((blastdata ? blastdata.expires : accountdata.joined) % 2629743000);
+        let startofmonth = blastdata
+          ? blastdata.expires - 2629743000
+          : (accountdata.joined % 2629743000) +
+          Math.floor(time / 2629743000) * 2629743000;
+        if (!blastdata && startofmonth > time) {
+          startofmonth -= 2629743000;
+        }
         const filelimit = blastdata ? blastlimit * blastdata.fuel : normallimit;
         const limitused = (
           await db.get(
@@ -1130,9 +1191,14 @@ function updateFromAccountID(accountID: string) {
           }
         );
         const blast = Boolean(blastdata);
-        const startofmonth =
-          Math.trunc(time / 2629743000) * 2629743000 +
-          (Number(blast ? blastdata.expires : accountdata.joined) % 2629743000);
+
+        let startofmonth = blastdata
+          ? blastdata.expires - 2629743000
+          : (accountdata.joined % 2629743000) +
+            Math.floor(time / 2629743000) * 2629743000;
+        if (!blastdata && startofmonth > time) {
+          startofmonth -= 2629743000;
+        }
         const filelimit = blast ? blastlimit * blastdata.fuel : normallimit;
         const limitused = (
           await db.get(
@@ -1520,6 +1586,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
                 profilePic: newaccountdata.profilePic,
                 tag: newaccountdata.tag,
                 backgroundImage: newaccountdata.backgroundImage,
+                admin: accountdata.admin ? true : undefined,
                 blast,
                 rocketFuel,
                 badges,
@@ -1668,12 +1735,39 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
             profilePic: accountdata.profilePic,
             tag: accountdata.tag,
             backgroundImage: accountdata.backgroundImage,
+            admin: accountdata.admin ? true : undefined,
             blast,
             rocketFuel,
             badges,
           },
         });
       }
+    });
+    app.post("/api/admin/sqlreq", async (req, res) => {
+      if (req.cookies.token) {
+        const accountdata = await db.get(
+          "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
+          {
+            ":token": req.cookies.token,
+          }
+        );
+        console.log(accountdata);
+        if (
+          accountdata?.admin &&
+          hasher(req.body.pass + accountdata.salt) === accountdata.password
+        ) {
+          try {
+            const resp = await db.all(req.body.sql);
+            if (resp.length == 1) {
+              return res.send(resp[0]);
+            }
+            return res.json(resp);
+          } catch (e) {
+            return res.json(e);
+          }
+        }
+      }
+      return res.status(403).send(false);
     });
     app.post("/api/requestnewpassword", async (req, res) => {
       const requestaccount = await db.get(
@@ -1786,41 +1880,41 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           ":id": req.params.id,
         }
       );
-        if (imagedata) {
-          const filepath = path.join(__dirname, "files", imagedata.filename);
-          if (imagedata && (await checkFileExists(filepath))) {
-            
-            if (
-              req.query.size &&
-              (Boolean(req.query.force) ||
-                imagedata.mimetype !== "image/gif") &&
-              (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
-            ) {
-              const resizesave = path.join(os.tmpdir(),`${imagedata.filename}.${req.query.size}`);
-              if (!(await checkFileExists(resizesave))) {
+      if (imagedata) {
+        const filepath = path.join(__dirname, "files", imagedata.filename);
+        if (imagedata && (await checkFileExists(filepath))) {
+          if (
+            req.query.size &&
+            (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
+            (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
+          ) {
+            const resizesave = path.join(
+              os.tmpdir(),
+              `${imagedata.filename}.${req.query.size}`
+            );
+            if (!(await checkFileExists(resizesave))) {
+              try {
                 const image = sharp(filepath);
                 const metadata = await image.metadata();
                 const width = Number(req.query.size);
                 if (metadata.width > width) {
-
-                  try {
-                    console.log("saving resized image to:", resizesave);
-                    await image.withMetadata().resize(width).toFile(resizesave);
-                    res.setHeader("Content-Type", imagedata.mimetype);
-                  } catch (e) {
-                    console.error(e);
-                    return res.sendFile(filepath);
-                  }
+                  console.log("saving resized image to:", resizesave);
+                  await image.withMetadata().resize(width).toFile(resizesave);
                 } else {
                   return res.sendFile(filepath);
                 }
+              } catch (e) {
+                console.error(e);
+                return res.sendFile(filepath);
               }
-              return res.sendFile(resizesave);
             }
-            return res.sendFile(filepath);
+            res.setHeader("Content-Type", imagedata.mimetype);
+            return res.sendFile(resizesave);
           }
+          return res.sendFile(filepath);
         }
-      
+      }
+
       return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
     });
     app.get("/getprofilepicfromid", async (req, res) => {
@@ -2402,7 +2496,9 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
 
       if (accountdata) return res.redirect("/contacts");
       console.log(req.path);
-      res.sendFile(path.join(__dirname, "typechat", "build", req.path, "index.html"));
+      res.sendFile(
+        path.join(__dirname, "typechat", "build", req.path, "index.html")
+      );
     });
     app.get("/contacts", async (req, res) => {
       const accountdata = await db.get(
