@@ -1893,7 +1893,12 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               os.tmpdir(),
               `${imagedata.filename}.${req.query.size}`
             );
-            if (!(await checkFileExists(resizesave))) {
+
+            if (resizing.includes(resizesave)) {
+              while (resizing.includes(resizesave)) {
+                await snooze(100);
+              }
+            } else if (!(await checkFileExists(resizesave))) {
               try {
                 const image = sharp(filepath);
                 const metadata = await image.metadata();
@@ -1912,11 +1917,6 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               }
             }
             res.setHeader("Content-Type", imagedata.mimetype);
-            if (resizing.includes(resizesave)) {
-              while (resizing.includes(resizesave)) {
-                await snooze(100);
-              }
-            }
             return res.sendFile(resizesave);
           }
           return res.sendFile(filepath);
@@ -2051,13 +2051,13 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       }).then(
         function (metadata) {
           tempmetadata[url] = metadata;
-          res.send(metadata);
           setTimeout(() => {
             delete tempmetadata[url];
           }, 3600000);
+          return res.send(metadata);
         },
         function (error) {
-          res.sendStatus(404).send(false);
+          return res.sendStatus(404).send(false);
         }
       );
     });
