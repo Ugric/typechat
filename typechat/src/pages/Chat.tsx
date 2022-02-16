@@ -55,6 +55,7 @@ import ReactGA from "react-ga4";
 import useWindowVisable from "../hooks/useWindowVisable";
 import isMobileDevice from "../isMobile";
 import snooze from "../snooze";
+import useWindowFocus from "use-window-focus";
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
   exists: boolean;
@@ -1072,7 +1073,8 @@ function ChatPage() {
   const [chats, setchats] = useState<
     Array<messageWithText | messageWithFile | giftMessage>
   >([]);
-  const isFocussed = useWindowVisable();
+  const isVisable = useWindowVisable();
+  const isFocussed = useWindowFocus();
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
   const { notifications, user, NotificationAPI } = useData();
@@ -1317,6 +1319,7 @@ function ChatPage() {
           };
         });
         if (usersdata) {
+          let notify = true
           if (toscroll.current) {
             setcanloadmore(true);
             isLoadMore.current = false;
@@ -1325,21 +1328,9 @@ function ChatPage() {
               chats.slice(Math.max(chats.length - StartMessagesLength, 0))
             );
             setTimeout(scrolltobottom, 0);
-            if (
-              lastJsonMessage.message.from !== user.id &&
-              !isFocussed &&
-              isElectron()
-            ) {
-              notify(
-                `${usersdata.users[lastJsonMessage.message.from].username}`,
-                lastJsonMessage.message.message,
-                () => {
-                  history.push(`/chat/${chattingto}`);
-                  scrolltobottom();
-                }
-              );
-            }
-          } else if (lastJsonMessage.message.from !== user.id) {
+            notify = !isFocussed
+          }
+          if (notify && lastJsonMessage.message.from !== user.id) {
             NotificationAPI(
               {
                 title: `${
@@ -1400,7 +1391,7 @@ function ChatPage() {
             setTimeout(scrolltobottom, 0);
             if (
               lastJsonMessage.message.from !== user.id &&
-              !isFocussed &&
+              !isVisable &&
               isElectron()
             ) {
               notify(
@@ -1535,10 +1526,10 @@ function ChatPage() {
   }, [lastJsonMessage]);
   useEffect(() => {
     if (isMobileDevice()) {
-      sendJsonMessage({ type: "setFocus", focus: isFocussed });
+      sendJsonMessage({ type: "setFocus", focus: isVisable });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocussed]);
+  }, [isVisable]);
   useEffect(() => {
     if (JSON.stringify(oldmetypingdata) !== JSON.stringify(metypingdata)) {
       sendJsonMessage(metypingdata);
