@@ -22,10 +22,9 @@ import greenlockexpress from "greenlock-express";
 import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import sharp from "sharp";
+import tokens from "./tokens.json"
 import { URLSearchParams } from "url";
 import os from "os";
-
-console.log();
 
 console.time("express boot");
 
@@ -43,19 +42,19 @@ const testRECAP3 = (secret: string, response: string) =>
 const environment =
   process.env.NODE_ENV === "development"
     ? new paypal.core.SandboxEnvironment(
-        "AeuWaW6AFfWlxVmxWYsof3Z9Gl6a055HPJh_UQO-0v1Fb5I12UYwteo_JsiitmIncsQETAu0Yw81wfH0",
-        "EAmkLLRgEYRvV7-3ijZry_bQPK82UwkKrKT9SQjTZJGHkb7Lu9sVDVUjJJWFUt5l-4v8ejCyU2LRhlur"
+        tokens.paypal.sandbox.CLID,
+        tokens.paypal.sandbox.SEID
       )
     : new paypal.core.LiveEnvironment(
-        "Afdcs6hnKtTzRMY5fV_hT60anRq51JteUwrlpchS3Rs3LyEp6a33tqWmhhzj6jMkq6ZdpWmAcwB2Bkmg",
-        "EA87J47CS97x5ThWeC332UEkgh1voNVc4uQJA5vNXvFpJ1tKIkispLVuzWiFM5X03cNUpwI14ztYK44K"
+        tokens.paypal.production.CLID,
+        tokens.paypal.production.SEID
       );
 const PPclient = new paypal.core.PayPalHttpClient(environment);
 
 const tempmetadata: { [key: string]: urlMetadata.Result } = {};
 
 const ev = new EmailValidation();
-const RECAPsecret = "6LdiWnceAAAAAGMsTpKirnqVLcKHCBIw6rz_YlGA";
+const RECAPsecret = tokens.recaptcha.secret;
 
 const discordserver = "https://discord.gg/R6FnAaX8rC";
 
@@ -2048,6 +2047,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         maxRedirects: 10,
         timeout: 10000,
         ensureSecureImageRequest: true,
+        fromEmail: 'noreply.typechat@gmail.com'
       }).then(
         function (metadata) {
           tempmetadata[url] = metadata;
@@ -2478,7 +2478,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
-    if (!["production", "development"].includes(process.env.NODE_ENV)) {
+    if (process.env.NODE_ENV == 'development') {
       app.use(forceDomain({ hostname: "typechat.world" }));
     }
     app.get("/logo.png", (_, res) =>

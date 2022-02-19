@@ -28,6 +28,7 @@
   padding: 8px 15px;
   margin-top: 1px;
   display: inline-block;
+
 }
 
 .message-yours {
@@ -40,28 +41,33 @@
   color: black;
 }
 
-.last-yours:before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  bottom: 0;
-  left: -7px;
-  height: 20px;
-  width: 20px;
-  background: #eee;
-  border-bottom-right-radius: 15px;
+.mid-yours {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+
+}
+.mid-mine {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+
 }
 
-.last-yours:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: -10px;
-  width: 10px;
-  height: 20px;
-  background: var(--dark-mode);
-  border-bottom-right-radius: 10px;
+
+
+.first-yours {
+  border-bottom-left-radius: 5px;
 }
+.first-mine {
+  border-bottom-right-radius: 5px;
+}
+
+.last-yours {
+  border-bottom-left-radius: 20px;
+}
+.last-mine {
+  border-bottom-right-radius: 20px;
+}
+
 
 .message-mine {
   align-self: flex-end;
@@ -72,30 +78,6 @@
   background: linear-gradient( to bottom, var(--light-bg-colour) 0%, var(--dark-bg-colour) 100%);
   background-attachment: fixed;
   position: relative;
-}
-
-.last-mine:before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  bottom: 0;
-  right: -8px;
-  height: 20px;
-  width: 20px;
-  background: linear-gradient( to bottom, var(--light-bg-colour) 0%, var(--dark-bg-colour) 100%);
-  background-attachment: fixed;
-  border-bottom-left-radius: 15px;
-}
-
-.last-mine:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  right: -10px;
-  width: 10px;
-  height: 20px;
-  background: var(--dark-mode);
-  border-bottom-left-radius: 10px;
 }
 
 .spinner>div {

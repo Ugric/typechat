@@ -7,7 +7,9 @@ import {
   faGift,
   faMobileAlt,
   faPaperPlane,
+  faPause,
   faPencilAlt,
+  faPlay,
   faPlus,
   faSadCry,
   faTimes,
@@ -54,8 +56,8 @@ import GiftIcon from "./images/gift.svg";
 import ReactGA from "react-ga4";
 import useWindowVisable from "../hooks/useWindowVisable";
 import isMobileDevice from "../isMobile";
-import snooze from "../snooze";
 import useWindowFocus from "use-window-focus";
+import "./css/audio.css";
 const chatSettings = createContext({ isGroupChat: false, time: 0 });
 const usersContext = createContext<{
   exists: boolean;
@@ -220,7 +222,6 @@ function MetaPage({
             size: "24",
             domain: urldata.hostname,
           })}`}
-          
         />
         {data.title ? data.title : decoratedText}
       </a>
@@ -230,7 +231,6 @@ function MetaPage({
           src={new URL(data.image, url).href}
           style={{ width: "100%", borderRadius: "10px" }}
           alt={data.title ? data.title : decoratedText}
-          
         ></img>
       ) : (
         <></>
@@ -328,6 +328,111 @@ function MessageFaviconOrVideoRenderer({
   );
 }
 
+function VoiceMessage({
+  path,
+  self,
+  controllable,
+}: {
+  path: string;
+  self: boolean;
+  controllable: boolean;
+}) {
+  const audio = useMemo(() => new Audio(), [path]);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setprogress] = useState(0);
+  useEffect(() => {
+    audio.src = path;
+    audio.onpause = () => setPlaying(false);
+    audio.onplay = () => setPlaying(true);
+    audio.ontimeupdate = () => setprogress(audio.currentTime / audio.duration);
+    return () => {
+      audio.pause();
+    };
+  }, [audio]);
+  return (
+    <div>
+      <div
+        style={{
+          width: controllable ? "645px" : "250px",
+          maxWidth: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          color: self
+            ? "var(--main-text-colour)"
+            : "var(--secondary-text-colour)",
+        }}
+      >
+        <FontAwesomeIcon
+          icon={playing ? faPause : faPlay}
+          onClick={() => {
+            if (playing) {
+              if (!controllable) audio.currentTime = 0;
+              audio.pause();
+            } else {
+              audio.play();
+            }
+          }}
+        />
+        {audio.duration ? (
+          <p>
+            {Math.round(playing ? progress * audio.duration : audio.duration) +
+              "s"}
+          </p>
+        ) : (
+          <></>
+        )}
+        <div
+          className={`audio-visualiser ${
+            playing ? "audio-visualiser-playing" : ""
+          }`}
+        >
+          <div
+            className="column"
+            style={{
+              animationDuration: "0.98s",
+            }}
+          ></div>
+          <div
+            className="column"
+            style={{
+              left: 12,
+              animationDuration: "0.67s",
+              animationDelay: "0.2",
+            }}
+          ></div>
+          <div
+            className="column"
+            style={{
+              left: 24,
+              animationDuration: "0.86s",
+              animationDelay: "0.1",
+            }}
+          ></div>
+        </div>
+      </div>
+      <div
+        style={{ width: "100%", backgroundColor: "gray" }}
+        onClick={function (e: any) {
+          if (controllable) {
+            const bcr = e.target.getBoundingClientRect();
+            audio.currentTime =
+              ((e.clientX - bcr.left) / bcr.width) * audio.duration;
+          }
+        }}
+      >
+        <div
+          style={{
+            width: progress * 100 + "%",
+            height: "15px",
+            backgroundColor: "white",
+            transition: "width 0.25s",
+          }}
+        ></div>
+      </div>
+    </div>
+  );
+}
+
 function Message({
   messages,
   i,
@@ -381,13 +486,26 @@ function Message({
               ? `message message-${
                   messages[i].from === user.id ? "mine" : "yours"
                 } ${
-                  !messages[i + 1] ||
-                  messages[i + 1].from !== messages[i].from ||
-                  (messages[i + 1] &&
-                    messages[i + 1].time - messages[i].time > 300000)
-                    ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+                  messages[i - 1]?.from == messages[i].from &&
+                  messages[i - 1] &&
+                  messages[i].time - messages[i - 1].time < 300000
+                    ? `mid-${messages[i].from === user.id ? "mine" : "yours"}`
                     : ""
-                }`
+                }
+              ${
+                !messages[i - 1] ||
+                messages[i].time - messages[i - 1].time > 300000
+                  ? `first-${messages[i].from === user.id ? "mine" : "yours"}`
+                  : ""
+              }  
+              ${
+                !messages[i + 1] ||
+                messages[i + 1].from !== messages[i].from ||
+                (messages[i + 1] &&
+                  messages[i + 1].time - messages[i].time > 300000)
+                  ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+                  : ""
+              }`
               : `emojimessage-${
                   messages[i].from === user.id ? "mine" : "yours"
                 }`
@@ -553,7 +671,6 @@ function Message({
                   <img
                     alt={file}
                     src={`/files/${file}?size=615`}
-                    
                     style={{
                       maxWidth: "100%",
                       maxHeight: "300px",
@@ -588,7 +705,7 @@ function Message({
                 ) : mimetype.split("/")[0] === "audio" ? (
                   <audio
                     src={`/files/${file}`}
-                    style={{ width: "100%", maxHeight: "300px" }}
+                    style={{ maxHeight: "300px" }}
                     controls
                     playsInline
                     onLoad={() => {
@@ -659,7 +776,8 @@ function Message({
             <FontAwesomeIcon icon={faCopy} /> Copy
           </span>
         </MenuItem>
-        {(messages[i].from === user.id && messages[i].ID) || (user.admin && messages[i].ID) ? (
+        {(messages[i].from === user.id && messages[i].ID) ||
+        (user.admin && messages[i].ID) ? (
           <>
             <MenuItem
               onClick={() => {
@@ -690,7 +808,7 @@ function Message({
                 </span>
               </MenuItem>
             ) : (
-                <></>
+              <></>
             )}
           </>
         ) : (
@@ -724,12 +842,26 @@ function Message({
         className={`message message-${
           messages[i].from === user.id ? "mine" : "yours"
         } ${
-          !messages[i + 1] ||
-          messages[i + 1].from !== messages[i].from ||
-          (messages[i + 1] && messages[i + 1].time - messages[i].time > 300000)
-            ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+          messages[i - 1]?.from == messages[i].from &&
+          messages[i - 1] &&
+          messages[i].time - messages[i - 1].time < 300000
+            ? `mid-${messages[i].from === user.id ? "mine" : "yours"}`
             : ""
-        }`}
+        }
+              ${
+                !messages[i - 1] ||
+                messages[i].time - messages[i - 1].time > 300000
+                  ? `first-${messages[i].from === user.id ? "mine" : "yours"}`
+                  : ""
+              }  
+              ${
+                !messages[i + 1] ||
+                messages[i + 1].from !== messages[i].from ||
+                (messages[i + 1] &&
+                  messages[i + 1].time - messages[i].time > 300000)
+                  ? `last-${messages[i].from === user.id ? "mine" : "yours"}`
+                  : ""
+              }`}
       >
         <h1>GIFT</h1>
         <div
@@ -747,7 +879,6 @@ function Message({
         {message ? <p data-private>Message: {message.trim()}</p> : <></>}
         <img
           src={GiftIcon}
-          
           alt="🎁"
           style={{
             padding: "1rem",
@@ -815,7 +946,7 @@ function MessageMaker({
       const output = [];
       let lastmessage: messageWithText | messageWithFile | giftMessage | null =
         null;
-      let topIndex = 0
+      let topIndex = 0;
       for (let i = 0; i < messages.length; i++) {
         if (
           (!lastmessage && !canloadmore) ||
@@ -836,10 +967,8 @@ function MessageMaker({
           );
         }
         if (
-          (!lastmessage ||
-          messages[i].from !== lastmessage.from) &&
-            (messages[i].from === user.id ||
-          users[messages[i].from])
+          (!lastmessage || messages[i].from !== lastmessage.from) &&
+          (messages[i].from === user.id || users[messages[i].from])
         ) {
           output.push(
             <div
@@ -868,7 +997,6 @@ function MessageMaker({
                   borderRadius: "50%",
                 }}
                 alt=""
-                
               />
               {users[messages[i].from] ? (
                 <span style={{ marginLeft: "5px" }}>
@@ -879,7 +1007,7 @@ function MessageMaker({
               )}
             </div>
           );
-          topIndex++
+          topIndex++;
         }
         output.push(
           <Message
@@ -981,7 +1109,6 @@ function MessageMaker({
                     margin: "3px",
                     borderRadius: "50%",
                   }}
-                  
                   alt=""
                 />
                 <span style={{ marginLeft: "5px" }}>{users[key].username}</span>
@@ -1083,6 +1210,7 @@ function ChatPage() {
   const [usersdata, setusersdata] = useState<
     undefined | { exists: boolean; users: { [key: string]: any } }
   >();
+  const [audiostream, setaudiostream] = useState<undefined | MediaRecorder>();
   const [groupchatdata /*setgroupchatdata*/] = useState({
     picture: "hi",
     name: "loading...",
@@ -1134,6 +1262,7 @@ function ChatPage() {
   const [localchats, setlocalchats] = useLocalStorage<{
     [key: string]: Array<messageWithText | messageWithFile | giftMessage>;
   }>("chats", {});
+  const [textareaHeight, settextareaHeight] = useState<number>(36);
   const [giftmodel, setgiftmodel] = useState(false);
   async function sendFile(file: any) {
     const id = Math.random();
@@ -1319,7 +1448,7 @@ function ChatPage() {
           };
         });
         if (usersdata) {
-          let notify = true
+          let notify = true;
           if (toscroll.current) {
             setcanloadmore(true);
             isLoadMore.current = false;
@@ -1328,7 +1457,7 @@ function ChatPage() {
               chats.slice(Math.max(chats.length - StartMessagesLength, 0))
             );
             setTimeout(scrolltobottom, 0);
-            notify = !isFocussed
+            notify = !isFocussed;
           }
           if (notify && lastJsonMessage.message.from !== user.id) {
             NotificationAPI(
@@ -1703,6 +1832,7 @@ function ChatPage() {
             width: "100%",
             maxWidth: "800px",
             display: "flex",
+            alignItems: "flex-end",
           }}
         >
           <input
@@ -1721,6 +1851,7 @@ function ChatPage() {
           <button
             style={{
               width: "45px",
+              height: "36px",
               marginRight: "5px",
               backgroundColor: "var(--dark-bg-colour)",
               padding: "5px",
@@ -1940,6 +2071,7 @@ function ChatPage() {
           <button
             style={{
               width: "45px",
+              height: "36px",
               marginRight: "5px",
               backgroundColor: "var(--dark-bg-colour)",
               padding: "5px",
@@ -2017,6 +2149,7 @@ function ChatPage() {
             style={{
               width: "100%",
               display: "flex",
+              alignItems: "flex-end",
             }}
           >
             <TextareaAutosize
@@ -2075,6 +2208,7 @@ function ChatPage() {
                 }
               }}
               onKeyDown={(e: any) => {
+                settextareaHeight(e.target.offsetHeight);
                 key.current = e.keyCode;
                 shiftkey.current = e.shiftKey;
                 clearTimeout(typingTimer.current);
@@ -2096,6 +2230,7 @@ function ChatPage() {
               ref={submitref}
               style={{
                 width: "60px",
+                height: "36px",
                 marginLeft: "5px",
                 backgroundColor: "var(--dark-bg-colour)",
                 padding: "5px",

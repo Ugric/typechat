@@ -26,3 +26,5 @@ typechat-electron-app
 ssl
 .greenlockrc
 greenlock.d
+
+tokens.json
