@@ -494,6 +494,7 @@ function Message({
                 }
               ${
                 !messages[i - 1] ||
+                messages[i - 1].from !== messages[i].from ||
                 messages[i].time - messages[i - 1].time > 300000
                   ? `first-${messages[i].from === user.id ? "mine" : "yours"}`
                   : ""
