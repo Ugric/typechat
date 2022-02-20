@@ -193,7 +193,7 @@ function App() {
     }
   }
   return (
-    <GoogleReCaptchaProvider reCaptchaKey="6LdiWnceAAAAAOrA5Tn0C80Y9x1dEIDIdG3FWNGC">
+    <GoogleReCaptchaProvider reCaptchaKey="6Lc53Y0eAAAAADVRsPwjT4xAhVVLR2ffq2wSBnfU">
       <Router>
         <datahook.Provider
           value={{
