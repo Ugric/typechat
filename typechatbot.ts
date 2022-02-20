@@ -2,6 +2,8 @@ import * as discord from "discord.js";
 import { Client } from "discord.js";
 import { generate } from "randomstring";
 import db from "./app";
+import tokens from './tokens.json'
+
 const client = new Client({
   intents: [
     "GUILDS",
@@ -216,5 +218,5 @@ client.on("guildMemberAdd", async (member) => {
   }
 });
 
-client.login(process.env.NODE_ENV === "development" ? require("./devdiscordtoken.json") : require("./discordtoken.json"));
+client.login(process.env.NODE_ENV === "development" ? tokens.discord.dev : tokens.discord.pro);
 export { serverID, client, roleID, unlinkedroleID };
