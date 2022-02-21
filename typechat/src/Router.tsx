@@ -29,7 +29,6 @@ export default ({ chattingto }: { chattingto?: string }) => (
       path="/chat/:id"
       render={({ match }) => (
         <Chat
-          isGroupChat={false}
           chattingto={match.params.id}
           key={match.params.id}
         />

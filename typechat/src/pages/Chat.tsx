@@ -58,7 +58,7 @@ import useWindowVisable from "../hooks/useWindowVisable";
 import isMobileDevice from "../isMobile";
 import useWindowFocus from "use-window-focus";
 import "./css/audio.css";
-const chatSettings = createContext({ isGroupChat: false, time: 0 });
+const chatSettings = createContext({ time: 0 });
 const usersContext = createContext<{
   exists: boolean;
   users: { [key: string]: any };
@@ -918,6 +918,7 @@ function MessageMaker({
   deleteFromID,
   editFromID,
   sendJsonMessage,
+  bottomMargin,
 }: {
   messages: Array<messageWithText | messageWithFile | giftMessage>;
   typingdata: {
@@ -937,6 +938,7 @@ function MessageMaker({
   deleteFromID: Function;
   editFromID: Function;
   sendJsonMessage: Function;
+  bottomMargin: number;
 }) {
   const { user } = useData();
   const { users } = useContext(usersContext);
@@ -1048,7 +1050,6 @@ function MessageMaker({
     }
     return output;
   }, [typingdata]);
-  // const [isMessageMenuOpen, setIsMessageMenuOpen] = useState(false);
   window.onscroll = () => {
     if (location.pathname === `/chat/${chattingto}`) {
       toscroll.current =
@@ -1075,7 +1076,7 @@ function MessageMaker({
       <div
         className="chat"
         style={{
-          margin: `90px auto 3rem auto`,
+          margin: `90px auto ${bottomMargin + 12}px auto`,
           maxWidth: "900px",
         }}
       >
@@ -1103,7 +1104,7 @@ function MessageMaker({
                 }}
               >
                 <img
-                  src={`/files/${users[key].profilePic}?size=25`}
+                  src={`/files/${users[key]?.profilePic}?size=25`}
                   style={{
                     width: "25px",
                     height: "25px",
@@ -1112,7 +1113,9 @@ function MessageMaker({
                   }}
                   alt=""
                 />
-                <span style={{ marginLeft: "5px" }}>{users[key].username}</span>
+                <span style={{ marginLeft: "5px" }}>
+                  {users[key]?.username}
+                </span>
               </div>
               <div
                 className="message message-yours last-yours"
@@ -1206,16 +1209,17 @@ function ChatPage() {
   const history = useHistory();
   const { id: chattingto } = useParams<{ id: string }>();
   const { notifications, user, NotificationAPI } = useData();
-
-  const { isGroupChat } = useContext(chatSettings);
+  const [isGroupChat, setisGroupChat] = useState(false);
   const [usersdata, setusersdata] = useState<
     undefined | { exists: boolean; users: { [key: string]: any } }
   >();
-  const [audiostream, setaudiostream] = useState<undefined | MediaRecorder>();
-  const [groupchatdata /*setgroupchatdata*/] = useState({
-    picture: "hi",
-    name: "loading...",
-  });
+  const [groupchatdata, setgroupchatdata] = useState<
+    | {
+        picture: string;
+        name: string;
+      }
+    | undefined
+  >();
   const [oldmetypingdata, setoldmetypingdata] = useState({
     type: "typing",
     typing: false,
@@ -1362,7 +1366,9 @@ function ChatPage() {
   }, []);
   useEffect(() => {
     if (usersdata) {
-      document.title = `${usersdata.users[chattingto]?.username} - TypeChat`;
+      document.title = `${isGroupChat ?
+        groupchatdata?.name || "Group Chat"
+        : usersdata.users[chattingto]?.username} - TypeChat`;
     }
     return () => {
       document.title = "TypeChat";
@@ -1493,6 +1499,15 @@ function ChatPage() {
             );
           }
         }
+      } else if (lastJsonMessage.type === "online") {
+        if (!lastJsonMessage.online && (isonline === "M" || isonline === "1")) {
+          playSound("/sounds/leave.mp3");
+        } else if (lastJsonMessage.online && isonline === "0") {
+          playSound("/sounds/join.mp3");
+        }
+        setisonline(
+          lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
+        );
       } else if (lastJsonMessage.type === "gift") {
         if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
           playSound("/sounds/gift.mp3");
@@ -1597,15 +1612,21 @@ function ChatPage() {
         }
         setChatUpdateID(Math.random());
         setchats(chats);
-      } else if (lastJsonMessage.type === "online") {
-        if (!lastJsonMessage.online && (isonline === "M" || isonline === "1")) {
-          playSound("/sounds/leave.mp3");
-        } else if (lastJsonMessage.online && isonline === "0") {
-          playSound("/sounds/join.mp3");
+      } else if (lastJsonMessage.type === "init") {
+        if (lastJsonMessage.isGroupChat) {
+          setchats(lastJsonMessage.messages);
+          setgroupchatdata(lastJsonMessage.groupChatData);
+        } else {
+          setchats(lastJsonMessage.messages);
+          setusersdata({ exists: true, users: lastJsonMessage.users });
+          setisonline(
+            lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
+          );
         }
-        setisonline(
-          lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
-        );
+        setcanloadmore(true);
+        isLoadMore.current = false;
+        setloadingchatmessages(false);
+        setisGroupChat(true);
       } else if (lastJsonMessage.type === "typing") {
         if (Recipienttyping) {
           if (
@@ -1700,6 +1721,7 @@ function ChatPage() {
   };
   if (
     (!usersdata ||
+      !groupchatdata ||
       (readyState !== ReadyState.OPEN &&
         readyState !== ReadyState.UNINSTANTIATED) ||
       loadingchatmessages) &&
@@ -1723,17 +1745,15 @@ function ChatPage() {
           background: "linear-gradient(0deg, transparent, var(--dark-mode))",
         }}
       >
-        {usersdata && readyState === ReadyState.OPEN ? (
+        {(groupchatdata || usersdata) && readyState === ReadyState.OPEN ? (
           <>
             {" "}
             <img
               src={
                 "/files/" +
-                String(
-                  isGroupChat
-                    ? groupchatdata.picture
-                    : usersdata.users[chattingto]?.profilePic
-                ) +
+                (isGroupChat
+                  ? groupchatdata?.picture
+                  : usersdata?.users[chattingto]?.profilePic) +
                 "?size=45"
               }
               data-private
@@ -1746,15 +1766,15 @@ function ChatPage() {
                 height: "45px",
               }}
               alt={
-                isGroupChat
-                  ? groupchatdata.name
-                  : usersdata.users[chattingto]?.username
+                groupchatdata
+                  ? groupchatdata?.name
+                  : usersdata?.users[chattingto]?.username
               }
             />
             <p style={{ textAlign: "center" }} data-private>
-              {!isGroupChat ? (
+              {!groupchatdata ? (
                 <>
-                  {usersdata.users[chattingto]?.username}{" "}
+                  {usersdata?.users[chattingto]?.username}{" "}
                   <FontAwesomeIcon
                     style={{
                       color:
@@ -1770,7 +1790,7 @@ function ChatPage() {
                   ></FontAwesomeIcon>
                   <div data-private>
                     <Badge
-                      badges={usersdata.users[chattingto]?.badges}
+                      badges={usersdata?.users[chattingto]?.badges}
                       size="20px"
                     ></Badge>
                   </div>
@@ -1815,6 +1835,7 @@ function ChatPage() {
         loadmore={loadmore}
         chatUpdateID={chatUpdateID}
         sendJsonMessage={sendJsonMessage}
+        bottomMargin={textareaHeight}
       />
       <div ref={bottomref}></div>
       <div
@@ -2069,39 +2090,43 @@ function ChatPage() {
               </button>
             </form>
           </ReactModal>
-          <button
-            style={{
-              width: "45px",
-              height: "36px",
-              marginRight: "5px",
-              backgroundColor: "var(--dark-bg-colour)",
-              padding: "5px",
-              borderRadius: "20px",
-              border: "solid 1px var(--light-bg-colour)",
-              color: "white",
-              textAlign: "center",
-              opacity:
+          {!isGroupChat ? (
+            <button
+              style={{
+                width: "45px",
+                height: "36px",
+                marginRight: "5px",
+                backgroundColor: "var(--dark-bg-colour)",
+                padding: "5px",
+                borderRadius: "20px",
+                border: "solid 1px var(--light-bg-colour)",
+                color: "white",
+                textAlign: "center",
+                opacity:
+                  usersdata && usersdata.users[chattingto]?.id !== "TypeChat"
+                    ? 1
+                    : 0.5,
+              }}
+              disabled={
+                !(usersdata && usersdata.users[chattingto]?.id !== "TypeChat")
+              }
+              onClick={
                 usersdata && usersdata.users[chattingto]?.id !== "TypeChat"
-                  ? 1
-                  : 0.5,
-            }}
-            disabled={
-              !(usersdata && usersdata.users[chattingto]?.id !== "TypeChat")
-            }
-            onClick={
-              usersdata && usersdata.users[chattingto]?.id !== "TypeChat"
-                ? () => {
-                    if (user.rocketFuel > 0) {
-                      setgiftmodel(true);
-                    } else {
-                      history.push("/blast");
+                  ? () => {
+                      if (user.rocketFuel > 0) {
+                        setgiftmodel(true);
+                      } else {
+                        history.push("/blast");
+                      }
                     }
-                  }
-                : undefined
-            }
-          >
-            <FontAwesomeIcon icon={faGift} />
-          </button>
+                  : undefined
+              }
+            >
+              <FontAwesomeIcon icon={faGift} />
+            </button>
+          ) : (
+            <></>
+          )}
           <form
             onSubmit={(e: any) => {
               e.preventDefault();
@@ -2156,6 +2181,15 @@ function ChatPage() {
             <TextareaAutosize
               data-private="lipsum"
               ref={inputref}
+              onHeightChange={(height) => {
+                settextareaHeight(height);
+                setTimeout(
+                  () =>
+                    (document.documentElement.scrollTop +=
+                      height - textareaHeight),
+                  0
+                );
+              }}
               onInput={(e: any) => {
                 if (key.current === 13 && !shiftkey.current) {
                   submitref.current.click();
@@ -2209,7 +2243,6 @@ function ChatPage() {
                 }
               }}
               onKeyDown={(e: any) => {
-                settextareaHeight(e.target.offsetHeight);
                 key.current = e.keyCode;
                 shiftkey.current = e.shiftKey;
                 clearTimeout(typingTimer.current);
@@ -2259,13 +2292,7 @@ function ChatPage() {
   );
 }
 
-function Chat({
-  isGroupChat,
-  chattingto,
-}: {
-  isGroupChat: boolean;
-  chattingto: string;
-}) {
+function Chat({ chattingto }: { chattingto: string }) {
   const { loggedin, user } = useData();
   const time = useMemo(() => new Date().getTime(), []);
   if (!loggedin) {
@@ -2276,7 +2303,7 @@ function Chat({
     );
   } else if (chattingto && chattingto !== user.id) {
     return (
-      <chatSettings.Provider value={{ isGroupChat, time }}>
+      <chatSettings.Provider value={{ time }}>
         <ChatPage />
       </chatSettings.Provider>
     );

@@ -22,12 +22,16 @@ import NotificationComponent from "./notification";
 import ReactGA from "react-ga4";
 import LogRocket from "logrocket";
 import Switches from "./Router";
-import { hydrate, render } from "react-dom";
+import {  render } from "react-dom";
 import { Snowflakes } from "./pages/christmas";
 LogRocket.init("b1hvjh/typechat");
 
-if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development"))
+if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development")) {
+  process
+    .on("unhandledRejection", console.error)
+    .on("uncaughtException", console.error);
   ReactGA.initialize("G-26D01FTK1T");
+}
 
 if (!JSON.parse(String(localStorage.getItem("tabCount")))) {
   localStorage.setItem("tabCount", JSON.stringify(0));
@@ -44,14 +48,17 @@ navigator.serviceWorker
 setInterval(() => {
   (document.onkeypress as any) = undefined;
   (window.onkeypress as any) = undefined;
-}, 1000)
+}, 1000);
 
 function App() {
   const { data, reload } = useApi<any>(
     navigator.userAgent !== "ReactSnap" ? "/api/userdata" : null
   );
   const [navbarsize, setnavbarsize] = useState({ width: 0, height: 0 });
-  const [chattingto, setchattingto] = useLocalStorage<string|undefined>("chattingto", undefined);
+  const [chattingto, setchattingto] = useLocalStorage<string | undefined>(
+    "chattingto",
+    undefined
+  );
   const [deferredprompt, setdeferredprompt] = useState<any>(null);
   const [alreadyshownInstall, setalreadyshownInstall] = useState(false);
   const [hideInstallPrompt, sethideInstallPrompt] = useLocalStorage(

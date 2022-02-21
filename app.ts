@@ -22,7 +22,7 @@ import greenlockexpress from "greenlock-express";
 import paypal from "@paypal/checkout-server-sdk";
 import fetch from "node-fetch";
 import sharp from "sharp";
-import tokens from "./tokens.json"
+import tokens from "./tokens.json";
 import { URLSearchParams } from "url";
 import os from "os";
 
@@ -255,12 +255,16 @@ function updateFromAccountID(accountID: string) {
     db.run("CREATE TABLE IF NOT EXISTS tokens (accountID, token)"),
     db.run("CREATE TABLE IF NOT EXISTS friends (accountID, toAccountID, time)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file, mimetype, deleted, gift, amount)"
+      "CREATE TABLE IF NOT EXISTS friendsChatMessages (ID,accountID, toAccountID, message, time, file, mimetype, deleted, gift, amount, edited)"
     ),
-    db.run("CREATE TABLE IF NOT EXISTS groupchats (chatID, name, picture)"),
-    db.run("CREATE TABLE IF NOT EXISTS groupchatUsers (chatID, accountID)"),
     db.run(
-      "CREATE TABLE IF NOT EXISTS groupchatMessages (chatID,accountID, message, time, file, mimetype, deleted)"
+      "CREATE TABLE IF NOT EXISTS tsgroupchats (chatID, name, picture, time)"
+    ),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS tsgroupchatUsers (chatID, accountID, leader, time)"
+    ),
+    db.run(
+      "CREATE TABLE IF NOT EXISTS tsgroupchatMessages (ID, chatID, accountID, message, time, file, mimetype, deleted, gift, amount, edited)"
     ),
     db.run(
       "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID, originalfilename, mimetype)"
@@ -289,6 +293,8 @@ function updateFromAccountID(accountID: string) {
   );
   db.run("ALTER TABLE images ADD mimetype").catch(() => {});
   db.run("ALTER TABLE accounts ADD admin DEFAULT false").catch(() => {});
+  db.run("ALTER TABLE tsgroupchatMessages ADD accountID").catch(() => {});
+  db.run("ALTER TABLE tsgroupchatMessages ADD edited").catch(() => {});
   db.run("ALTER TABLE images ADD originalfilename").catch(() => {});
   db.run("ALTER TABLE uploadlogs ADD fileID").catch(() => {});
   db.run("ALTER TABLE friendsChatMessages ADD gift").catch(() => {});
@@ -303,6 +309,19 @@ function updateFromAccountID(accountID: string) {
   );
   db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => {});
   db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => {});
+  if (!(await db.get("SELECT * FROM tsgroupchats WHERE chatID='TEST'"))) {
+    await Promise.all([
+      db.run(
+        "INSERT INTO tsgroupchats (chatID, name, picture, time) VALUES ('TEST', 'Test', 'my chat lolll', 0)"
+      ),
+      db.run(
+        "INSERT INTO tsgroupchatUsers (chatID, accountID, leader, time) VALUES ('TEST', 'TypeChat', 1, 0)"
+      ),
+      db.run(
+        "INSERT INTO tsgroupchatUsers (chatID, accountID, leader, time) VALUES ('TEST', 'eqdohzPsMGcQ8p9sUJBG', 0, 0)"
+      ),
+    ]);
+  }
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
@@ -522,60 +541,9 @@ function updateFromAccountID(accountID: string) {
         };
 
         pingpong();
-      } else if (req.url == "/groupchat") {
-        let chatID: string;
-        const connectionID = generate(20);
-        let lastping = 0;
-        if (!accountdata) {
-          return ws.close();
-        }
-        const pingpong = async () => {
-          await snooze(10000);
-          ws.send(JSON.stringify({ type: "ping" }), () => {});
-          await snooze(2500);
-          const time = new Date().getTime();
-          if (time - lastping > 5000) {
-            ws.close();
-          }
-        };
-        ws.on("message", (data: string) => {
-          try {
-            const msg = JSON.parse(data);
-            if (msg.type == "start") {
-              chatID = msg.chatID;
-              if (!groupchats[chatID]) {
-                groupchats[chatID] = {};
-              }
-              if (!groupchats[chatID][accountdata.accountID]) {
-                groupchats[chatID][accountdata.accountID] = {};
-              }
-              groupchats[chatID][accountdata.accountID][connectionID] = {
-                ws,
-              };
-            } else if (msg.type == "pong") {
-              lastping = new Date().getTime();
-              pingpong();
-            } else if (msg.type === "message" || msg.type === "file") {
-              if (groupchats[chatID]) {
-                for (const accountID of Object.keys(groupchats[chatID])) {
-                  for (const connectionID of Object.keys(
-                    groupchats[chatID][accountID]
-                  )) {
-                    groupchats[chatID][accountID][connectionID].ws.send(
-                      JSON.stringify(msg)
-                    );
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            console.error(e, e.stack);
-          }
-        });
-        ws.send(JSON.stringify({ type: "start" }), () => {});
-        pingpong();
       } else if (req.url == "/chat") {
         let to: string;
+        let isGroupChat: boolean = false;
         let mobile: boolean = false;
         const connectionID = generate(20);
         if (!accountdata) {
@@ -617,10 +585,15 @@ function updateFromAccountID(accountID: string) {
           try {
             const msg = JSON.parse(data);
             if (msg.type === "start") {
-              if (msg.to === accountdata.accountID) {
-                return ws.close();
-              }
-
+              const dm = await db.get(
+                `SELECT accountID
+        FROM friends
+        WHERE toAccountID == :accountID and accountID == :to`,
+                {
+                  ":accountID": accountdata.accountID,
+                  ":to": msg.to,
+                }
+              );
               if (to) {
                 delete messagefunctions[accountdata.accountID][to][
                   connectionID
@@ -643,9 +616,13 @@ function updateFromAccountID(accountID: string) {
                   }
                 }
               }
-              const messages = (
-                await db.all(
-                  `SELECT * 
+              if (dm) {
+                if (msg.to === accountdata.accountID) {
+                  return ws.close();
+                }
+                const messages = (
+                  await db.all(
+                    `SELECT * 
         FROM (SELECT
         ID, accountID as "from", message, time, file, mimetype, edited, gift, amount
         FROM friendsChatMessages
@@ -659,15 +636,15 @@ function updateFromAccountID(accountID: string) {
                 and toAccountID = :accountID
                 and deleted=false
             ) ORDER  BY time DESC) LIMIT :max`,
-                  {
-                    ":accountID": accountdata.accountID,
-                    ":toUser": msg.to,
-                    ":max": msg.limit,
-                  }
-                )
-              ).reverse();
-              const users = await db.get(
-                `WITH friendrequestlist as (
+                    {
+                      ":accountID": accountdata.accountID,
+                      ":toUser": msg.to,
+                      ":max": msg.limit,
+                    }
+                  )
+                ).reverse();
+                let users = await db.get(
+                  `WITH friendrequestlist as (
         SELECT accountID
         FROM friends
         WHERE toAccountID == :accountID
@@ -677,79 +654,110 @@ function updateFromAccountID(accountID: string) {
     JOIN accounts ON friends.toAccountID=accounts.accountID
     WHERE friends.accountID == :accountID and friends.toAccountID==:ID
         and toAccountID in friendrequestlist`,
-                {
-                  ":accountID": accountdata.accountID,
-                  ":ID": msg.to,
+                  {
+                    ":accountID": accountdata.accountID,
+                    ":ID": msg.to,
+                  }
+                );
+                if (users) {
+                  const badges = await getBadgesFromAccountID(users.accountID);
+                  users = {
+                    [msg.to]: {
+                      username: users.username,
+                      id: users.accountID,
+                      profilePic: users.profilePic,
+                      tag: users.tag,
+                      backgroundImage: users.backgroundImage,
+                      badges,
+                    },
+                  };
                 }
-              );
-              if (users) {
-                const badges = await getBadgesFromAccountID(users.accountID);
+                to = String(msg.to);
+                const allonline = getAllOnline(
+                  messagefunctions[to] &&
+                    messagefunctions[to][accountdata.accountID]
+                    ? messagefunctions[to][accountdata.accountID]
+                    : []
+                );
                 ws.send(
                   JSON.stringify({
-                    type: "setmessages",
+                    type: "init",
+                    isGroupChat: false,
                     messages,
-                    users: {
-                      [msg.to]: {
-                        username: users.username,
-                        id: users.accountID,
-                        profilePic: users.profilePic,
-                        tag: users.tag,
-                        backgroundImage: users.backgroundImage,
-                        badges,
-                      },
-                    },
+                    users,
+                    online:
+                      (messagefunctions[to] &&
+                        messagefunctions[to][accountdata.accountID] &&
+                        allonline.length > 0) === true,
+                    mobile:
+                      allonline.length > 0
+                        ? allonline[allonline.length - 1].mobile
+                        : undefined,
+                  })
+                );
+                if (
+                  messagefunctions[to] &&
+                  messagefunctions[to][accountdata.accountID]
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[to][accountdata.accountID]
+                  )) {
+                    messagefunctions[to][accountdata.accountID][ws].ws.send(
+                      JSON.stringify({
+                        type: "online",
+                        online: true,
+                        mobile: msg.mobile,
+                      })
+                    );
+                  }
+                }
+                mobile = msg.mobile;
+                if (!messagefunctions[accountdata.accountID]) {
+                  messagefunctions[accountdata.accountID] = {};
+                }
+                if (!messagefunctions[accountdata.accountID][msg.to]) {
+                  messagefunctions[accountdata.accountID][msg.to] = {};
+                }
+                messagefunctions[accountdata.accountID][msg.to][connectionID] = {
+                    connectionID,
+                    ws,
+                    mobile: msg.mobile,
+                    focus: true,
+                  };
+                return;
+              }
+              const gc = await db.get(
+                `SELECT picture, name
+        FROM tsgroupchats
+        WHERE chatID == :chatID`,
+                {
+                  ":chatID": msg.to,
+                }
+              );
+              if (gc) {
+                isGroupChat = true;
+                const messages = (
+                  await db.all(
+                    `SELECT * 
+        FROM (SELECT
+        ID, accountID as "from", message, time, file, mimetype, edited, gift, amount
+        FROM tsgroupchatMessages
+        WHERE chatID==:chatID and deleted==false ORDER BY time DESC) LIMIT :max`,
+                    {
+                      ":chatID": msg.to,
+                      ":max": msg.limit,
+                    }
+                  )
+                ).reverse();
+                ws.send(
+                  JSON.stringify({
+                    type: "init",
+                    isGroupChat: true,
+                    groupChatData: gc,
+                    messages,
                   })
                 );
               }
-              to = String(msg.to);
-              const allonline = getAllOnline(
-                messagefunctions[to] &&
-                  messagefunctions[to][accountdata.accountID]
-                  ? messagefunctions[to][accountdata.accountID]
-                  : []
-              );
-              ws.send(
-                JSON.stringify({
-                  type: "online",
-                  online:
-                    (messagefunctions[to] &&
-                      messagefunctions[to][accountdata.accountID] &&
-                      allonline.length > 0) === true,
-                  mobile:
-                    allonline.length > 0
-                      ? allonline[allonline.length - 1].mobile
-                      : undefined,
-                })
-              );
-              if (
-                messagefunctions[to] &&
-                messagefunctions[to][accountdata.accountID]
-              ) {
-                for (const ws of Object.keys(
-                  messagefunctions[to][accountdata.accountID]
-                )) {
-                  messagefunctions[to][accountdata.accountID][ws].ws.send(
-                    JSON.stringify({
-                      type: "online",
-                      online: true,
-                      mobile: msg.mobile,
-                    })
-                  );
-                }
-              }
-              mobile = msg.mobile;
-              if (!messagefunctions[accountdata.accountID]) {
-                messagefunctions[accountdata.accountID] = {};
-              }
-              if (!messagefunctions[accountdata.accountID][msg.to]) {
-                messagefunctions[accountdata.accountID][msg.to] = {};
-              }
-              messagefunctions[accountdata.accountID][msg.to][connectionID] = {
-                connectionID,
-                ws,
-                mobile: msg.mobile,
-                focus: true,
-              };
             } else if (msg.type == "delete") {
               const id = msg.id;
               const isowned = Boolean(
@@ -758,7 +766,6 @@ function updateFromAccountID(accountID: string) {
                   { ":id": id, ":accountID": accountdata.accountID }
                 )
               );
-              console.log(accountdata.admin);
               if (isowned || accountdata.admin) {
                 db.run(
                   "UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id",
@@ -2047,7 +2054,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         maxRedirects: 10,
         timeout: 10000,
         ensureSecureImageRequest: true,
-        fromEmail: 'noreply.typechat@gmail.com'
+        fromEmail: "noreply.typechat@gmail.com",
       }).then(
         function (metadata) {
           tempmetadata[url] = metadata;
@@ -2478,7 +2485,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         return res.send({ resp: false, err: "INVALID RECAPTCHA AUTH" });
       }
     });
-    if (process.env.NODE_ENV == 'development') {
+    if (process.env.NODE_ENV == "development") {
       app.use(forceDomain({ hostname: "typechat.world" }));
     }
     app.get("/logo.png", (_, res) =>
