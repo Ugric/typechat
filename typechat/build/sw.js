@@ -90,13 +90,10 @@ self.addEventListener("fetch", (event) => {
 const ws = new WebSocket(
   `${self.location.origin.replace('http', 'ws').replace('3000', '5000')}/notifications-bg`
 );
-
-
 ws.addEventListener("open", () => {
   console.log("connected to notifications-bg");
   ws.send(JSON.stringify({ type: "ping" }));
 })
-
 ws.addEventListener(
   'message',
   event => {
