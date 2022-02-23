@@ -66,14 +66,15 @@ const errorresp = new Response(
 );
 let html200;
 (async () => {
-  html200 = await fetch('/200.html')
-})()
+  html200 = await fetch("/200.html");
+})();
 
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((resp) => {
-        if (url.search != "?nocache") cached[event.request.url] = resp.clone();
+        if (url.search != "?nocache" && event.request.method == "GET")
+          cached[event.request.url] = resp.clone();
         return resp;
       })
       .catch(() => {
