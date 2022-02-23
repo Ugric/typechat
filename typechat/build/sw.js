@@ -73,8 +73,7 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((resp) => {
-        console.log(url);
-        if (url.search != "?nocache" && event.request.method == 'GET') cached[event.request.url] = resp.clone();
+        if (url.search != "?nocache") cached[event.request.url] = resp.clone();
         return resp;
       })
       .catch(() => {
