@@ -734,7 +734,7 @@ function updateFromAccountID(accountID: string) {
                     type: "init",
                     isGroupChat: false,
                     messages,
-                    users:{[users.accountID]: users},
+                    users,
                     online:
                       (messagefunctions[to] &&
                         messagefunctions[to][accountdata.accountID] &&
