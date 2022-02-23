@@ -25,13 +25,17 @@ import sharp from "sharp";
 import tokens from "./tokens.json";
 import { URLSearchParams } from "url";
 import os from "os";
+import React from "react";
+import ReactDOMServer from "react-dom/server";
+import App from "./typechat/src/index";
 
 console.time("express boot");
 
 const testRECAP3 = (secret: string, response: string) =>
   fetch(
     `https://www.google.com/recaptcha/api/siteverify?` +
-      new URLSearchParams({ secret, response })
+      new URLSearchParams({ secret, response }),
+    {}
   )
     .then((resp: { json: () => Promise<any> }) => resp.json())
     .then((json: { success: any }) => {
@@ -109,8 +113,10 @@ async function checkFileExists(file: fs.PathLike) {
     return false;
   }
 }
-const truncate = (input: string, limit: number) =>
-  input.length > limit ? `${input.substring(0, limit)}...` : input;
+const truncate = (input: string, limit: number) => {
+  const list = Array(input);
+  return list.length > limit ? `${list.slice(0, limit)}...` : input;
+};
 
 const notificationsockets: Record<
   string,
@@ -126,6 +132,48 @@ const groupchats: Record<
 
 const toVerify: Record<string, string> = {};
 const resizing: string[] = [];
+const failedresize: Record<string, { time: number }> = {};
+const toresizing: Record<
+  string,
+  {
+    path: string;
+    size: number;
+    save: string;
+  }
+> = {};
+
+for (let i = 0; i < 3; i++) {
+  (async () => {
+    while (true) {
+      for (const key of Object.keys(toresizing)) {
+        const tores = toresizing[key];
+        delete toresizing[key];
+        console.log(tores);
+        try {
+          const image = sharp(tores.path);
+          const metadata = await image.metadata();
+          const width = Number(tores.size);
+          if (metadata.width > width) {
+            console.log("saving resized image to:", tores.path);
+            resizing.push(tores.save);
+            await image.withMetadata().resize(width).toFile(tores.save);
+
+            const index = resizing.indexOf(tores.save);
+            if (index !== -1) resizing.splice(index, 1);
+          } else {
+            failedresize[tores.save] = { time: Date.now() };
+          }
+        } catch (e) {
+          console.error(e);
+          const index = resizing.indexOf(tores.save);
+          if (index !== -1) resizing.splice(index, 1);
+          failedresize[tores.save] = { time: Date.now() };
+        }
+      }
+      await snooze(100);
+    }
+  })();
+}
 
 const toVerifyAccountID: Record<string, string> = {};
 
@@ -266,6 +314,7 @@ function updateFromAccountID(accountID: string) {
     db.run(
       "CREATE TABLE IF NOT EXISTS tsgroupchatMessages (ID, chatID, accountID, message, time, file, mimetype, deleted, gift, amount, edited)"
     ),
+    db.run("CREATE TABLE IF NOT EXISTS tsgroupchatLastMessage (chatID, time)"),
     db.run(
       "CREATE TABLE IF NOT EXISTS images (imageID, filename, hash, fromID, originalfilename, mimetype)"
     ),
@@ -543,7 +592,7 @@ function updateFromAccountID(accountID: string) {
         pingpong();
       } else if (req.url == "/chat") {
         let to: string;
-        let isGroupChat: boolean = false;
+        let isGroupChat: { picture: string; name: string } | false = false;
         let mobile: boolean = false;
         const connectionID = generate(20);
         if (!accountdata) {
@@ -618,7 +667,11 @@ function updateFromAccountID(accountID: string) {
               }
               if (dm) {
                 if (msg.to === accountdata.accountID) {
-                  return ws.close();
+                  return ws.send(
+                    JSON.stringify({
+                      type: "nchat",
+                    })
+                  );
                 }
                 const messages = (
                   await db.all(
@@ -718,7 +771,8 @@ function updateFromAccountID(accountID: string) {
                 if (!messagefunctions[accountdata.accountID][msg.to]) {
                   messagefunctions[accountdata.accountID][msg.to] = {};
                 }
-                messagefunctions[accountdata.accountID][msg.to][connectionID] = {
+                messagefunctions[accountdata.accountID][msg.to][connectionID] =
+                  {
                     connectionID,
                     ws,
                     mobile: msg.mobile,
@@ -726,7 +780,7 @@ function updateFromAccountID(accountID: string) {
                   };
                 return;
               }
-              const gc = await db.get(
+              const gc = await db.get<{ picture: string; name: string }>(
                 `SELECT picture, name
         FROM tsgroupchats
         WHERE chatID == :chatID`,
@@ -735,7 +789,15 @@ function updateFromAccountID(accountID: string) {
                 }
               );
               if (gc) {
-                isGroupChat = true;
+                if (!groupchats[to]) groupchats[to] = {};
+                if (!groupchats[to][accountdata.accountID]) {
+                  groupchats[to][accountdata.accountID] = {};
+                }
+                groupchats[to][accountdata.accountID][connectionID] = {
+                  ws,
+                  focus: true,
+                };
+                isGroupChat = gc;
                 const messages = (
                   await db.all(
                     `SELECT * 
@@ -757,6 +819,8 @@ function updateFromAccountID(accountID: string) {
                     messages,
                   })
                 );
+              } else {
+                return ws.send(JSON.stringify({ type: "nchat" }));
               }
             } else if (msg.type == "delete") {
               const id = msg.id;
@@ -1032,40 +1096,53 @@ function updateFromAccountID(accountID: string) {
             } else if (msg.type === "message" || msg.type === "file") {
               const time = new Date().getTime();
               const id = generate(100);
-              if (
-                messagefunctions[to] &&
-                messagefunctions[to][accountdata.accountID]
-              ) {
-                for (const ws of Object.keys(
-                  messagefunctions[to][accountdata.accountID]
-                )) {
-                  messagefunctions[to][accountdata.accountID][ws].ws.send(
-                    JSON.stringify({
-                      type: "message",
-                      message: {
-                        from: accountdata.accountID,
-                        time,
-                        message: msg.message,
-                        file: msg.file,
-                        mimetype: msg.mimetype,
-                        ID: id,
-                      },
-                    })
-                  );
+              if (isGroupChat) {
+                if (groupchats[to]) {
+                  for (const accountID of Object.keys(messagefunctions[to])) {
+                    if (
+                      accountID !== accountdata.accountID &&
+                      !(
+                        messagefunctions[to] &&
+                        messagefunctions[to][accountID] &&
+                        getAllOnline(messagefunctions[to][accountID]).length > 0
+                      )
+                    ) {
+                      sendNotification(to, {
+                        title: `${isGroupChat.name} - ${accountdata.username}#${accountdata.tag}`,
+                        message: msg.message
+                          ? truncate(msg.message, 25)
+                          : "file",
+                        to: `/chat/${to}`,
+                      });
+                    }
+                    for (const ws of Object.keys(
+                      messagefunctions[to][accountID]
+                    )) {
+                      messagefunctions[to][accountID][ws].ws.send(
+                        JSON.stringify({
+                          type: msg.type,
+                          message: {
+                            from: accountdata.accountID,
+                            time,
+                            message: msg.message,
+                            file: msg.file,
+                            mimetype: msg.mimetype,
+                            ID: id,
+                          },
+                        })
+                      );
+                    }
+                  }
                 }
-              }
-              if (
-                messagefunctions[accountdata.accountID] &&
-                messagefunctions[accountdata.accountID][to]
-              ) {
-                for (const ws of Object.keys(
-                  messagefunctions[accountdata.accountID][to]
-                )) {
-                  if (
-                    messagefunctions[accountdata.accountID][to][ws]
-                      .connectionID !== connectionID
-                  ) {
-                    messagefunctions[accountdata.accountID][to][ws].ws.send(
+              } else {
+                if (
+                  messagefunctions[to] &&
+                  messagefunctions[to][accountdata.accountID]
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[to][accountdata.accountID]
+                  )) {
+                    messagefunctions[to][accountdata.accountID][ws].ws.send(
                       JSON.stringify({
                         type: "message",
                         message: {
@@ -1080,38 +1157,67 @@ function updateFromAccountID(accountID: string) {
                     );
                   }
                 }
-              }
-              if (
-                !(
-                  messagefunctions[to] &&
-                  messagefunctions[to][accountdata.accountID] &&
-                  getAllOnline(messagefunctions[to][accountdata.accountID])
-                    .length > 0
-                )
-              ) {
-                sendNotification(to, {
-                  title: accountdata.username,
-                  message: msg.message ? truncate(msg.message, 25) : "file",
-                  to: `/chat/${accountdata.accountID}`,
-                });
-              }
-              await db
-                .run(
-                  `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype, false)`,
-                  {
-                    ":ID": id,
-                    ":accountID": accountdata.accountID,
-                    ":toAccountID": to,
-                    ":message": msg.message,
-                    ":file": msg.file,
-                    ":mimetype": msg.mimetype,
-                    ":time": time,
+                if (
+                  messagefunctions[accountdata.accountID] &&
+                  messagefunctions[accountdata.accountID][to]
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[accountdata.accountID][to]
+                  )) {
+                    if (
+                      messagefunctions[accountdata.accountID][to][ws]
+                        .connectionID !== connectionID
+                    ) {
+                      messagefunctions[accountdata.accountID][to][ws].ws.send(
+                        JSON.stringify({
+                          type: "message",
+                          message: {
+                            from: accountdata.accountID,
+                            time,
+                            message: msg.message,
+                            file: msg.file,
+                            mimetype: msg.mimetype,
+                            ID: id,
+                          },
+                        })
+                      );
+                    }
                   }
-                )
-                .catch(console.error);
-              updateFriendMessageTiming(accountdata.accountID, to);
-              updateFriendMessageTiming(to, accountdata.accountID);
-              ws.send(JSON.stringify({ type: "sent", tempid: msg.tempid, id }));
+                }
+                if (
+                  !(
+                    messagefunctions[to] &&
+                    messagefunctions[to][accountdata.accountID] &&
+                    getAllOnline(messagefunctions[to][accountdata.accountID])
+                      .length > 0
+                  )
+                ) {
+                  sendNotification(to, {
+                    title: accountdata.username,
+                    message: msg.message ? truncate(msg.message, 25) : "file",
+                    to: `/chat/${accountdata.accountID}`,
+                  });
+                }
+                await db
+                  .run(
+                    `INSERT INTO friendsChatMessages (ID, accountID, toAccountID, message, file, time, mimetype, deleted) VALUES (:ID, :accountID, :toAccountID, :message, :file, :time, :mimetype, false)`,
+                    {
+                      ":ID": id,
+                      ":accountID": accountdata.accountID,
+                      ":toAccountID": to,
+                      ":message": msg.message,
+                      ":file": msg.file,
+                      ":mimetype": msg.mimetype,
+                      ":time": time,
+                    }
+                  )
+                  .catch(console.error);
+                updateFriendMessageTiming(accountdata.accountID, to);
+                updateFriendMessageTiming(to, accountdata.accountID);
+                ws.send(
+                  JSON.stringify({ type: "sent", tempid: msg.tempid, id })
+                );
+              }
             } else if (msg.type === "typing") {
               if (
                 messagefunctions[to] &&
@@ -1889,41 +1995,34 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       );
       if (imagedata) {
         const filepath = path.join(__dirname, "files", imagedata.filename);
-        if (await checkFileExists(filepath)) {
+        const resizesave = path.join(
+          os.tmpdir(),
+          `${imagedata.filename}.${req.query.size}`
+        );
+        if (!failedresize[resizesave] || (await checkFileExists(filepath))) {
           if (
             req.query.size &&
             (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
             (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
           ) {
-            const resizesave = path.join(
-              os.tmpdir(),
-              `${imagedata.filename}.${req.query.size}`
-            );
-
-            if (resizing.includes(resizesave)) {
-              while (resizing.includes(resizesave)) {
+            if (toresizing[resizesave]) {
+              while (toresizing[resizesave] || resizing.includes(resizesave)) {
                 await snooze(100);
               }
             } else if (!(await checkFileExists(resizesave))) {
-              try {
-                const image = sharp(filepath);
-                const metadata = await image.metadata();
-                const width = Number(req.query.size);
-                if (metadata.width > width) {
-                  console.log("saving resized image to:", resizesave);
-                  resizing.push(resizesave);
-                  await image.withMetadata().resize(width).toFile(resizesave);
-                  resizing.splice(resizing.indexOf(resizesave), 1);
-                } else {
-                  return res.sendFile(filepath);
-                }
-              } catch (e) {
-                console.error(e);
-                return res.sendFile(filepath);
+              toresizing[resizesave] = {
+                path: filepath,
+                size: Number(req.query.size),
+                save: resizesave,
+              };
+              while (toresizing[resizesave] || resizing.includes(resizesave)) {
+                await snooze(100);
               }
             }
-            res.setHeader("Content-Type", imagedata.mimetype);
-            return res.sendFile(resizesave);
+            if (!failedresize[resizesave]) {
+              res.setHeader("Content-Type", imagedata.mimetype);
+              return res.sendFile(resizesave);
+            }
           }
           return res.sendFile(filepath);
         }
@@ -1962,16 +2061,21 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
         "SELECT * FROM accounts WHERE accountID=(SELECT accountID FROM tokens WHERE token=:token) LIMIT 1",
         { ":token": req.cookies.token }
       );
+      let username: string | string[] = Array(req.body.username);
+      if (username.length > 30) {
+        username = username.slice(0, 30);
+      }
+      username = username.join("");
       if (accountdata.password == hasher(req.body.pass + accountdata.salt)) {
         const exist = await db.get(
           "SELECT * FROM accounts WHERE username=:username and tag=:tag",
-          { ":username": req.body.username, ":tag": accountdata.tag }
+          { ":username": username, ":tag": accountdata.tag }
         );
         if (!exist) {
           await db.run(
             "UPDATE accounts SET username=:username WHERE accountID=:accountID",
             {
-              ":username": req.body.username,
+              ":username": username,
               ":accountID": accountdata.accountID,
             }
           );
@@ -1985,9 +2089,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
             const memberonguild = guild?.members?.cache?.get(
               discordlink.discordID
             );
-            memberonguild
-              ?.setNickname(req.body.username, "rename")
-              .catch(() => {});
+            memberonguild?.setNickname(username, "rename").catch(() => {});
           }
           res.send({ resp: true });
         } else {
