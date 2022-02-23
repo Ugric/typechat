@@ -25,9 +25,6 @@ import sharp from "sharp";
 import tokens from "./tokens.json";
 import { URLSearchParams } from "url";
 import os from "os";
-import React from "react";
-import ReactDOMServer from "react-dom/server";
-import App from "./typechat/src/index";
 
 console.time("express boot");
 

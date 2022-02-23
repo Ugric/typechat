@@ -81,11 +81,7 @@ self.addEventListener("fetch", (event) => {
         return cached[event.request.url]
           ? cached[event.request.url].clone()
           : event.request.destination == "document"
-            ? (() => {
-              const resp = html200.clone()
-              resp.url = event.request.url
-              return resp
-            })()
+          ? html200.clone()
           : errorresp.clone();
       })
   );
