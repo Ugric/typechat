@@ -1755,9 +1755,9 @@ function ChatPage() {
             <img
               src={
                 "/files/" +
-                (isGroupChat
+                (groupchatdata
                   ? groupchatdata?.picture
-                  : usersdata?.users[chattingto]?.profilePic) +
+                  : usersdata?.users[chattingto].profilePic) +
                 "?size=45"
               }
               data-private
@@ -1769,11 +1769,7 @@ function ChatPage() {
                 width: "45px",
                 height: "45px",
               }}
-              alt={
-                groupchatdata
-                  ? groupchatdata?.name
-                  : usersdata?.users[chattingto]?.username
-              }
+              alt={usersdata?.users[chattingto].profilePic}
             />
             <p style={{ textAlign: "center" }} data-private>
               {!groupchatdata ? (
