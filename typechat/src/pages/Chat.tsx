@@ -1375,6 +1375,7 @@ function ChatPage() {
     };
   }, [chattingto, usersdata]);
   const [oldmessagsize, setoldmessagesize] = useState(chats.length > 0);
+  const [noChat, setnoChat] = useState(false);
   const messagesize = chats.length > 0;
   useEffect(() => {
     if (messagesize !== oldmessagsize) {
@@ -1508,6 +1509,8 @@ function ChatPage() {
         setisonline(
           lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
         );
+      } else if (lastJsonMessage.type === "nchat") {
+        setnoChat(true)
       } else if (lastJsonMessage.type === "gift") {
         if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
           playSound("/sounds/gift.mp3");
@@ -1719,6 +1722,7 @@ function ChatPage() {
       });
     }
   };
+  if (noChat) return <ChatNotFound></ChatNotFound>;
   if (
     (!usersdata ||
       !groupchatdata ||

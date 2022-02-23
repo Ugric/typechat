@@ -22,14 +22,11 @@ import NotificationComponent from "./notification";
 import ReactGA from "react-ga4";
 import LogRocket from "logrocket";
 import Switches from "./Router";
-import {  render } from "react-dom";
+import { render } from "react-dom";
 import { Snowflakes } from "./pages/christmas";
 LogRocket.init("b1hvjh/typechat");
 
 if (!(!process.env.NODE_ENV || process.env.NODE_ENV === "development")) {
-  process
-    .on("unhandledRejection", console.error)
-    .on("uncaughtException", console.error);
   ReactGA.initialize("G-26D01FTK1T");
 }
 
@@ -85,7 +82,7 @@ function App() {
         if (!getuserdataonupdate && userdata.loggedin) {
           setgetuserdataonupdate(true);
           const response = await (
-            await fetch("/api/getuserdataonupdate")
+            await fetch("/api/getuserdataonupdate?nocache")
           ).json();
           if (!response.reconnect) {
             console.log(response);
@@ -125,6 +122,7 @@ function App() {
     window.addEventListener("offline", () => {
       store.addNotification({
         title: "Offline",
+        message: "the page is now offline!",
         type: "danger",
         insert: "top",
         container: "top-left",
@@ -140,6 +138,7 @@ function App() {
     window.addEventListener("online", () => {
       store.addNotification({
         title: "Online",
+        message: "the page is now online!",
         type: "success",
         insert: "top",
         container: "top-left",
@@ -152,6 +151,22 @@ function App() {
         },
       });
     });
+    if (!window.navigator.onLine) {
+      store.addNotification({
+        title: "Offline",
+        message: "the page is now offline!",
+        type: "danger",
+        insert: "top",
+        container: "top-left",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          pauseOnHover: true,
+          onScreen: true,
+        },
+      });
+    }
   }, []);
   useEffect(() => {
     if (userdata?.loggedin) {
