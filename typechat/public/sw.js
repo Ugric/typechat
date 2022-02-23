@@ -1,7 +1,10 @@
-const cached = {};
-
-const errorresp = new Response(
-  `<!DOCTYPE html>
+self.addEventListener("fetch", (event) => {
+  if (event.request.destination == "document") {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        console.log("offline mode");
+        return new Response(
+          `<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
@@ -62,29 +65,11 @@ const errorresp = new Response(
       </div>
     </body>
     </html>`,
-  { status: 503, headers: { "Content-Type": "text/html" } }
-);
-let html200;
-(async () => {
-  html200 = await fetch("/200.html");
-})();
-
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    fetch(event.request)
-      .then((resp) => {
-        if (url.search != "?nocache" && event.request.method == "GET")
-          cached[event.request.url] = resp.clone();
-        return resp;
+          { status: 503, headers: { "Content-Type": "text/html" } }
+        );
       })
-      .catch(() => {
-        return cached[event.request.url]
-          ? cached[event.request.url].clone()
-          : event.request.destination == "document"
-          ? html200.clone()
-          : errorresp.clone();
-      })
-  );
+    );
+  }
 });
 /*
 const ws = new WebSocket(
