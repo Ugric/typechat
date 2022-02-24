@@ -1,3 +1,4 @@
+const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 const cached = {};
 
 const errorresp = new Response(
@@ -64,11 +65,21 @@ const errorresp = new Response(
     </html>`,
   { status: 503, headers: { "Content-Type": "text/html" } }
 );
-errorresp.clone()
+
 let html200;
 (async () => {
-  html200 = await fetch("/200.html");
+  while (true) {
+    try {
+      html200 = await fetch("/200.html");
+      break
+    } catch {
+      await snooze(1000)
+    }
+  }
 })();
+setInterval(async () => {
+    html200 = await fetch("/200.html");
+}, 600000);
 
 self.addEventListener("fetch", (event) => {
   event.respondWith(
@@ -83,7 +94,7 @@ self.addEventListener("fetch", (event) => {
         console.log(err)
         return cached[event.request.url]
           ? cached[event.request.url].clone()
-          : event.request.destination == "document"
+          : event.request.destination == "document" && html200
           ? html200.clone()
           : errorresp.clone();
       })
