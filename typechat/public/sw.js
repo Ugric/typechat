@@ -1,10 +1,7 @@
-self.addEventListener("fetch", (event) => {
-  if (event.request.destination == "document") {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        console.log("offline mode");
-        return new Response(
-          `<!DOCTYPE html>
+const cached = {};
+
+const errorresp = new Response(
+  `<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
@@ -65,11 +62,32 @@ self.addEventListener("fetch", (event) => {
       </div>
     </body>
     </html>`,
-          { status: 503, headers: { "Content-Type": "text/html" } }
-        );
+  { status: 503, headers: { "Content-Type": "text/html" } }
+);
+errorresp.clone()
+let html200;
+(async () => {
+  html200 = await fetch("/200.html");
+})();
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((resp) => {
+        const url = new URL(event.request.url);
+        if (url.search != "?nocache" && event.request.method == "GET")
+          cached[event.request.url] = resp.clone();
+        return resp;
       })
-    );
-  }
+      .catch((err) => {
+        console.log(err)
+        return cached[event.request.url]
+          ? cached[event.request.url].clone()
+          : event.request.destination == "document"
+          ? html200.clone()
+          : errorresp.clone();
+      })
+  );
 });
 /*
 const ws = new WebSocket(
