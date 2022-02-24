@@ -1619,17 +1619,18 @@ function ChatPage() {
         if (lastJsonMessage.isGroupChat) {
           setchats(lastJsonMessage.messages);
           setgroupchatdata(lastJsonMessage.groupChatData);
+          setisGroupChat(true);
         } else {
           setchats(lastJsonMessage.messages);
           setusersdata({ exists: true, users: lastJsonMessage.users });
           setisonline(
             lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
           );
+          setisGroupChat(false);
         }
         setcanloadmore(true);
         isLoadMore.current = false;
         setloadingchatmessages(false);
-        setisGroupChat(true);
       } else if (lastJsonMessage.type === "typing") {
         if (Recipienttyping) {
           if (
