@@ -124,7 +124,16 @@ const messagefunctions = {};
 
 const groupchats: Record<
   string,
-  Record<string, Record<string, Record<string, any>>>
+  Record<
+    string,
+    Record<
+      string,
+      {
+        [key: string]: any;
+        focus: boolean;
+      }
+    >
+  >
 > = {};
 
 const toVerify: Record<string, string> = {};
@@ -145,7 +154,6 @@ for (let i = 0; i < 3; i++) {
       for (const key of Object.keys(toresizing)) {
         const tores = toresizing[key];
         delete toresizing[key];
-        console.log(tores);
         try {
           const image = sharp(tores.path);
           const metadata = await image.metadata();
@@ -355,26 +363,38 @@ function updateFromAccountID(accountID: string) {
   );
   db.run("ALTER TABLE accounts ADD joined NUMBER DEFAULT 0").catch(() => {});
   db.run("ALTER TABLE friendsChatMessages ADD mimetype STRING").catch(() => {});
-  if (!(await db.get("SELECT * FROM tsgroupchats WHERE chatID='TEST'"))) {
-    await Promise.all([
-      db.run(
-        "INSERT INTO tsgroupchats (chatID, name, picture, time) VALUES ('TEST', 'Test', 'my chat lolll', 0)"
-      ),
-      db.run(
-        "INSERT INTO tsgroupchatUsers (chatID, accountID, leader, time) VALUES ('TEST', 'TypeChat', 1, 0)"
-      ),
-      db.run(
-        "INSERT INTO tsgroupchatUsers (chatID, accountID, leader, time) VALUES ('TEST', 'eqdohzPsMGcQ8p9sUJBG', 0, 0)"
-      ),
-    ]);
-  }
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
       ":email": autoaccountdetails.email,
     }
   );
-
+  async function updateGroupchatMessageTiming(to: string) {
+    if (
+      await db.get(
+        "SELECT * FROM tsgroupchatLastMessage WHERE chatID=:chatID",
+        {
+          ":chatID": to,
+        }
+      )
+    ) {
+      db.run(
+        "UPDATE tsgroupchatLastMessage SET time=:time WHERE accountID=:accountID AND toAccountID=:toAccountID",
+        {
+          ":chatID": to,
+          ":time": Date.now(),
+        }
+      );
+    } else {
+      db.run(
+        "INSERT INTO tsgroupchatLastMessage (chatID, time) VALUES (:chatID, :time)",
+        {
+          ":chatID": to,
+          ":time": Date.now(),
+        }
+      );
+    }
+  }
   async function updateFriendMessageTiming(
     accountID: string,
     toAccountID: string
@@ -662,6 +682,7 @@ function updateFromAccountID(accountID: string) {
                   }
                 }
               }
+              to = msg.to;
               if (dm) {
                 if (msg.to === accountdata.accountID) {
                   return ws.send(
@@ -780,9 +801,10 @@ function updateFromAccountID(accountID: string) {
               const gc = await db.get<{ picture: string; name: string }>(
                 `SELECT picture, name
         FROM tsgroupchats
-        WHERE chatID == :chatID`,
+        WHERE chatID == :chatID and (SELECT accountID from groupChatUsers where chatID == :chatID and accountID == :accountID) != null`,
                 {
-                  ":chatID": msg.to,
+                    ":chatID": msg.to,
+                    ":accountID": accountdata.accountID,
                 }
               );
               if (gc) {
@@ -808,11 +830,32 @@ function updateFromAccountID(accountID: string) {
                     }
                   )
                 ).reverse();
+                const userinfo = await db.all(
+                  `SELECT accounts.accountID, accounts.username, accounts.profilePic, accounts.tag, accounts.backgroundImage
+                            FROM tsgroupchatUsers JOIN accounts ON tsgroupchatUsers.accountID = accounts.accountID
+                            WHERE chatID==:chatID and accounts.accountID!=:accountID`,
+                  {
+                    ":chatID": msg.to,
+                    ":accountID": accountdata.accountID,
+                  }
+                );
+                const users = {};
+                for (const user of userinfo) {
+                  users[user.accountID] = {
+                    username: user.username,
+                    id: user.accountID,
+                    profilePic: user.profilePic,
+                    tag: user.tag,
+                    backgroundImage: user.backgroundImage,
+                    badge: await getBadgesFromAccountID(user.accountID),
+                  };
+                }
                 ws.send(
                   JSON.stringify({
                     type: "init",
                     isGroupChat: true,
                     groupChatData: gc,
+                    users,
                     messages,
                   })
                 );
@@ -823,13 +866,17 @@ function updateFromAccountID(accountID: string) {
               const id = msg.id;
               const isowned = Boolean(
                 await db.get(
-                  "SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID",
+                  `SELECT * from ${
+                    isGroupChat ? "tsgroupchatMessages" : "friendsChatMessages"
+                  } WHERE deleted=false and ID=:id and accountID=:accountID`,
                   { ":id": id, ":accountID": accountdata.accountID }
                 )
               );
               if (isowned || accountdata.admin) {
                 db.run(
-                  "UPDATE friendsChatMessages SET deleted=true WHERE deleted=false and ID=:id",
+                  `UPDATE ${
+                    isGroupChat ? "tsgroupchatMessages" : "friendsChatMessages"
+                  } SET deleted=true WHERE deleted=false and ID=:id`,
                   { ":id": id }
                 );
                 if (
@@ -848,24 +895,40 @@ function updateFromAccountID(accountID: string) {
                     );
                   }
                 }
-                if (
-                  messagefunctions[accountdata.accountID] &&
-                  messagefunctions[accountdata.accountID][to]
-                ) {
-                  for (const ws of Object.keys(
+                if (isGroupChat) {
+                  for (const accountID of Object.keys(groupchats[to])) {
+                    for (const ws of Object.keys(groupchats[to][accountID])) {
+                      if (ws !== connectionID) {
+                        groupchats[to][accountID][ws].ws.send(
+                          JSON.stringify({
+                            type: "delete",
+                            id,
+                            from: accountdata.accountID,
+                          })
+                        );
+                      }
+                    }
+                  }
+                } else {
+                  if (
+                    messagefunctions[accountdata.accountID] &&
                     messagefunctions[accountdata.accountID][to]
-                  )) {
-                    if (
-                      messagefunctions[accountdata.accountID][to][ws]
-                        .connectionID !== connectionID
-                    ) {
-                      messagefunctions[accountdata.accountID][to][ws].ws.send(
-                        JSON.stringify({
-                          type: "delete",
-                          id,
-                          from: accountdata.accountID,
-                        })
-                      );
+                  ) {
+                    for (const ws of Object.keys(
+                      messagefunctions[accountdata.accountID][to]
+                    )) {
+                      if (
+                        messagefunctions[accountdata.accountID][to][ws]
+                          .connectionID !== connectionID
+                      ) {
+                        messagefunctions[accountdata.accountID][to][ws].ws.send(
+                          JSON.stringify({
+                            type: "delete",
+                            id,
+                            from: accountdata.accountID,
+                          })
+                        );
+                      }
                     }
                   }
                 }
@@ -875,47 +938,46 @@ function updateFromAccountID(accountID: string) {
               const message = String(msg.message);
               const isowned = Boolean(
                 await db.get(
-                  "SELECT * from friendsChatMessages WHERE deleted=false and ID=:id and accountID=:accountID",
+                  `SELECT * from ${
+                    isGroupChat ? "tsgroupchatMessages" : "friendsChatMessages"
+                  } WHERE deleted=false and ID=:id and accountID=:accountID`,
                   { ":id": id, ":accountID": accountdata.accountID }
                 )
               );
               if (isowned || accountdata.admin) {
                 db.run(
-                  "UPDATE friendsChatMessages SET message=:message, edited=true WHERE deleted=false and ID=:id",
+                  `UPDATE ${
+                    isGroupChat ? "tsgroupchatMessages" : "friendsChatMessages"
+                  } SET message=:message, edited=true WHERE deleted=false and ID=:id`,
                   {
                     ":id": id,
                     ":message": message,
                   }
                 );
-                if (
-                  messagefunctions[to] &&
-                  messagefunctions[to][accountdata.accountID]
-                ) {
-                  for (const ws of Object.keys(
-                    messagefunctions[to][accountdata.accountID]
-                  )) {
-                    messagefunctions[to][accountdata.accountID][ws].ws.send(
-                      JSON.stringify({
-                        type: "edit",
-                        id,
-                        message,
-                        from: accountdata.accountID,
-                      })
-                    );
+                if (isGroupChat) {
+                  for (const accountID of Object.keys(groupchats[to])) {
+                    for (const ws of Object.keys(groupchats[to][accountID])) {
+                      if (ws !== connectionID) {
+                        groupchats[to][accountID][ws].ws.send(
+                          JSON.stringify({
+                            type: "edit",
+                            id,
+                            message,
+                            from: accountdata.accountID,
+                          })
+                        );
+                      }
+                    }
                   }
-                }
-                if (
-                  messagefunctions[accountdata.accountID] &&
-                  messagefunctions[accountdata.accountID][to]
-                ) {
-                  for (const ws of Object.keys(
-                    messagefunctions[accountdata.accountID][to]
-                  )) {
-                    if (
-                      messagefunctions[accountdata.accountID][to][ws]
-                        .connectionID !== connectionID
-                    ) {
-                      messagefunctions[accountdata.accountID][to][ws].ws.send(
+                } else {
+                  if (
+                    messagefunctions[to] &&
+                    messagefunctions[to][accountdata.accountID]
+                  ) {
+                    for (const ws of Object.keys(
+                      messagefunctions[to][accountdata.accountID]
+                    )) {
+                      messagefunctions[to][accountdata.accountID][ws].ws.send(
                         JSON.stringify({
                           type: "edit",
                           id,
@@ -925,12 +987,59 @@ function updateFromAccountID(accountID: string) {
                       );
                     }
                   }
+                  if (
+                    messagefunctions[accountdata.accountID] &&
+                    messagefunctions[accountdata.accountID][to]
+                  ) {
+                    for (const ws of Object.keys(
+                      messagefunctions[accountdata.accountID][to]
+                    )) {
+                      if (
+                        messagefunctions[accountdata.accountID][to][ws]
+                          .connectionID !== connectionID
+                      ) {
+                        messagefunctions[accountdata.accountID][to][ws].ws.send(
+                          JSON.stringify({
+                            type: "edit",
+                            id,
+                            message,
+                            from: accountdata.accountID,
+                          })
+                        );
+                      }
+                    }
+                  }
                 }
               }
             } else if (msg.type == "getmessages") {
-              const messages = (
-                await db.all(
-                  `SELECT * FROM (SELECT
+              if (isGroupChat) {
+                const messages = (
+                  await db.all(
+                    `SELECT * 
+        FROM (SELECT
+        ID, accountID as "from", message, time, file, mimetype, edited, gift, amount
+        FROM tsgroupchatMessages
+        WHERE chatID==:chatID and deleted==false ORDER BY time DESC) LIMIT :start, :max`,
+                    {
+                      ":chatID": to,
+                      ":start": msg.start,
+                      ":max": msg.max,
+                    }
+                  )
+                ).reverse();
+                for (const message of messages) {
+                  message.mine = message.mine === 1;
+                }
+                ws.send(
+                  JSON.stringify({
+                    type: "prependmessages",
+                    messages,
+                  })
+                );
+              } else {
+                const messages = (
+                  await db.all(
+                    `SELECT * FROM (SELECT
         ID, accountID as "from", message, time, file, mimetype, edited, gift, amount
         FROM friendsChatMessages
         WHERE (
@@ -943,23 +1052,24 @@ function updateFromAccountID(accountID: string) {
                 and toAccountID = :accountID
                 and deleted=false
             ) ORDER  BY time DESC) LIMIT :start, :max`,
-                  {
-                    ":accountID": accountdata.accountID,
-                    ":toUser": to,
-                    ":start": msg.start,
-                    ":max": msg.max,
-                  }
-                )
-              ).reverse();
-              for (const message of messages) {
-                message.mine = message.mine === 1;
+                    {
+                      ":accountID": accountdata.accountID,
+                      ":toUser": to,
+                      ":start": msg.start,
+                      ":max": msg.max,
+                    }
+                  )
+                ).reverse();
+                for (const message of messages) {
+                  message.mine = message.mine === 1;
+                }
+                ws.send(
+                  JSON.stringify({
+                    type: "prependmessages",
+                    messages,
+                  })
+                );
               }
-              ws.send(
-                JSON.stringify({
-                  type: "prependmessages",
-                  messages,
-                })
-              );
             } else if (
               msg.type == "setFocus" &&
               to &&
@@ -990,7 +1100,7 @@ function updateFromAccountID(accountID: string) {
             } else if (msg.type == "pong") {
               lastping = new Date().getTime();
               pingpong();
-            } else if (msg.type === "gift") {
+            } else if (msg.type === "gift" && !isGroupChat) {
               const rocketFuel: any = (
                 await db.all(
                   "SELECT * FROM rocketFuelPoints WHERE accountID=:accountID and used=false",
@@ -1094,28 +1204,24 @@ function updateFromAccountID(accountID: string) {
               const time = new Date().getTime();
               const id = generate(100);
               if (isGroupChat) {
-                if (groupchats[to]) {
-                  for (const accountID of Object.keys(messagefunctions[to])) {
-                    if (
-                      accountID !== accountdata.accountID &&
-                      !(
-                        messagefunctions[to] &&
-                        messagefunctions[to][accountID] &&
-                        getAllOnline(messagefunctions[to][accountID]).length > 0
-                      )
-                    ) {
-                      sendNotification(to, {
-                        title: `${isGroupChat.name} - ${accountdata.username}#${accountdata.tag}`,
-                        message: msg.message
-                          ? truncate(msg.message, 25)
-                          : "file",
-                        to: `/chat/${to}`,
-                      });
-                    }
-                    for (const ws of Object.keys(
-                      messagefunctions[to][accountID]
-                    )) {
-                      messagefunctions[to][accountID][ws].ws.send(
+                for (const accountID of Object.keys(groupchats[to])) {
+                  if (
+                    accountID !== accountdata.accountID &&
+                    !(
+                      groupchats[to] &&
+                      groupchats[to][accountID] &&
+                      getAllOnline(groupchats[to][accountID]).length > 0
+                    )
+                  ) {
+                    sendNotification(to, {
+                      title: `${isGroupChat.name} - ${accountdata.username}#${accountdata.tag}`,
+                      message: msg.message ? truncate(msg.message, 25) : "file",
+                      to: `/chat/${to}`,
+                    });
+                  }
+                  for (const ws of Object.keys(groupchats[to][accountID])) {
+                    if (ws !== connectionID) {
+                      groupchats[to][accountID][ws].ws.send(
                         JSON.stringify({
                           type: msg.type,
                           message: {
@@ -1131,6 +1237,51 @@ function updateFromAccountID(accountID: string) {
                     }
                   }
                 }
+                (async () => {
+                  for (const account of await db.all(
+                    "SELECT accountID FROM tsgroupchatUsers WHERE chatID ==:chatID AND accountID!=:accountID",
+                    {
+                      ":chatID": to,
+                      ":accountID": accountdata.accountID,
+                    }
+                  )) {
+                    if (
+                      !(
+                        groupchats[to] &&
+                        groupchats[to][account.accountID] &&
+                        getAllOnline(messagefunctions[to][account.accountID])
+                          .length > 0
+                      )
+                    ) {
+                      sendNotification(account.accountID, {
+                        title: `${isGroupChat.name} - ${accountdata.username}`,
+                        message: msg.message
+                          ? truncate(msg.message, 25)
+                          : "file",
+                        to: `/chat/${to}`,
+                      });
+                    }
+                  }
+                })();
+
+                await db
+                  .run(
+                    `INSERT INTO tsgroupchatMessages (ID, accountID, chatID, message, file, time, mimetype, deleted) VALUES (:ID, :accountID, :chatID, :message, :file, :time, :mimetype, false)`,
+                    {
+                      ":ID": id,
+                      ":accountID": accountdata.accountID,
+                      ":chatID": to,
+                      ":message": msg.message,
+                      ":file": msg.file,
+                      ":mimetype": msg.mimetype,
+                      ":time": time,
+                    }
+                  )
+                  .catch(console.error);
+                updateGroupchatMessageTiming(to);
+                ws.send(
+                  JSON.stringify({ type: "sent", tempid: msg.tempid, id })
+                );
               } else {
                 if (
                   messagefunctions[to] &&
@@ -1216,7 +1367,23 @@ function updateFromAccountID(accountID: string) {
                 );
               }
             } else if (msg.type === "typing") {
-              if (
+              if (isGroupChat) {
+                for (const accountID of Object.keys(groupchats[to])) {
+                  if (accountID !== accountdata.accountID) {
+                    for (const ws of Object.keys(groupchats[to][accountID])) {
+                      groupchats[to][accountID][ws].ws.send(
+                        JSON.stringify({
+                          type: "typing",
+                          typing: msg.typing,
+                          length: msg.length,
+                          specialchars: msg.specialchars,
+                          by: accountdata.accountID,
+                        })
+                      );
+                    }
+                  }
+                }
+              } else if (
                 messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
               ) {
@@ -1268,6 +1435,7 @@ function updateFromAccountID(accountID: string) {
         if (!blastdata && startofmonth > time) {
           startofmonth -= 2629743000;
         }
+        console.log(blastdata);
         const filelimit = blastdata ? blastlimit * blastdata.fuel : normallimit;
         const limitused = (
           await db.get(
@@ -1996,17 +2164,19 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
           os.tmpdir(),
           `${imagedata.filename}.${req.query.size}`
         );
-        if (!failedresize[resizesave] || (await checkFileExists(filepath))) {
+        if (!failedresize[resizesave] && (await checkFileExists(filepath))) {
           if (
             req.query.size &&
             (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
             (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
           ) {
-            if (toresizing[resizesave]) {
+            if (toresizing[resizesave] || resizing.includes(resizesave)) {
+              console.log("bum");
               while (toresizing[resizesave] || resizing.includes(resizesave)) {
                 await snooze(100);
               }
             } else if (!(await checkFileExists(resizesave))) {
+              console.log("hello");
               toresizing[resizesave] = {
                 path: filepath,
                 size: Number(req.query.size),
@@ -2017,6 +2187,7 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
               }
             }
             if (!failedresize[resizesave]) {
+              console.log("sending");
               res.setHeader("Content-Type", imagedata.mimetype);
               return res.sendFile(resizesave);
             }

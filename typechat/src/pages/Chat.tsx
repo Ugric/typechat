@@ -1,7 +1,10 @@
 import {
+  faCloud,
   faCommentSlash,
   faCopy,
   faDesktop,
+  faEthernet,
+  faExclamation,
   faEyeSlash,
   faFile,
   faGift,
@@ -58,6 +61,7 @@ import useWindowVisable from "../hooks/useWindowVisable";
 import isMobileDevice from "../isMobile";
 import useWindowFocus from "use-window-focus";
 import "./css/audio.css";
+import useIsOnline from "../hooks/isonline";
 const chatSettings = createContext({ time: 0 });
 const usersContext = createContext<{
   exists: boolean;
@@ -1137,6 +1141,28 @@ function MessageMaker({
   );
 }
 
+function NoInternet() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        textAlign: "center",
+        color: "gray",
+      }}
+    >
+      <div style={{ fontSize: "50px" }}>
+        <FontAwesomeIcon icon={faExclamation} />
+        <FontAwesomeIcon icon={faCloud} />
+      </div>
+      <h1>No Internet Connection!</h1>
+      <p>This will disappear once you have an internet connection.</p>
+    </div>
+  );
+}
+
 function ChatNotFound() {
   return (
     <div
@@ -1366,9 +1392,11 @@ function ChatPage() {
   }, []);
   useEffect(() => {
     if (usersdata) {
-      document.title = `${isGroupChat ?
-        groupchatdata?.name || "Group Chat"
-        : usersdata.users[chattingto]?.username} - TypeChat`;
+      document.title = `${
+        isGroupChat
+          ? groupchatdata?.name || "Group Chat"
+          : usersdata.users[chattingto]?.username
+      } - TypeChat`;
     }
     return () => {
       document.title = "TypeChat";
@@ -1436,7 +1464,9 @@ function ChatPage() {
   const formref = useRef<any>(null);
   const shiftkey = useRef(false);
   const key = useRef(null);
-
+  const [chattext] = useState(
+    JSON.parse(localStorage.getItem("chattext") || "{}")
+  );
   useEffect(() => {
     if (lastJsonMessage) {
       if (lastJsonMessage.type === "message") {
@@ -1510,7 +1540,7 @@ function ChatPage() {
           lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
         );
       } else if (lastJsonMessage.type === "nchat") {
-        setnoChat(true)
+        setnoChat(true);
       } else if (lastJsonMessage.type === "gift") {
         if (lastJsonMessage.message.from !== user.id && ReceiveSound) {
           playSound("/sounds/gift.mp3");
@@ -1622,12 +1652,12 @@ function ChatPage() {
           setisGroupChat(true);
         } else {
           setchats(lastJsonMessage.messages);
-          setusersdata({ exists: true, users: lastJsonMessage.users });
           setisonline(
             lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
           );
           setisGroupChat(false);
         }
+        setusersdata({ exists: true, users: lastJsonMessage.users });
         setcanloadmore(true);
         isLoadMore.current = false;
         setloadingchatmessages(false);
@@ -1758,7 +1788,7 @@ function ChatPage() {
                 "/files/" +
                 (groupchatdata
                   ? groupchatdata?.picture
-                  : usersdata?.users[chattingto].profilePic) +
+                  : usersdata?.users[chattingto]?.profilePic) +
                 "?size=45"
               }
               data-private
@@ -1770,7 +1800,11 @@ function ChatPage() {
                 width: "45px",
                 height: "45px",
               }}
-              alt={usersdata?.users[chattingto].profilePic}
+              alt={
+                groupchatdata
+                  ? groupchatdata?.picture
+                  : usersdata?.users[chattingto]?.profilePic
+              }
             />
             <p style={{ textAlign: "center" }} data-private>
               {!groupchatdata ? (
@@ -2002,7 +2036,7 @@ function ChatPage() {
               </div>
 
               <TextareaAutosize
-                data-private="lipsum"
+                data-private
                 onInput={(e: any) => {
                   const message = e.target.value.trim();
                   const messagetoarray: string[] = Array.from(message);
@@ -2149,7 +2183,6 @@ function ChatPage() {
                 setloadingchatmessages(false);
                 setchats(
                   chats
-                    .slice(Math.max(chats.length - StartMessagesLength, 0))
                     .concat({
                       gift: undefined,
                       amount: undefined,
@@ -2161,8 +2194,13 @@ function ChatPage() {
                       tempid,
                       edited: false,
                     })
+                    .slice(
+                      toscroll.current
+                        ? Math.max(chats.length - StartMessagesLength, 0)
+                        : 0
+                    )
                 );
-                setTimeout(scrolltobottom, 0);
+                if (toscroll.current) setTimeout(scrolltobottom, 0);
                 metypingref.current = false;
                 setmetypingdata({
                   type: "typing",
@@ -2180,7 +2218,8 @@ function ChatPage() {
             }}
           >
             <TextareaAutosize
-              data-private="lipsum"
+              data-private
+              defaultValue={chattext[chattingto]}
               ref={inputref}
               onHeightChange={(height) => {
                 settextareaHeight(height);
@@ -2242,6 +2281,11 @@ function ChatPage() {
                     .slice(0, maxlength)
                     .join("");
                 }
+                const chattext: Record<string, string> = JSON.parse(
+                  localStorage.getItem("chattext")||"{}"
+                );
+                chattext[chattingto] = e.target.value;
+                localStorage.setItem("chattext", JSON.stringify(chattext));
               }}
               onKeyDown={(e: any) => {
                 key.current = e.keyCode;
@@ -2296,12 +2340,16 @@ function ChatPage() {
 function Chat({ chattingto }: { chattingto: string }) {
   const { loggedin, user } = useData();
   const time = useMemo(() => new Date().getTime(), []);
+
+  const IsOnline = useIsOnline();
   if (!loggedin) {
     return (
       <Redirect
         to={"/login?" + new URLSearchParams({ to: "/chat/" + chattingto })}
       ></Redirect>
     );
+  } else if (!IsOnline) {
+    return <NoInternet></NoInternet>;
   } else if (chattingto && chattingto !== user.id) {
     return (
       <chatSettings.Provider value={{ time }}>
