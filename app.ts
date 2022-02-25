@@ -800,11 +800,11 @@ function updateFromAccountID(accountID: string) {
               }
               const gc = await db.get<{ picture: string; name: string }>(
                 `SELECT picture, name
-        FROM tsgroupchats
-        WHERE chatID == :chatID and (SELECT accountID from groupChatUsers where chatID == :chatID and accountID == :accountID) != null`,
+        FROM tsgroupchats JOIN tsgroupchatUsers ON tsgroupchats.chatID=tsgroupchatUsers.chatID
+        WHERE tsgroupchats.chatID == :chatID and tsgroupchatUsers.accountID == :accountID`,
                 {
-                    ":chatID": msg.to,
-                    ":accountID": accountdata.accountID,
+                  ":chatID": msg.to,
+                  ":accountID": accountdata.accountID,
                 }
               );
               if (gc) {
