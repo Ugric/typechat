@@ -1,6 +1,6 @@
-const nodemailer = require("nodemailer");
-const { email, password } = require("./emailconfig.json");
-const bleach = require("bleach");
+import nodemailer from "nodemailer";
+import {email} from "./tokens.json";
+import bleach from "bleach";
 
 const url = "https://typechat.world/"
 
@@ -11,8 +11,8 @@ async function NotificationEmail(
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: email,
-      pass: password,
+      user: email.email,
+      pass: email.password,
     },
   });
   const info = await transporter.sendMail({
@@ -59,8 +59,8 @@ async function PasswordEmail(
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: email,
-      pass: password,
+      user: email.email,
+      pass: email.password,
     },
   });
   await transporter.sendMail({
@@ -108,8 +108,8 @@ async function VerificationEmail(
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: email,
-      pass: password,
+      user: email.email,
+      pass: email.password,
     },
   });
   await transporter.sendMail({

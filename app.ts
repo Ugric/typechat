@@ -13,7 +13,6 @@ const snooze = (milliseconds: number) =>
 import { generate } from "randomstring";
 import WebSocket = require("ws");
 import { NotificationEmail, PasswordEmail, VerificationEmail } from "./emailer";
-import autoaccountdetails from "./autoaccountdetails.json";
 import EmailValidation from "emailvalid";
 import { client, roleID, serverID, unlinkedroleID } from "./typechatbot";
 import { MessageEmbed } from "discord.js";
@@ -366,7 +365,7 @@ function updateFromAccountID(accountID: string) {
   let defaultaccount = await db.get(
     "SELECT * FROM accounts WHERE email=:email",
     {
-      ":email": autoaccountdetails.email,
+      ":email": tokens.autoaccount.email,
     }
   );
   async function updateGroupchatMessageTiming(to: string) {
@@ -435,12 +434,12 @@ function updateFromAccountID(accountID: string) {
   }
   if (!defaultaccount) {
     const salt = generate(150);
-    const password = hasher(autoaccountdetails.pass + salt);
+    const password = hasher(tokens.autoaccount.pass + salt);
     await db.run(
       "INSERT INTO accounts (accountID, email, username, password, salt, tag, joined, admin) VALUES  (:accountID, :email, :username, :password, :salt, :tag, :time, true)",
       {
         ":accountID": "TypeChat",
-        ":email": autoaccountdetails.email,
+        ":email": tokens.autoaccount.email,
         ":username": "TypeChat",
         ":password": password,
         ":salt": salt,
@@ -449,7 +448,7 @@ function updateFromAccountID(accountID: string) {
       }
     );
     defaultaccount = await db.get("SELECT * FROM accounts WHERE email=:email", {
-      ":email": autoaccountdetails.email,
+      ":email": tokens.autoaccount.email,
     });
   }
   if (!(await db.get("SELECT * FROM badges WHERE accountID='TypeChat'"))) {
@@ -627,22 +626,26 @@ function updateFromAccountID(accountID: string) {
         };
         ws.on("close", () => {
           if (to) {
-            delete messagefunctions[accountdata.accountID][to][connectionID];
-            if (
-              getAllOnline(messagefunctions[accountdata.accountID][to])
-                .length <= 0 &&
-              messagefunctions[to] &&
-              messagefunctions[to][accountdata.accountID]
-            ) {
-              for (const ws of Object.keys(
+            if (isGroupChat) {
+              delete messagefunctions[to][accountdata.accountID][connectionID];
+            } else {
+              delete messagefunctions[accountdata.accountID][to][connectionID];
+              if (
+                getAllOnline(messagefunctions[accountdata.accountID][to])
+                  .length <= 0 &&
+                messagefunctions[to] &&
                 messagefunctions[to][accountdata.accountID]
-              )) {
-                messagefunctions[to][accountdata.accountID][ws].ws.send(
-                  JSON.stringify({
-                    type: "online",
-                    online: false,
-                  })
-                );
+              ) {
+                for (const ws of Object.keys(
+                  messagefunctions[to][accountdata.accountID]
+                )) {
+                  messagefunctions[to][accountdata.accountID][ws].ws.send(
+                    JSON.stringify({
+                      type: "online",
+                      online: false,
+                    })
+                  );
+                }
               }
             }
           }
@@ -1072,29 +1075,34 @@ function updateFromAccountID(accountID: string) {
               }
             } else if (
               msg.type == "setFocus" &&
-              to &&
-              messagefunctions[accountdata.accountID][to][connectionID]
+              to
             ) {
-              messagefunctions[accountdata.accountID][to][connectionID].focus =
-                msg.focus;
-              if (
-                (!msg.focus
-                  ? getAllOnline(messagefunctions[accountdata.accountID][to])
+              if (isGroupChat) {
+                groupchats[to][accountdata.accountID][connectionID].focus =
+                  msg.focus;
+                
+              } else  {
+                messagefunctions[accountdata.accountID][to][connectionID].focus =
+                  msg.focus;
+                if (
+                  (!msg.focus
+                    ? getAllOnline(messagefunctions[accountdata.accountID][to])
                       .length <= 0
-                  : true) &&
-                messagefunctions[to] &&
-                messagefunctions[to][accountdata.accountID]
-              ) {
-                for (const ws of Object.keys(
+                    : true) &&
+                  messagefunctions[to] &&
                   messagefunctions[to][accountdata.accountID]
-                )) {
-                  messagefunctions[to][accountdata.accountID][ws].ws.send(
-                    JSON.stringify({
-                      type: "online",
-                      online: msg.focus,
-                      mobile: msg.focus ? mobile : undefined,
-                    })
-                  );
+                ) {
+                  for (const ws of Object.keys(
+                    messagefunctions[to][accountdata.accountID]
+                  )) {
+                    messagefunctions[to][accountdata.accountID][ws].ws.send(
+                      JSON.stringify({
+                        type: "online",
+                        online: msg.focus,
+                        mobile: msg.focus ? mobile : undefined,
+                      })
+                    );
+                  }
                 }
               }
             } else if (msg.type == "pong") {
