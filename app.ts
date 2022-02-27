@@ -378,7 +378,7 @@ function updateFromAccountID(accountID: string) {
       )
     ) {
       db.run(
-        "UPDATE tsgroupchatLastMessage SET time=:time WHERE accountID=:accountID AND toAccountID=:toAccountID",
+        "UPDATE tsgroupchatLastMessage SET time=:time WHERE chatID=:chatID",
         {
           ":chatID": to,
           ":time": Date.now(),
@@ -627,7 +627,7 @@ function updateFromAccountID(accountID: string) {
         ws.on("close", () => {
           if (to) {
             if (isGroupChat) {
-              delete messagefunctions[to][accountdata.accountID][connectionID];
+              delete groupchats[to][accountdata.accountID][connectionID];
             } else {
               delete messagefunctions[accountdata.accountID][to][connectionID];
               if (
