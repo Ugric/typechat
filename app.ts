@@ -1257,7 +1257,7 @@ function updateFromAccountID(accountID: string) {
                       !(
                         groupchats[to] &&
                         groupchats[to][account.accountID] &&
-                        getAllOnline(messagefunctions[to][account.accountID])
+                        getAllOnline(groupchats[to][account.accountID])
                           .length > 0
                       )
                     ) {
