@@ -1051,7 +1051,7 @@ function MessageMaker({
               }}
             >
               {messages[i].from === user.id ? (
-                <span style={{ marginRight: "5px", fontSize: "10px" }}>
+                <span style={{ marginRight: "5px" }}>
                   {user.username}
                 </span>
               ) : (
@@ -1072,7 +1072,7 @@ function MessageMaker({
                 alt=""
               />
               {users[messages[i].from] ? (
-                <span style={{ marginLeft: "5px", fontSize: "10px" }}>
+                <span style={{ marginLeft: "5px" }}>
                   {users[messages[i].from].username}
                 </span>
               ) : (
@@ -1156,6 +1156,16 @@ function MessageMaker({
           typingdata[key].typing ? (
             <React.Fragment key={key}>
               <div
+                className="message message-yours last-yours"
+                style={{
+                  opacity: 0.5,
+                  textShadow: "0 0 7px black",
+                  color: "transparent",
+                }}
+              >
+                {faketext[key]}
+              </div>
+              <div
                 data-private
                 style={{
                   alignSelf: "flex-start",
@@ -1174,16 +1184,6 @@ function MessageMaker({
                 <span style={{ marginLeft: "5px" }}>
                   {users[key]?.username}
                 </span>
-              </div>
-              <div
-                className="message message-yours last-yours"
-                style={{
-                  opacity: 0.5,
-                  textShadow: "0 0 7px black",
-                  color: "transparent",
-                }}
-              >
-                {faketext[key]}
               </div>
             </React.Fragment>
           ) : (
