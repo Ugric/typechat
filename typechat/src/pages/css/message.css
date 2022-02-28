@@ -3,7 +3,7 @@
   display: flex;
   text-align: left;
   flex-direction: column;
-  padding: 20px;
+  padding: 20px 5px;
 }
 
 .chat a {
@@ -15,10 +15,12 @@
 }
 
 .emojimessage-mine {
+  margin-right: 25px;
   text-align: end;
 }
 
 .emojimessage-yours {
+  margin-left: 25px;
   text-align: start;
 }
 
@@ -26,12 +28,13 @@
   white-space: pre-line;
   border-radius: 20px;
   padding: 8px 15px;
-  margin-top: 1px;
+  margin-top: 2px;
   display: inline-block;
 
 }
 
 .message-yours {
+  margin-left: 25px;
   align-self: flex-start;
   max-width: 75%;
   background-color: #eee;
@@ -42,15 +45,16 @@
 }
 
 .mid-yours {
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
 
 }
 .mid-mine {
-  border-top-right-radius: 5px;
-  border-bottom-right-radius: 5px;
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
 
 }
+/*
 
 .last-yours:before {
   content: "";
@@ -74,7 +78,6 @@
   background: var(--dark-mode);
   border-bottom-right-radius: 10px;
 }
-
 .last-mine:before {
   content: "";
   position: absolute;
@@ -97,30 +100,30 @@
   height: 20px;
   background: var(--dark-mode);
   border-bottom-left-radius: 10px;
-}
+}*/
 
 .first-yours {
-  border-bottom-left-radius: 5px;
+  border-bottom-left-radius: 2px;
 }
 .first-mine {
-  border-bottom-right-radius: 5px;
+  border-bottom-right-radius: 2px;
 }
 
 .last-yours {
-  border-bottom-left-radius: 20px;
+  border-bottom-left-radius: 2px;
 }
 .last-mine {
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 2px;
 }
 
 
 .message-mine {
+  margin-right: 25px;
   align-self: flex-end;
   color: white;
   max-width: 75%;
   word-break: normal;
   word-wrap: break-word;
-  background: linear-gradient( to bottom, var(--light-bg-colour) 0%, var(--dark-bg-colour) 100%);
   background-attachment: fixed;
   position: relative;
 }

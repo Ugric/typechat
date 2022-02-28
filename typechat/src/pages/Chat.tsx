@@ -68,6 +68,9 @@ const usersContext = createContext<{
   users: { [key: string]: any };
 }>({ exists: false, users: {} });
 
+const top = [111, 111, 255];
+const bottom = [59, 59, 211];
+
 const reg = new RegExp("[" + emoji.join("|") + "]", "g");
 function onlyContainsEmojis(str: string) {
   const removeEmoji = (str: string) => str.replace(reg, "");
@@ -477,14 +480,58 @@ function Message({
   const submitref = useRef<any>();
   const longmessage = messagecharlist && messagecharlist.length > 500;
   const messageref = useRef(message);
+  const msgref = useRef<any>(null);
+  const [gradients, setgradients] = useState({
+    top: top,
+    bottom: top,
+  });
+  useEffect(() => {
+    if (messages[i].from === user.id) {
+      const call = () => {
+        const pos = msgref.current?.getBoundingClientRect();
+        if (pos) {
+          if (pos.top > 0 && pos.bottom < window.screen.height) {
+            const topgradent = [
+              (bottom[0] - top[0]) * (pos.top / window.screen.height) + top[0],
+              (bottom[1] - top[1]) * (pos.top / window.screen.height) + top[1],
+              (bottom[2] - top[2]) * (pos.top / window.screen.height) + top[2],
+            ];
+            const bottomgradent = [
+              (bottom[0] - top[0]) * (pos.bottom / window.screen.height) +
+              top[0],
+              (bottom[1] - top[1]) * (pos.bottom / window.screen.height) +
+              top[1],
+              (bottom[2] - top[2]) * (pos.bottom / window.screen.height) +
+              top[2],
+            ];
+            setgradients({ top: topgradent, bottom: bottomgradent });
+          }
+        }
+      };
+      window.addEventListener("scroll", call);
+      window.addEventListener("resize", call);
+      call()
+      return () => {
+        window.removeEventListener("scroll", call);
+        window.removeEventListener("resize", call);
+      };
+    }
+  }, []);
   return !messages[i].gift ? (
     <>
       <ContextMenuTrigger
         id={String(messages[i].ID ? messages[i].ID : messages[i].tempid)}
       >
         <div
+          ref={msgref}
           data-private
-          style={{ opacity: !messages[i].ID ? 0.5 : undefined }}
+          style={{
+            opacity: !messages[i].ID ? 0.5 : undefined,
+            background:
+              (onlyemojis || file) && messages[i].from === user.id
+                ? `linear-gradient( to bottom, rgb(${gradients.top[0]}, ${gradients.top[1]}, ${gradients.top[2]}) 0%, rgb(${gradients.bottom[0]}, ${gradients.bottom[1]}, ${gradients.bottom[2]}) 100%)`
+                : undefined,
+          }}
           className={
             onlyemojis || file
               ? `message message-${
@@ -843,6 +890,10 @@ function Message({
         style={{
           opacity: !messages[i].ID ? 0.5 : undefined,
           textAlign: "center",
+          background:
+             messages[i].from === user.id
+              ? `linear-gradient( to bottom, rgb(${gradients.top[0]}, ${gradients.top[1]}, ${gradients.top[2]}) 0%, rgb(${gradients.bottom[0]}, ${gradients.bottom[1]}, ${gradients.bottom[2]}) 100%)`
+              : undefined,
         }}
         className={`message message-${
           messages[i].from === user.id ? "mine" : "yours"
@@ -973,8 +1024,21 @@ function MessageMaker({
             </p>
           );
         }
+        output.push(
+          <Message
+            key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+            messages={messages}
+            deleteFromID={deleteFromID}
+            i={i}
+            user={user}
+            toscroll={toscroll}
+            scrolltobottom={scrolltobottom}
+            sendJsonMessage={sendJsonMessage}
+            editFromID={editFromID}
+          ></Message>
+        );
         if (
-          (!lastmessage || messages[i].from !== lastmessage.from) &&
+          (!messages[i + 1] || messages[i].from !== messages[i + 1].from) &&
           (messages[i].from === user.id || users[messages[i].from])
         ) {
           output.push(
@@ -987,7 +1051,9 @@ function MessageMaker({
               }}
             >
               {messages[i].from === user.id ? (
-                <span style={{ marginRight: "5px" }}>{user.username}</span>
+                <span style={{ marginRight: "5px", fontSize: "10px" }}>
+                  {user.username}
+                </span>
               ) : (
                 <></>
               )}
@@ -1006,7 +1072,7 @@ function MessageMaker({
                 alt=""
               />
               {users[messages[i].from] ? (
-                <span style={{ marginLeft: "5px" }}>
+                <span style={{ marginLeft: "5px", fontSize: "10px" }}>
                   {users[messages[i].from].username}
                 </span>
               ) : (
@@ -1016,19 +1082,7 @@ function MessageMaker({
           );
           topIndex++;
         }
-        output.push(
-          <Message
-            key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-            messages={messages}
-            deleteFromID={deleteFromID}
-            i={i}
-            user={user}
-            toscroll={toscroll}
-            scrolltobottom={scrolltobottom}
-            sendJsonMessage={sendJsonMessage}
-            editFromID={editFromID}
-          ></Message>
-        );
+
         lastmessage = messages[i];
       }
       console.timeEnd("chatrender");
@@ -2208,6 +2262,11 @@ function ChatPage() {
                   length: 0,
                   specialchars: {},
                 });
+                const chattext: Record<string, string> = JSON.parse(
+                  localStorage.getItem("chattext") || "{}"
+                );
+                chattext[chattingto] = e.target.value;
+                localStorage.setItem("chattext", JSON.stringify(chattext));
               }
             }}
             ref={formref}
@@ -2282,7 +2341,7 @@ function ChatPage() {
                     .join("");
                 }
                 const chattext: Record<string, string> = JSON.parse(
-                  localStorage.getItem("chattext")||"{}"
+                  localStorage.getItem("chattext") || "{}"
                 );
                 chattext[chattingto] = e.target.value;
                 localStorage.setItem("chattext", JSON.stringify(chattext));

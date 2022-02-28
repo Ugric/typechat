@@ -24,6 +24,9 @@ import sharp from "sharp";
 import tokens from "./tokens.json";
 import { URLSearchParams } from "url";
 import os from "os";
+import pLimit from "p-limit";
+
+const fileprocesslimit = pLimit(3);
 
 console.time("express boot");
 
@@ -137,47 +140,6 @@ const groupchats: Record<
 
 const toVerify: Record<string, string> = {};
 const resizing: string[] = [];
-const failedresize: Record<string, { time: number }> = {};
-const toresizing: Record<
-  string,
-  {
-    path: string;
-    size: number;
-    save: string;
-  }
-> = {};
-
-for (let i = 0; i < 3; i++) {
-  (async () => {
-    while (true) {
-      for (const key of Object.keys(toresizing)) {
-        const tores = toresizing[key];
-        delete toresizing[key];
-        try {
-          const image = sharp(tores.path);
-          const metadata = await image.metadata();
-          const width = Number(tores.size);
-          if (metadata.width > width) {
-            console.log("saving resized image to:", tores.path);
-            resizing.push(tores.save);
-            await image.withMetadata().resize(width).toFile(tores.save);
-
-            const index = resizing.indexOf(tores.save);
-            if (index !== -1) resizing.splice(index, 1);
-          } else {
-            failedresize[tores.save] = { time: Date.now() };
-          }
-        } catch (e) {
-          console.error(e);
-          const index = resizing.indexOf(tores.save);
-          if (index !== -1) resizing.splice(index, 1);
-          failedresize[tores.save] = { time: Date.now() };
-        }
-      }
-      await snooze(100);
-    }
-  })();
-}
 
 const toVerifyAccountID: Record<string, string> = {};
 
@@ -1073,21 +1035,18 @@ function updateFromAccountID(accountID: string) {
                   })
                 );
               }
-            } else if (
-              msg.type == "setFocus" &&
-              to
-            ) {
+            } else if (msg.type == "setFocus" && to) {
               if (isGroupChat) {
                 groupchats[to][accountdata.accountID][connectionID].focus =
                   msg.focus;
-                
-              } else  {
-                messagefunctions[accountdata.accountID][to][connectionID].focus =
-                  msg.focus;
+              } else {
+                messagefunctions[accountdata.accountID][to][
+                  connectionID
+                ].focus = msg.focus;
                 if (
                   (!msg.focus
                     ? getAllOnline(messagefunctions[accountdata.accountID][to])
-                      .length <= 0
+                        .length <= 0
                     : true) &&
                   messagefunctions[to] &&
                   messagefunctions[to][accountdata.accountID]
@@ -1257,8 +1216,8 @@ function updateFromAccountID(accountID: string) {
                       !(
                         groupchats[to] &&
                         groupchats[to][account.accountID] &&
-                        getAllOnline(groupchats[to][account.accountID])
-                          .length > 0
+                        getAllOnline(groupchats[to][account.accountID]).length >
+                          0
                       )
                     ) {
                       sendNotification(account.accountID, {
@@ -2159,53 +2118,60 @@ WHERE friends.accountID == :accountID and accounts.accountID != :accountID
       return res.send(false);
     });
 
-    app.get("/files/:id", async (req, res) => {
-      const imagedata = await db.get(
-        `SELECT filename, mimetype FROM images WHERE imageID=:id`,
-        {
-          ":id": req.params.id,
-        }
-      );
-      if (imagedata) {
-        const filepath = path.join(__dirname, "files", imagedata.filename);
-        const resizesave = path.join(
-          os.tmpdir(),
-          `${imagedata.filename}.${req.query.size}`
+    app.get("/files/:id", (req, res) =>
+      fileprocesslimit(async () => {
+        const imagedata = await db.get(
+          `SELECT filename, mimetype FROM images WHERE imageID=:id`,
+          {
+            ":id": req.params.id,
+          }
         );
-        if (!failedresize[resizesave] && (await checkFileExists(filepath))) {
-          if (
-            req.query.size &&
-            (Boolean(req.query.force) || imagedata.mimetype !== "image/gif") &&
-            (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
-          ) {
-            if (toresizing[resizesave] || resizing.includes(resizesave)) {
-              console.log("bum");
-              while (toresizing[resizesave] || resizing.includes(resizesave)) {
-                await snooze(100);
+        if (imagedata) {
+          const filepath = path.join(__dirname, "files", imagedata.filename);
+          if (await checkFileExists(filepath)) {
+            if (
+              req.query.size &&
+              (Boolean(req.query.force) ||
+                imagedata.mimetype !== "image/gif") &&
+              (!imagedata.mimetype || imagedata.mimetype.startsWith("image/"))
+            ) {
+              const resizesave = path.join(
+                os.tmpdir(),
+                `${imagedata.filename}.${req.query.size}`
+              );
+
+              if (resizing.includes(resizesave)) {
+                while (resizing.includes(resizesave)) {
+                  await snooze(100);
+                }
+              } else if (!(await checkFileExists(resizesave))) {
+                try {
+                  const image = sharp(filepath);
+                  const metadata = await image.metadata();
+                  const width = Number(req.query.size);
+                  if (metadata.width > width) {
+                    console.log("saving resized image to:", resizesave);
+                    resizing.push(resizesave);
+                    await image.withMetadata().resize(width).toFile(resizesave);
+                    resizing.splice(resizing.indexOf(resizesave), 1);
+                  } else {
+                    return res.sendFile(filepath);
+                  }
+                } catch (e) {
+                  console.error(e);
+                  return res.sendFile(filepath);
+                }
               }
-            } else if (!(await checkFileExists(resizesave))) {
-              console.log("hello");
-              toresizing[resizesave] = {
-                path: filepath,
-                size: Number(req.query.size),
-                save: resizesave,
-              };
-              while (toresizing[resizesave] || resizing.includes(resizesave)) {
-                await snooze(100);
-              }
-            }
-            if (!failedresize[resizesave]) {
-              console.log("sending");
               res.setHeader("Content-Type", imagedata.mimetype);
               return res.sendFile(resizesave);
             }
+            return res.sendFile(filepath);
           }
-          return res.sendFile(filepath);
         }
-      }
 
-      return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
-    });
+        return res.status(404).sendFile(path.join(__dirname, "unknown.png"));
+      })
+    );
     app.get("/getprofilepicfromid", async (req, res) => {
       const imagedata = await db.get(
         `SELECT filename FROM images WHERE imageID=(SELECT profilePic FROM accounts WHERE accountID==:accountID)`,
