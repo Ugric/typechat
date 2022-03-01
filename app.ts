@@ -591,17 +591,14 @@ function updateFromAccountID(accountID: string) {
             if (isGroupChat) {
               delete groupchats[to][accountdata.accountID][connectionID];
               if (
-                getAllOnline(groupchats[to][accountdata.accountID])
-                  .length <= 0
+                getAllOnline(groupchats[to][accountdata.accountID]).length <= 0
               ) {
                 for (const accountID of Object.keys(
                   groupchats[to][accountdata.accountID]
                 )) {
-                  for (
-                    const connectionID of Object.keys(
-                      groupchats[to][accountdata.accountID][accountID]
-                    )
-                  ) {
+                  for (const connectionID of Object.keys(
+                    groupchats[to][accountdata.accountID][accountID]
+                  )) {
                     groupchats[to][accountdata.accountID][accountID][
                       connectionID
                     ].ws.send(
@@ -650,30 +647,29 @@ function updateFromAccountID(accountID: string) {
                 }
               );
               if (dm) {
-
-              if (to) {
-                delete messagefunctions[accountdata.accountID][to][
-                  connectionID
-                ];
-                if (
-                  getAllOnline(messagefunctions[accountdata.accountID][to])
-                    .length <= 0 &&
-                  messagefunctions[to] &&
-                  messagefunctions[to][accountdata.accountID]
-                ) {
-                  for (const ws of Object.keys(
+                if (to) {
+                  delete messagefunctions[accountdata.accountID][to][
+                    connectionID
+                  ];
+                  if (
+                    getAllOnline(messagefunctions[accountdata.accountID][to])
+                      .length <= 0 &&
+                    messagefunctions[to] &&
                     messagefunctions[to][accountdata.accountID]
-                  )) {
-                    messagefunctions[to][accountdata.accountID][ws].ws.send(
-                      JSON.stringify({
-                        type: "online",
-                        online: false,
-                      })
-                    );
+                  ) {
+                    for (const ws of Object.keys(
+                      messagefunctions[to][accountdata.accountID]
+                    )) {
+                      messagefunctions[to][accountdata.accountID][ws].ws.send(
+                        JSON.stringify({
+                          type: "online",
+                          online: false,
+                        })
+                      );
+                    }
                   }
                 }
-              }
-              to = msg.to;
+                to = msg.to;
                 if (msg.to === accountdata.accountID) {
                   return ws.send(
                     JSON.stringify({
@@ -687,7 +683,7 @@ function updateFromAccountID(accountID: string) {
         FROM (SELECT
         ID, accountID as "from", message, time, file, mimetype, edited, gift, amount
         FROM friendsChatMessages
-        WHERE (
+        WHERE (Ì
                 accountID = :accountID
                 and toAccountID = :toUser
                 and deleted=false
@@ -798,6 +794,8 @@ function updateFromAccountID(accountID: string) {
                 }
               );
               if (gc) {
+
+                to = msg.to;
                 if (!groupchats[to]) groupchats[to] = {};
                 if (!groupchats[to][accountdata.accountID]) {
                   groupchats[to][accountdata.accountID] = {};
@@ -1017,9 +1015,6 @@ function updateFromAccountID(accountID: string) {
                     }
                   )
                 ).reverse();
-                for (const message of messages) {
-                  message.mine = message.mine === 1;
-                }
                 ws.send(
                   JSON.stringify({
                     type: "prependmessages",
@@ -1050,9 +1045,6 @@ function updateFromAccountID(accountID: string) {
                     }
                   )
                 ).reverse();
-                for (const message of messages) {
-                  message.mine = message.mine === 1;
-                }
                 ws.send(
                   JSON.stringify({
                     type: "prependmessages",
@@ -1065,8 +1057,8 @@ function updateFromAccountID(accountID: string) {
                 groupchats[to][accountdata.accountID][connectionID].focus =
                   msg.focus;
                 if (
-                  getAllOnline(groupchats[to][accountdata.accountID])
-                    .length <= 0
+                  getAllOnline(groupchats[to][accountdata.accountID]).length <=
+                  0
                 ) {
                   for (const accountID of Object.keys(groupchats[to])) {
                     for (const ws of Object.keys(groupchats[to][accountID])) {
@@ -1233,7 +1225,7 @@ function updateFromAccountID(accountID: string) {
                     if (ws !== connectionID) {
                       groupchats[to][accountID][ws].ws.send(
                         JSON.stringify({
-                          type: 'message',
+                          type: "message",
                           message: {
                             from: accountdata.accountID,
                             time,

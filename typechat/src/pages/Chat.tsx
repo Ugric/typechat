@@ -1932,7 +1932,11 @@ function ChatPage() {
                     {Object.keys(Object(usersdata?.users)).map((userid) => (
                       <img
                         key={userid}
-                        src={"/files/" + user.profilePic + "?size=25"}
+                        src={
+                          "/files/" +
+                          usersdata?.users[userid].profilePic +
+                          "?size=25"
+                        }
                         alt={usersdata?.users[userid].username}
                         width="25px"
                         height="25px"
