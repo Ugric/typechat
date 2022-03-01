@@ -68,8 +68,8 @@ const usersContext = createContext<{
   users: { [key: string]: any };
 }>({ exists: false, users: {} });
 
-const top = [111, 111, 255];
-const bottom = [59, 59, 211];
+const top = [121, 121, 255];
+const bottom = [35, 35, 175];
 
 const reg = new RegExp("[" + emoji.join("|") + "]", "g");
 function onlyContainsEmojis(str: string) {
@@ -486,11 +486,11 @@ function Message({
     bottom: top,
   });
   useEffect(() => {
-    if (messages[i].from === user.id) {
+    if ((onlyemojis || file) && messages[i].from === user.id) {
       const call = () => {
         const pos = msgref.current?.getBoundingClientRect();
         if (pos) {
-          if (pos.top > 0 && pos.bottom < window.screen.height) {
+          if (pos.top >= 0 && pos.top <= window.screen.height) {
             const topgradent = [
               (bottom[0] - top[0]) * (pos.top / window.screen.height) + top[0],
               (bottom[1] - top[1]) * (pos.top / window.screen.height) + top[1],
@@ -498,19 +498,24 @@ function Message({
             ];
             const bottomgradent = [
               (bottom[0] - top[0]) * (pos.bottom / window.screen.height) +
-              top[0],
+                top[0],
               (bottom[1] - top[1]) * (pos.bottom / window.screen.height) +
-              top[1],
+                top[1],
               (bottom[2] - top[2]) * (pos.bottom / window.screen.height) +
-              top[2],
+                top[2],
             ];
             setgradients({ top: topgradent, bottom: bottomgradent });
+          } else {
+            setgradients({
+              top: pos.top < 0 ? top : bottom,
+              bottom: pos.top < 0 ? top : bottom,
+            });
           }
         }
       };
       window.addEventListener("scroll", call);
       window.addEventListener("resize", call);
-      call()
+      call();
       return () => {
         window.removeEventListener("scroll", call);
         window.removeEventListener("resize", call);
@@ -891,7 +896,7 @@ function Message({
           opacity: !messages[i].ID ? 0.5 : undefined,
           textAlign: "center",
           background:
-             messages[i].from === user.id
+            messages[i].from === user.id
               ? `linear-gradient( to bottom, rgb(${gradients.top[0]}, ${gradients.top[1]}, ${gradients.top[2]}) 0%, rgb(${gradients.bottom[0]}, ${gradients.bottom[1]}, ${gradients.bottom[2]}) 100%)`
               : undefined,
         }}
@@ -1024,21 +1029,10 @@ function MessageMaker({
             </p>
           );
         }
-        output.push(
-          <Message
-            key={messages[i].ID ? messages[i].ID : messages[i].tempid}
-            messages={messages}
-            deleteFromID={deleteFromID}
-            i={i}
-            user={user}
-            toscroll={toscroll}
-            scrolltobottom={scrolltobottom}
-            sendJsonMessage={sendJsonMessage}
-            editFromID={editFromID}
-          ></Message>
-        );
         if (
-          (!messages[i + 1] || messages[i].from !== messages[i + 1].from) &&
+          (!lastmessage ||
+            messages[i].from !== lastmessage.from ||
+            messages[i].time - lastmessage.time > 300000) &&
           (messages[i].from === user.id || users[messages[i].from])
         ) {
           output.push(
@@ -1051,9 +1045,7 @@ function MessageMaker({
               }}
             >
               {messages[i].from === user.id ? (
-                <span style={{ marginRight: "5px" }}>
-                  {user.username}
-                </span>
+                <span style={{ marginRight: "5px" }}>{user.username}</span>
               ) : (
                 <></>
               )}
@@ -1083,6 +1075,19 @@ function MessageMaker({
           topIndex++;
         }
 
+        output.push(
+          <Message
+            key={messages[i].ID ? messages[i].ID : messages[i].tempid}
+            messages={messages}
+            deleteFromID={deleteFromID}
+            i={i}
+            user={user}
+            toscroll={toscroll}
+            scrolltobottom={scrolltobottom}
+            sendJsonMessage={sendJsonMessage}
+            editFromID={editFromID}
+          ></Message>
+        );
         lastmessage = messages[i];
       }
       console.timeEnd("chatrender");
@@ -1327,7 +1332,9 @@ function ChatPage() {
       specialchars: { [key: number]: any };
     };
   }>({});
-  const [isonline, setisonline] = useState("0");
+  const [onlinemembers, setonlinemembers] = useState<{ [key: string]: string }>(
+    {}
+  );
   const metypinglengthref = useRef<number>(0);
   const metypingref = useRef<any>(false);
   const typingTimer = useRef<any>(null);
@@ -1585,14 +1592,29 @@ function ChatPage() {
           }
         }
       } else if (lastJsonMessage.type === "online") {
-        if (!lastJsonMessage.online && (isonline === "M" || isonline === "1")) {
-          playSound("/sounds/leave.mp3");
-        } else if (lastJsonMessage.online && isonline === "0") {
-          playSound("/sounds/join.mp3");
+        if (!isGroupChat) {
+          if (
+            !lastJsonMessage.online &&
+            (onlinemembers[lastJsonMessage.user || chattingto] === "M" ||
+              onlinemembers[lastJsonMessage.user || chattingto] === "1")
+          ) {
+            playSound("/sounds/leave.mp3");
+          } else if (
+            lastJsonMessage.online &&
+            (onlinemembers[lastJsonMessage.user || chattingto] === "0" ||
+              !onlinemembers[lastJsonMessage.user || chattingto])
+          ) {
+            playSound("/sounds/join.mp3");
+          }
         }
-        setisonline(
-          lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
-        );
+        setonlinemembers({
+          ...onlinemembers,
+          [lastJsonMessage.user || chattingto]: lastJsonMessage.online
+            ? lastJsonMessage.mobile
+              ? "M"
+              : "1"
+            : "0",
+        });
       } else if (lastJsonMessage.type === "nchat") {
         setnoChat(true);
       } else if (lastJsonMessage.type === "gift") {
@@ -1703,11 +1725,20 @@ function ChatPage() {
         if (lastJsonMessage.isGroupChat) {
           setchats(lastJsonMessage.messages);
           setgroupchatdata(lastJsonMessage.groupChatData);
+          const online: Record<string, string> = {}
+          for (const member of Object.keys(Object(lastJsonMessage.groupChatData.members))) {
+            online[member] = lastJsonMessage.members[member].online
+              ? lastJsonMessage.members[member].mobile
+                ? "M"
+                : "1"
+              : "0";
+          }
+          setonlinemembers(online);
           setisGroupChat(true);
         } else {
           setchats(lastJsonMessage.messages);
-          setisonline(
-            lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0"
+          setonlinemembers(
+            { [chattingto]:lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0" }
           );
           setisGroupChat(false);
         }
@@ -1867,12 +1898,14 @@ function ChatPage() {
                   <FontAwesomeIcon
                     style={{
                       color:
-                        isonline === "0" ? "var(--offline)" : "var(--online)",
+                        onlinemembers[chattingto] === "0"
+                          ? "var(--offline)"
+                          : "var(--online)",
                     }}
                     icon={
-                      isonline === "1"
+                      onlinemembers[chattingto] === "1"
                         ? faDesktop
-                        : isonline === "M"
+                        : onlinemembers[chattingto] === "M"
                         ? faMobileAlt
                         : faEyeSlash
                     }
@@ -1886,14 +1919,40 @@ function ChatPage() {
                 </>
               ) : (
                 <>
-                  {groupchatdata.name}{" "}
-                  <FontAwesomeIcon
+                  <FontAwesomeIcon icon={faUsers}></FontAwesomeIcon>{" "}
+                  {groupchatdata.name}
+                  <div
+                    data-private
                     style={{
-                      color:
-                        isonline === "0" ? "var(--offline)" : "var(--online)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
-                    icon={faUsers}
-                  ></FontAwesomeIcon>
+                  >
+                    {Object.keys(Object(usersdata?.users)).map((userid) => (
+                      <img
+                        key={userid}
+                        src={"/files/" + user.profilePic + "?size=25"}
+                        alt={usersdata?.users[userid].username}
+                        width="25px"
+                        height="25px"
+                        style={{
+                          borderRadius: "100%",
+                          margin: "5px",
+                          opacity:
+                            !onlinemembers[userid] ||
+                            onlinemembers[userid] === "0"
+                              ? 0.5
+                              : 1,
+                          filter:
+                            !onlinemembers[userid] ||
+                            onlinemembers[userid] === "0"
+                              ? "grayscale(100%)"
+                              : undefined,
+                        }}
+                      ></img>
+                    ))}
+                  </div>
                 </>
               )}
             </p>

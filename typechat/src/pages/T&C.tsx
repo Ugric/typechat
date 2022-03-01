@@ -21,7 +21,7 @@ function TandC() {
           href="/chat/TypeChat"
           style={{ color: "var(--secondary-text-colour)" }}
         >
-          the offical TypeChat account
+          the official TypeChat account
         </a>
         .
       </b>
@@ -52,7 +52,7 @@ function TandC() {
           <li>to not use the app for illigal activity</li>
           <li>keep all users on the app feeling safe and secure</li>
           <li>
-            to report people who break any rules to the offical TypeChat account
+            to report people who break any rules to the official TypeChat account
           </li>
         </ul>
       </div>
@@ -81,6 +81,7 @@ function TandC() {
         >
           <li>to keep your personal infomation safe and secure from hackers</li>
           <li>to make sure you feel safe at all time while using the app</li>
+          <li>We will never sell your userdata to third parties!</li>
         </ul>
       </div>
       <div
@@ -236,7 +237,7 @@ function TandC() {
             href="/chat/TypeChat"
             style={{ color: "var(--secondary-text-colour)" }}
           >
-            the offical TypeChat account
+            the official TypeChat account
           </a>
           .
         </b>

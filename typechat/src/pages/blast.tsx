@@ -22,7 +22,6 @@ import { useData } from "../hooks/datahook";
 import { PayPalButton } from "react-paypal-button-v2";
 import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import ReactGA from "react-ga4";
-import Loader from "./loader";
 
 // make a function that takes in the day of the month and adds 'th' or 'st' or 'nd' or 'rd' to it
 function ordinal_suffix_of(i: number) {
@@ -540,7 +539,7 @@ function Blast() {
                       href="/chat/TypeChat"
                       style={{ color: "var(--secondary-text-colour)" }}
                     >
-                      the offical TypeChat account
+                      the official TypeChat account
                     </a>
                     !
                   </p>
@@ -824,7 +823,7 @@ function Blast() {
                       href="/chat/TypeChat"
                       style={{ color: "var(--secondary-text-colour)" }}
                     >
-                      the offical TypeChat account
+                      the official TypeChat account
                     </a>
                     !
                   </p>

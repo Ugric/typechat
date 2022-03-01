@@ -103,17 +103,19 @@
 }*/
 
 .first-yours {
+  border-top-left-radius: 2px;
   border-bottom-left-radius: 2px;
 }
 .first-mine {
+  border-top-right-radius: 2px;
   border-bottom-right-radius: 2px;
 }
 
 .last-yours {
-  border-bottom-left-radius: 2px;
+  border-bottom-left-radius: 20px;
 }
 .last-mine {
-  border-bottom-right-radius: 2px;
+  border-bottom-right-radius: 20px;
 }
 
 

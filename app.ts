@@ -590,6 +590,30 @@ function updateFromAccountID(accountID: string) {
           if (to) {
             if (isGroupChat) {
               delete groupchats[to][accountdata.accountID][connectionID];
+              if (
+                getAllOnline(groupchats[to][accountdata.accountID])
+                  .length <= 0
+              ) {
+                for (const accountID of Object.keys(
+                  groupchats[to][accountdata.accountID]
+                )) {
+                  for (
+                    const connectionID of Object.keys(
+                      groupchats[to][accountdata.accountID][accountID]
+                    )
+                  ) {
+                    groupchats[to][accountdata.accountID][accountID][
+                      connectionID
+                    ].ws.send(
+                      JSON.stringify({
+                        type: "online",
+                        online: false,
+                        user: accountdata.accountID,
+                      })
+                    );
+                  }
+                }
+              }
             } else {
               delete messagefunctions[accountdata.accountID][to][connectionID];
               if (
@@ -625,6 +649,9 @@ function updateFromAccountID(accountID: string) {
                   ":to": msg.to,
                 }
               );
+              to = msg.to;
+              if (dm) {
+
               if (to) {
                 delete messagefunctions[accountdata.accountID][to][
                   connectionID
@@ -647,8 +674,6 @@ function updateFromAccountID(accountID: string) {
                   }
                 }
               }
-              to = msg.to;
-              if (dm) {
                 if (msg.to === accountdata.accountID) {
                   return ws.send(
                     JSON.stringify({
@@ -1039,6 +1064,24 @@ function updateFromAccountID(accountID: string) {
               if (isGroupChat) {
                 groupchats[to][accountdata.accountID][connectionID].focus =
                   msg.focus;
+                if (
+                  getAllOnline(groupchats[to][accountdata.accountID])
+                    .length <= 0
+                ) {
+                  for (const accountID of Object.keys(groupchats[to])) {
+                    for (const ws of Object.keys(groupchats[to][accountID])) {
+                      if (ws !== connectionID) {
+                        groupchats[to][accountID][ws].ws.send(
+                          JSON.stringify({
+                            type: "online",
+                            online: msg.focus,
+                            mobile: msg.focus ? mobile : undefined,
+                          })
+                        );
+                      }
+                    }
+                  }
+                }
               } else {
                 messagefunctions[accountdata.accountID][to][
                   connectionID
@@ -1190,7 +1233,7 @@ function updateFromAccountID(accountID: string) {
                     if (ws !== connectionID) {
                       groupchats[to][accountID][ws].ws.send(
                         JSON.stringify({
-                          type: msg.type,
+                          type: 'message',
                           message: {
                             from: accountdata.accountID,
                             time,
