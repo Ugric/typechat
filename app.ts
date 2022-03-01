@@ -649,7 +649,6 @@ function updateFromAccountID(accountID: string) {
                   ":to": msg.to,
                 }
               );
-              to = msg.to;
               if (dm) {
 
               if (to) {
@@ -674,6 +673,7 @@ function updateFromAccountID(accountID: string) {
                   }
                 }
               }
+              to = msg.to;
                 if (msg.to === accountdata.accountID) {
                   return ws.send(
                     JSON.stringify({
