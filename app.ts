@@ -683,7 +683,7 @@ function updateFromAccountID(accountID: string) {
         FROM (SELECT
         ID, accountID as "from", message, time, file, mimetype, edited, gift, amount
         FROM friendsChatMessages
-        WHERE (Ì
+        WHERE (
                 accountID = :accountID
                 and toAccountID = :toUser
                 and deleted=false
@@ -700,6 +700,7 @@ function updateFromAccountID(accountID: string) {
                     }
                   )
                 ).reverse();
+                console.log("not here");
                 let users = await db.get(
                   `WITH friendrequestlist as (
         SELECT accountID
