@@ -1161,16 +1161,6 @@ function MessageMaker({
           typingdata[key].typing ? (
             <React.Fragment key={key}>
               <div
-                className="message message-yours last-yours"
-                style={{
-                  opacity: 0.5,
-                  textShadow: "0 0 7px black",
-                  color: "transparent",
-                }}
-              >
-                {faketext[key]}
-              </div>
-              <div
                 data-private
                 style={{
                   alignSelf: "flex-start",
@@ -1189,6 +1179,16 @@ function MessageMaker({
                 <span style={{ marginLeft: "5px" }}>
                   {users[key]?.username}
                 </span>
+              </div>
+              <div
+                className="message message-yours fist-yours"
+                style={{
+                  opacity: 0.5,
+                  textShadow: "0 0 7px black",
+                  color: "transparent",
+                }}
+              >
+                {faketext[key]}
               </div>
             </React.Fragment>
           ) : (
@@ -1725,8 +1725,10 @@ function ChatPage() {
         if (lastJsonMessage.isGroupChat) {
           setchats(lastJsonMessage.messages);
           setgroupchatdata(lastJsonMessage.groupChatData);
-          const online: Record<string, string> = {}
-          for (const member of Object.keys(Object(lastJsonMessage.groupChatData.members))) {
+          const online: Record<string, string> = {};
+          for (const member of Object.keys(
+            Object(lastJsonMessage.groupChatData.members)
+          )) {
             online[member] = lastJsonMessage.members[member].online
               ? lastJsonMessage.members[member].mobile
                 ? "M"
@@ -1737,9 +1739,13 @@ function ChatPage() {
           setisGroupChat(true);
         } else {
           setchats(lastJsonMessage.messages);
-          setonlinemembers(
-            { [chattingto]:lastJsonMessage.online ? (lastJsonMessage.mobile ? "M" : "1") : "0" }
-          );
+          setonlinemembers({
+            [chattingto]: lastJsonMessage.online
+              ? lastJsonMessage.mobile
+                ? "M"
+                : "1"
+              : "0",
+          });
           setisGroupChat(false);
         }
         setusersdata({ exists: true, users: lastJsonMessage.users });
