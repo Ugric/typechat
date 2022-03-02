@@ -1285,6 +1285,7 @@ function ChatPage() {
     "8",
     "9",
     "0",
+    "\n",
   ];
   const [chats, setchats] = useState<
     Array<messageWithText | messageWithFile | giftMessage>
@@ -1592,21 +1593,20 @@ function ChatPage() {
           }
         }
       } else if (lastJsonMessage.type === "online") {
-        if (!isGroupChat) {
-          if (
-            !lastJsonMessage.online &&
-            (onlinemembers[lastJsonMessage.user || chattingto] === "M" ||
-              onlinemembers[lastJsonMessage.user || chattingto] === "1")
-          ) {
-            playSound("/sounds/leave.mp3");
-          } else if (
-            lastJsonMessage.online &&
-            (onlinemembers[lastJsonMessage.user || chattingto] === "0" ||
-              !onlinemembers[lastJsonMessage.user || chattingto])
-          ) {
-            playSound("/sounds/join.mp3");
-          }
+        if (
+          !lastJsonMessage.online &&
+          (onlinemembers[lastJsonMessage.user || chattingto] === "M" ||
+            onlinemembers[lastJsonMessage.user || chattingto] === "1")
+        ) {
+          playSound("/sounds/leave.mp3");
+        } else if (
+          lastJsonMessage.online &&
+          (onlinemembers[lastJsonMessage.user || chattingto] === "0" ||
+            !onlinemembers[lastJsonMessage.user || chattingto])
+        ) {
+          playSound("/sounds/join.mp3");
         }
+
         setonlinemembers({
           ...onlinemembers,
           [lastJsonMessage.user || chattingto]: lastJsonMessage.online
@@ -1726,11 +1726,9 @@ function ChatPage() {
           setchats(lastJsonMessage.messages);
           setgroupchatdata(lastJsonMessage.groupChatData);
           const online: Record<string, string> = {};
-          for (const member of Object.keys(
-            Object(lastJsonMessage.groupChatData.members)
-          )) {
-            online[member] = lastJsonMessage.members[member].online
-              ? lastJsonMessage.members[member].mobile
+          for (const userid of Object.keys(Object(lastJsonMessage.online))) {
+            online[userid] = lastJsonMessage.online[userid].online
+              ? lastJsonMessage.online[userid].mobile
                 ? "M"
                 : "1"
               : "0";

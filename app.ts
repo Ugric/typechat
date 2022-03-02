@@ -594,12 +594,12 @@ function updateFromAccountID(accountID: string) {
                 getAllOnline(groupchats[to][accountdata.accountID]).length <= 0
               ) {
                 for (const accountID of Object.keys(
-                  groupchats[to][accountdata.accountID]
+                  groupchats[to]
                 )) {
                   for (const connectionID of Object.keys(
-                    groupchats[to][accountdata.accountID][accountID]
+                    groupchats[to][accountID]
                   )) {
-                    groupchats[to][accountdata.accountID][accountID][
+                    groupchats[to][accountID][
                       connectionID
                     ].ws.send(
                       JSON.stringify({
@@ -700,7 +700,6 @@ function updateFromAccountID(accountID: string) {
                     }
                   )
                 ).reverse();
-                console.log("not here");
                 let users = await db.get(
                   `WITH friendrequestlist as (
         SELECT accountID
@@ -795,7 +794,6 @@ function updateFromAccountID(accountID: string) {
                 }
               );
               if (gc) {
-
                 to = msg.to;
                 if (!groupchats[to]) groupchats[to] = {};
                 if (!groupchats[to][accountdata.accountID]) {
@@ -804,6 +802,7 @@ function updateFromAccountID(accountID: string) {
                 groupchats[to][accountdata.accountID][connectionID] = {
                   ws,
                   focus: true,
+                  mobile: msg.mobile,
                 };
                 isGroupChat = gc;
                 const messages = (
@@ -829,7 +828,36 @@ function updateFromAccountID(accountID: string) {
                   }
                 );
                 const users = {};
+                const online: Record<string, Record<string, any>> = {};
                 for (const user of userinfo) {
+                  if (groupchats[to][user.accountID]) {
+                    for (const ws of Object.keys(
+                      groupchats[to][user.accountID]
+                    )) {
+                      groupchats[to][user.accountID][ws].ws.send(
+                        JSON.stringify({
+                          type: "online",
+                          online: true,
+                          mobile: msg.mobile,
+                          user: accountdata.accountID,
+                        })
+                      );
+                    }
+                    const allonline = getAllOnline(
+                      groupchats[to][user.accountID]
+                    );
+                    if (allonline.length > 0) {
+                      online[user.accountID] = {
+                        online: allonline[allonline.length - 1].focus,
+                        mobile: allonline[allonline.length - 1].mobile,
+                      };
+                    } else {
+                      online[user] = {
+                        mobile: undefined,
+                        online: false,
+                      };
+                    }
+                  }
                   users[user.accountID] = {
                     username: user.username,
                     id: user.accountID,
@@ -846,6 +874,7 @@ function updateFromAccountID(accountID: string) {
                     groupChatData: gc,
                     users,
                     messages,
+                    online,
                   })
                 );
               } else {
@@ -1057,18 +1086,26 @@ function updateFromAccountID(accountID: string) {
               if (isGroupChat) {
                 groupchats[to][accountdata.accountID][connectionID].focus =
                   msg.focus;
-                if (
+                console.log(
                   getAllOnline(groupchats[to][accountdata.accountID]).length <=
-                  0
+                    0
+                );
+                if (
+                  !msg.focus
+                    ? getAllOnline(groupchats[to][accountdata.accountID])
+                        .length <= 0
+                    : true
                 ) {
+                  console.log("no one online");
                   for (const accountID of Object.keys(groupchats[to])) {
-                    for (const ws of Object.keys(groupchats[to][accountID])) {
-                      if (ws !== connectionID) {
+                    if (accountID !== accountdata.accountID) {
+                      for (const ws of Object.keys(groupchats[to][accountID])) {
                         groupchats[to][accountID][ws].ws.send(
                           JSON.stringify({
                             type: "online",
                             online: msg.focus,
                             mobile: msg.focus ? mobile : undefined,
+                            user: accountdata.accountID,
                           })
                         );
                       }
