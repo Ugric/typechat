@@ -490,7 +490,7 @@ function Message({
       const call = () => {
         const pos = msgref.current?.getBoundingClientRect();
         if (pos) {
-          if (pos.top >= 0 && pos.top <= window.screen.height) {
+          if (pos.bottom >= 0 && pos.top <= window.screen.height) {
             const topgradent = [
               (bottom[0] - top[0]) * (pos.top / window.screen.height) + top[0],
               (bottom[1] - top[1]) * (pos.top / window.screen.height) + top[1],
@@ -1181,7 +1181,7 @@ function MessageMaker({
                 </span>
               </div>
               <div
-                className="message message-yours fist-yours"
+                className="message message-yours first-yours"
                 style={{
                   opacity: 0.5,
                   textShadow: "0 0 7px black",
