@@ -1934,31 +1934,33 @@ function ChatPage() {
                     }}
                   >
                     {Object.keys(Object(usersdata?.users)).map((userid) => (
-                      <img
-                        key={userid}
-                        src={
-                          "/files/" +
-                          usersdata?.users[userid].profilePic +
-                          "?size=25"
-                        }
-                        alt={usersdata?.users[userid].username}
-                        width="25px"
-                        height="25px"
-                        style={{
-                          borderRadius: "100%",
-                          margin: "5px",
-                          opacity:
-                            !onlinemembers[userid] ||
-                            onlinemembers[userid] === "0"
-                              ? 0.5
-                              : 1,
-                          filter:
-                            !onlinemembers[userid] ||
-                            onlinemembers[userid] === "0"
-                              ? "grayscale(100%)"
-                              : undefined,
-                        }}
-                      ></img>
+                      <a
+                          key={userid} target="blank" href={"/chat/" + userid}>
+                        <img
+                          src={
+                            "/files/" +
+                            usersdata?.users[userid].profilePic +
+                            "?size=25"
+                          }
+                          alt={usersdata?.users[userid].username}
+                          width="25px"
+                          height="25px"
+                          style={{
+                            borderRadius: "100%",
+                            margin: "5px",
+                            opacity:
+                              !onlinemembers[userid] ||
+                              onlinemembers[userid] === "0"
+                                ? 0.5
+                                : 1,
+                            filter:
+                              !onlinemembers[userid] ||
+                              onlinemembers[userid] === "0"
+                                ? "grayscale(100%)"
+                                : undefined,
+                          }}
+                        ></img>
+                      </a>
                     ))}
                   </div>
                 </>
