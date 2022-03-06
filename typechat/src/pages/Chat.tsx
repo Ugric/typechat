@@ -1181,7 +1181,7 @@ function MessageMaker({
                 </span>
               </div>
               <div
-                className="message message-yours first-yours"
+                className="message message-yours last-yours"
                 style={{
                   opacity: 0.5,
                   textShadow: "0 0 7px black",
